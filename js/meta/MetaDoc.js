@@ -1,3 +1,5 @@
+import {Table} from '../data/Table.js';
+
 // 테이블 설명을 바깥 형식과 주고받는다: 설명서(.md) 만들기·읽기, 엑셀 Meta 시트 읽기
 
 // 엑셀 Meta 시트의 머리줄. 사람마다 이름과 순서가 달라서 알려진 이름 표본으로 열을 찾는다 (대소문자·띄어쓰기·_ 무시)
@@ -25,16 +27,28 @@ export class MetaDoc {
       t.cols.map(c => `| ${mdEsc(c.name)} | ${type(c)} | ${mdEsc(c.desc)} |`).join('\n') + '\n';
   }
 
-  // toMd의 반대. 불러오기에서 같은 이름의 .md를 함께 고르면 설명을 되살린다
+  // toMd의 반대. 불러오기에서 같은 이름의 .md가 있으면 설명과 함께, JSON에는 없는 설정도 타입 칸에서 되살린다:
+  //   열 타입(값이 비어 정수·실수를 모르는 열), ID 접두사와 'JSON에 포함', 다른 테이블 참조('items에서 가져옴')
   static applyMd(t, text) {
     const lines = text.split(/\r?\n/);
     const first = lines.findIndex(l => l.startsWith('|'));
     t.desc = (first < 0 ? lines : lines.slice(0, first)).filter(l => !l.startsWith('# ')).join('\n').trim();
     if (first < 0) return;
+    const typeKey = Object.fromEntries(Object.entries(Table.TYPES).map(([k, v]) => [v, k]));
     for (const l of lines.slice(first + 2)) {
       const cells = l.split(/(?<!\\)\|/).slice(1, -1).map(mdUnesc);
-      const col = t.cols.find(c => c.name === cells[0]);
-      if (col) col.desc = cells[2] || '';
+      const i = t.cols.findIndex(c => c.name === cells[0]);
+      if (i < 0) continue;
+      const col = t.cols[i], type = cells[1] || '';
+      col.desc = cells[2] || '';
+      let m;
+      if (col.id) {
+        const pre = /`([^`]*)`/.exec(type);
+        if (pre && !t.prefix) t.prefix = pre[1];
+        t.prefixOut = /^ID · 문자/.test(type) && !!t.prefix;
+      } else if ((m = /^(.+?) · (.+)에서 가져옴$/.exec(type))) {
+        if (t.hasId) t.ref = m[2]; // 이 열은 참조를 켜면 다시 연결된다
+      } else if (typeKey[type] && typeKey[type] !== col.type) t.setType(i, typeKey[type]);
     }
   }
 

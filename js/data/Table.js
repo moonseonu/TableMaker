@@ -7,8 +7,9 @@ export class Table {
   static TYPES = {string: '문자', int: '정수', float: '실수', bool: '참/거짓'};
 
   // ref: 이 테이블의 ID가 가리키는 다른 테이블 이름 (Localization → items). 이름이 같은 열은 그 테이블 값으로 채운다 (Workbook.syncRef)
-  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = ''} = {}) {
-    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, ref});
+  // flip: 행/열 바꿔 보기 (화면만, 데이터는 그대로)
+  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = '', flip = false} = {}) {
+    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, ref, flip});
   }
 
   static sample() {
@@ -111,8 +112,12 @@ export class Table {
 
   // ---------- 정렬 ----------
 
-  // 기본은 ID 오름차순. 다른 열로 정렬하기 전까지는 다시 그릴 때마다 ID 순서를 유지한다
-  sortOf() { return this.sort || {c: this.hasId ? 0 : -1, dir: 1}; }
+  // 정렬은 ID 열만 (오름·내림). 다시 그릴 때마다 ID 순서를 유지한다.
+  // 예전에 다른 열로 정렬해 저장된 값은 무시하고 ID 오름차순으로 본다
+  sortOf() {
+    const s = this.sort;
+    return s && this.cols[s.c] && this.cols[s.c].id ? s : {c: this.hasId ? 0 : -1, dir: 1};
+  }
 
   autoSort() {
     const {c, dir} = this.sortOf();
@@ -125,16 +130,10 @@ export class Table {
     slots.forEach((s, k) => this.rows[s] = rows[k]);
   }
 
+  // ID 열의 오름·내림을 뒤집는다. 실제 정렬은 autoSort가 한다
   sortBy(c) {
-    const cur = this.sortOf(), dir = cur.c === c ? -cur.dir : 1;
-    this.sort = {c, dir};
-    if (this.cols[c].id) return; // ID 열은 autoSort가 맡는다
-    const num = ['int', 'float'].includes(this.cols[c].type);
-    const key = v => num ? (v === '' ? Infinity : Number(v)) : v;
-    this.rows.sort((a, b) => {
-      const x = key(a[c]), y = key(b[c]);
-      return (num ? (x < y ? -1 : x > y ? 1 : 0) : x.localeCompare(y, 'ko', {numeric: true})) * dir;
-    });
+    const cur = this.sortOf();
+    this.sort = {c, dir: cur.c === c ? -cur.dir : 1};
   }
 
   // ---------- 구조 바꾸기 ----------

@@ -8,16 +8,6 @@ export class Workbook {
     this.tables = tables.map(t => t instanceof Table ? t : new Table(t));
     this.cur = Math.max(0, Math.min(cur, this.tables.length - 1));
   }
-
-  // 프로젝트 파일(.tablemaker): 모든 탭과 설정을 그대로 담는다. 회원가입·서버 없이 PC에 저장하는 백업
-  toProject() { return JSON.stringify({format: 'tablemaker', version: 1, tables: this.tables}, null, 2); }
-
-  static readProject(text) {
-    const d = JSON.parse(text);
-    if (!d || d.format !== 'tablemaker' || !Array.isArray(d.tables)) throw new Error('TableMaker 프로젝트 파일이 아닙니다');
-    return d.tables.map(t => new Table(t));
-  }
-
   static load() {
     try {
       const d = JSON.parse(localStorage.getItem(KEY));

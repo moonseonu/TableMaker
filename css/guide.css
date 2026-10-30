@@ -1,0 +1,38 @@
+/* 사용 안내(guide.html) 전용. 색·표·탭 모양은 style.css를 그대로 쓰고, 번호 표시와 설명 목록만 더한다 */
+header .back{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--accent-text);text-decoration:none}
+header .back:hover{text-decoration:underline}
+.intro{padding:10px 12px;color:var(--dim)}
+#tabs .tab{padding-right:12px}
+main.guide{padding:18px 20px 48px}
+/* 모든 주제를 한 페이지에 펼친다 (Ctrl+F로 찾을 수 있게). 위 탭 줄은 목차 */
+.topic{max-width:1000px;scroll-margin-top:12px}
+.topic + .topic{margin-top:36px;padding-top:24px;border-top:1px solid var(--line)}
+.topic h2{font-size:15px;margin:0 0 4px}
+.topic .lead{color:var(--dim);margin:0 0 14px}
+.topic h3{font-size:13px;margin:22px 0 8px}
+/* 설명용 표: 실제 화면과 같은 모양이지만 눌리지 않는다(inert) */
+.sheet{overflow:auto;width:fit-content;max-width:100%;border:1px solid var(--line);border-radius:6px;margin:0 0 14px}
+.sheet th.colhead .cname{width:130px}
+.sheet table{width:max-content}
+.sheet thead th{position:static}
+.sheet th.colhead{background:var(--head);text-align:left}
+.sheet .num{height:30px}
+/* 번호 표시와 그 설명 */
+.mk{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;font-style:normal;margin:0 4px;flex:none;vertical-align:middle}
+.notes{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.notes li{display:flex;gap:6px;align-items:flex-start;line-height:1.65}
+.notes li > .mk{margin:2px 4px 0 0}
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;margin:0 0 14px}
+.static{position:static !important;box-shadow:none !important}
+.static.menu{display:inline-flex}
+.tip{margin-top:16px;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:var(--panel);line-height:1.65}
+.tip b{color:var(--accent-text)}
+pre.md{margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--code);font:12px/1.55 Consolas,monospace;overflow:auto}
+.keys{border-collapse:collapse}
+.keys th,.keys td{background:transparent;padding:7px 14px 7px 0;text-align:left;border:0;border-bottom:1px solid var(--line);white-space:normal;vertical-align:top}
+.keys th{color:var(--dim);font-weight:400;white-space:nowrap}
+kbd{display:inline-block;padding:1px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:var(--btn);font:12px Consolas,monospace}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:6px;padding:12px 14px;background:var(--panel);line-height:1.65}
+.card h3{margin:0 0 6px}
+.card p{margin:0;color:var(--dim)}

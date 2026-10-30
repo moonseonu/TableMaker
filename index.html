@@ -5,27 +5,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TableMaker</title>
 <link rel="stylesheet" href="css/style.css">
+<!-- 화면이 그려지기 전에 테마를 정한다 (늦게 정하면 다크→라이트로 한 번 깜빡인다). 바꾸는 곳은 js/settings/SettingsMenu.js -->
+<script>try { const t = localStorage.getItem('tablemaker.theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}</script>
 </head>
 <body>
-<header><h1>TableMaker</h1></header>
+<header>
+  <h1>TableMaker</h1>
+  <details id="appMenu" class="dropmenu appmenu">
+    <summary aria-label="메뉴" title="설정">☰</summary>
+    <div class="menu">
+      <div class="h">화면 테마</div>
+      <button data-theme-pick="system"><span class="dot"></span>시스템 설정 따름</button>
+      <button data-theme-pick="light"><span class="dot"></span>라이트</button>
+      <button data-theme-pick="dark"><span class="dot"></span>다크</button>
+      <hr>
+      <a href="guide.html" target="_blank" rel="noopener">사용 안내 <small>새 탭</small></a>
+    </div>
+  </details>
+</header>
 <div class="layout">
 <!-- 광고 자리 (160×600 세로 광고). 좁은 화면에서는 숨긴다 -->
 <aside class="ad" id="adLeft"></aside>
 <div class="work">
 <div class="toolbar">
-  <button id="import" title="JSON · CSV 파일을 새 탭으로 엽니다. 같은 이름의 설명서(.md)를 함께 고르면 설명도 불러옵니다.&#10;저장해 둔 프로젝트 파일(.tablemaker)은 모든 탭을 그대로 엽니다.&#10;엑셀에서 복사한 표는 빈 곳을 누르고 Ctrl+V 하면 새 탭으로 열립니다">불러오기</button>
-  <input type="file" id="file" accept=".json,.csv,.md,.tablemaker" multiple hidden>
+  <details id="openMenu" class="dropmenu outline">
+    <summary title="JSON · CSV는 새 탭으로 열리고, 같은 이름의 설명서(.md)가 있으면 설명과 설정도 함께 되살아납니다.&#10;엑셀에서 복사한 표는 빈 곳을 누르고 Ctrl+V 하면 새 탭으로 열립니다">불러오기 ▾</summary>
+    <div class="menu left">
+      <button data-open="file">파일 <small>JSON · CSV · MD · ZIP</small></button>
+      <button data-open="folder">폴더 <small>안의 JSON · CSV · MD 전부</small></button>
+    </div>
+  </details>
+  <input type="file" id="file" accept=".json,.csv,.md,.zip" multiple hidden>
+  <input type="file" id="folder" webkitdirectory multiple hidden>
   <span class="spacer"></span>
   <span id="status"></span>
   <button id="toggleJson">JSON 보기</button>
   <button id="toggleMeta">테이블 설명</button>
-  <details id="saveMenu" class="savemenu">
+  <details id="saveMenu" class="dropmenu primary">
     <summary>파일 저장 ▾</summary>
     <div class="menu">
       <button data-save="json">JSON <small data-hint="json"></small></button>
       <button data-save="md">설명서 (.md) <small data-hint="md"></small></button>
       <hr>
-      <button data-save="project" title="모든 탭과 설정(접두사·참조·설명)을 파일 하나로 저장합니다. 불러오기로 다시 열면 이어서 작업할 수 있습니다">프로젝트 전체 <small>모든 탭 · 불러오기로 다시 열기</small></button>
+      <button data-save="project" title="모든 탭의 JSON과 설명서를 zip 하나로 저장합니다. 압축을 풀어 그대로 쓰거나, 불러오기(파일·폴더)로 다시 열 수 있습니다">프로젝트 전체 (.zip) <small>모든 탭의 JSON + 설명서</small></button>
     </div>
   </details>
 </div>

@@ -29,33 +29,23 @@ export class GridView {
     if (this.el.contains(document.activeElement)) document.activeElement.blur();
     this.rendering = false;
     if (!keepOrder) t.autoSort();
-    const wb = this.app.workbook;
-    wb.syncRef(t);
-    const sort = t.sortOf(), cands = wb.refCandidates(t);
-    let h = '<thead><tr><th class="num"><button class="ico" id="addRow" title="행 추가 (맨 아래 빈 행으로 이동)">+</button></th>';
-    t.cols.forEach((c, i) => {
-      h += `<th data-c="${i}"><div class="col"><input class="cname${c.id ? ' idname' : ''}" data-c="${i}" value="${esc(c.name)}">`;
-      h += `<select data-c="${i}"${c.linked ? ' disabled' : ''}>${Object.entries({id: 'ID', ...Table.TYPES}).map(([k, v]) =>
-        `<option value="${k}"${k === (c.id ? 'id' : c.type) ? ' selected' : ''}>${v}</option>`).join('')}</select>`;
-      // 참조 대상에 같은 이름 열이 있으면 🔗 켜기/끄기. 기본은 켜짐(파랗게 눌린 상태)
-      if (c.linkable) h += `<button class="ico link${c.linked ? ' on' : ''}" data-link="${i}" title="${c.linked
-        ? `${esc(t.ref)}의 ${esc(c.name)}에서 가져오는 중. 누르면 연결을 끊고 직접 입력합니다`
-        : `연결 끊김. 누르면 ${esc(t.ref)}의 ${esc(c.name)} 값으로 다시 채웁니다`}">${LINK_ICON}</button>`;
-      // 접두사·참조는 처음 한 번 정하는 설정이라 ⚙ 안에 둔다. 설정돼 있으면 ⚙가 파랗다
-      if (c.id) h += `<details class="idopt"><summary class="ico${t.prefix || t.ref ? ' set' : ''}" title="ID 설정 (접두사 · 참조)">⚙</summary><div class="pop">` +
-        `<label title="기본은 화면에만 표시되고 JSON에는 번호만 정수로 나갑니다">접두사 <input class="prefix" value="${esc(t.prefix)}" placeholder="예: item_"></label>` +
-        `<label title="켜면 JSON에 접두사까지 붙여 &quot;item_1001&quot; 같은 문자로 내보냅니다"><input type="checkbox" class="pout"${t.prefixOut ? ' checked' : ''}> JSON에 포함</label>` +
-        `<label title="${cands.length ? 'ID가 다른 테이블의 ID를 가리킬 때 (예: Localization → items). 이름이 같은 열은 그 테이블 값으로 채워집니다' : '참조할 수 있는 다른 테이블(ID 열이 있는 탭)이 없습니다'}">` +
-        `<input type="checkbox" class="refon"${t.ref ? ' checked' : ''}${cands.length ? '' : ' disabled'}> 다른 테이블 참조</label>` +
-        (t.ref ? `<select class="reftable">${cands.map(o => `<option${o.name === t.ref ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select>` : '') +
-        '</div></details>';
-      h += `<button class="ico" data-sort="${i}" title="정렬">${sort.c === i ? (sort.dir > 0 ? '▲' : '▼') : '↕'}</button>`;
-      h += `<button class="ico" data-delcol="${i}" title="열 삭제">✕</button>`;
-      h += '</div></th>';
-    });
+    this.app.workbook.syncRef(t);
+    // 모서리 칸: 행/열 바꿔 보기. 바꾼 상태면 파랗게 눌린 상태
+    const corner = `<th class="num corner"><button class="ico flip${t.flip ? ' on' : ''}" id="flipView" title="${t.flip
+      ? '행/열을 원래대로 (가로로 보기)' : '행/열 바꿔 보기 (열이 많은 테이블을 세로로)'}">⇄</button></th>`;
+    const ghostColHead = '<div class="col"><input class="cname" data-ghost placeholder="+ 새 열"></div>';
+    this.el.classList.toggle('flip', !!t.flip);
+    this.el.innerHTML = t.flip ? this.flippedHtml(corner, ghostColHead) : this.normalHtml(corner, ghostColHead);
+    this.update();
+  }
+
+  // 가로 보기: 열 = 컬럼, 행 = 데이터 한 줄
+  normalHtml(corner, ghostColHead) {
+    const t = this.t;
+    let h = '<thead><tr>' + corner;
+    t.cols.forEach((c, i) => h += `<th data-c="${i}">${this.colHead(c, i)}</th>`);
     // 맨 오른쪽 빈 열: 채우는 순간 진짜 열이 되고, 비어 있으면 JSON에 안 나온다
-    h += '<th class="ghost"><div class="col"><input class="cname" data-ghost placeholder="+ 새 열"></div></th>';
-    h += '</tr></thead><tbody>';
+    h += `<th class="ghost">${ghostColHead}</th></tr></thead><tbody>`;
     t.rows.forEach((r, ri) => {
       h += `<tr><td class="num"><button class="ico del" data-delrow="${ri}" title="행 삭제">✕</button>${ri + 1}</td>`;
       t.cols.forEach((c, ci) => h += this.cellHtml(c, ci, r[ci], `data-r="${ri}"`));
@@ -63,8 +53,50 @@ export class GridView {
     });
     // 맨 아래 빈 행: 열과 같은 규칙. 채우는 순간 진짜 행이 된다
     h += '<tr class="ghostrow"><td class="num"></td>' + t.cols.map((c, ci) => this.cellHtml(c, ci, '', 'data-ghostrow')).join('') + '<td></td></tr>';
-    this.el.innerHTML = h + '</tbody>';
-    this.update();
+    return h + '</tbody>';
+  }
+
+  // 세로 보기(Config처럼 열이 많은 테이블): 줄 = 컬럼, 칸 = 데이터 한 줄. 데이터와 JSON은 그대로이고 보는 방향만 다르다.
+  // 칸의 data-r · data-c는 가로 보기와 같은 뜻이라 입력·검사·붙여넣기 코드는 그대로 쓴다
+  flippedHtml(corner, ghostColHead) {
+    const t = this.t;
+    let h = '<thead><tr>' + corner;
+    t.rows.forEach((r, ri) => h += `<th class="num rowhead"><button class="ico del" data-delrow="${ri}" title="행 삭제">✕</button>${ri + 1}</th>`);
+    h += '<th class="num rowhead ghostcell"></th></tr></thead><tbody>';
+    t.cols.forEach((c, ci) => {
+      h += `<tr><th class="colhead" data-c="${ci}">${this.colHead(c, ci)}</th>`;
+      t.rows.forEach((r, ri) => h += this.cellHtml(c, ci, r[ci], `data-r="${ri}"`));
+      h += this.cellHtml(c, ci, '', 'data-ghostrow') + '</tr>'; // 맨 오른쪽: 새 행
+    });
+    // 맨 아래: 새 열
+    h += `<tr><th class="colhead ghost">${ghostColHead}</th>` + t.rows.map((r, ri) => `<td class="ghost"><input data-ghost data-gr="${ri}"></td>`).join('') + '<td></td></tr>';
+    return h + '</tbody>';
+  }
+
+  // 컬럼 머리칸 내용: 이름, 타입, 🔗, ⚙, 정렬, 삭제 (가로·세로 보기 모두 같은 것을 쓴다)
+  colHead(c, i) {
+    const t = this.t, sort = t.sortOf(), cands = this.app.workbook.refCandidates(t);
+    let h = `<div class="col"><input class="cname${c.id ? ' idname' : ''}" data-c="${i}" value="${esc(c.name)}">`;
+    h += `<select data-c="${i}"${c.linked ? ' disabled' : ''}>${Object.entries({id: 'ID', ...Table.TYPES}).map(([k, v]) =>
+      `<option value="${k}"${k === (c.id ? 'id' : c.type) ? ' selected' : ''}>${v}</option>`).join('')}</select>`;
+    // 참조 대상에 같은 이름 열이 있으면 🔗 켜기/끄기. 기본은 켜짐(파랗게 눌린 상태)
+    if (c.linkable) h += `<button class="ico link${c.linked ? ' on' : ''}" data-link="${i}" title="${c.linked
+      ? `${esc(t.ref)}의 ${esc(c.name)}에서 가져오는 중. 누르면 연결을 끊고 직접 입력합니다`
+      : `연결 끊김. 누르면 ${esc(t.ref)}의 ${esc(c.name)} 값으로 다시 채웁니다`}">${LINK_ICON}</button>`;
+    // 접두사·참조는 처음 한 번 정하는 설정이라 ⚙ 안에 둔다. 설정돼 있으면 ⚙가 파랗다
+    if (c.id) h += `<details class="idopt"><summary class="ico${t.prefix || t.ref ? ' set' : ''}" title="ID 설정 (접두사 · 참조)">⚙</summary><div class="pop">` +
+      `<label title="기본은 화면에만 표시되고 JSON에는 번호만 정수로 나갑니다">접두사 <input class="prefix" value="${esc(t.prefix)}" placeholder="예: item_"></label>` +
+      `<label title="켜면 JSON에 접두사까지 붙여 &quot;item_1001&quot; 같은 문자로 내보냅니다"><input type="checkbox" class="pout"${t.prefixOut ? ' checked' : ''}> JSON에 포함</label>` +
+      `<label title="${cands.length ? 'ID가 다른 테이블의 ID를 가리킬 때 (예: Localization → items). 이름이 같은 열은 그 테이블 값으로 채워집니다' : '참조할 수 있는 다른 테이블(ID 열이 있는 탭)이 없습니다'}">` +
+      `<input type="checkbox" class="refon"${t.ref ? ' checked' : ''}${cands.length ? '' : ' disabled'}> 다른 테이블 참조</label>` +
+      (t.ref ? `<select class="reftable">${cands.map(o => `<option${o.name === t.ref ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select>` : '') +
+      '</div></details>';
+    // 정렬은 ID 열만: ▼ 오름차순(작은 값이 위), ▲ 내림차순.
+    // 다른 열로 정렬하면 JSON 순서까지 바뀌고 ID 자동 정렬이 꺼져서 뺐다
+    if (c.id) h += `<button class="ico sort on" data-sort="${i}" title="${sort.dir > 0
+      ? '오름차순 · 누르면 내림차순' : '내림차순 · 누르면 오름차순'}">${sort.dir > 0 ? '▼' : '▲'}</button>`;
+    h += `<button class="ico" data-delcol="${i}" title="열 삭제">✕</button>`;
+    return h + '</div>';
   }
 
   // 참조 대상에서 가져온 칸(linked)은 회색으로 잠근다. Tab 키로는 건너뛴다
@@ -185,7 +217,7 @@ export class GridView {
   onClick(e) {
     const b = e.target.closest('button'), t = this.t;
     if (!b) return;
-    if (b.id === 'addRow') this.focusGhostRow(0);
+    if (b.id === 'flipView') { t.flip = !t.flip; this.render(); }
     else if (b.dataset.link) { const c = t.cols[+b.dataset.link]; c.unlink = !c.unlink; this.render(); }
     else if (b.dataset.sort) { t.sortBy(+b.dataset.sort); this.render(); }
     else if (b.dataset.delcol) {
@@ -195,18 +227,35 @@ export class GridView {
     } else if (b.dataset.delrow) { t.deleteRow(+b.dataset.delrow); this.render(); }
   }
 
-  // 엑셀처럼 Enter/↓ 아래 칸, Shift+Enter/↑ 위 칸. 마지막 행 아래는 빈 행
+  // 엑셀처럼 Enter/↓ 아래 칸, Shift+Enter/↑ 위 칸. 마지막 행 아래는 빈 행.
+  // Ctrl+↓: 맨 아래 빈 줄로 한 번에 (긴 표에서 새 행·새 열 넣을 때)
   onKey(e) {
     const el = e.target, ghost = el.hasAttribute('data-ghostrow'), t = this.t;
+    if (e.ctrlKey && e.key === 'ArrowDown' && this.el.contains(el)) {
+      e.preventDefault();
+      if (t.flip) this.el.querySelector('.cname[data-ghost]').focus();
+      else this.focusGhostRow(el.dataset.c != null && t.cols[el.dataset.c] ? el.dataset.c : 0);
+      return;
+    }
     if (el.dataset.r == null && !ghost) return;
-    const r = ghost ? t.rows.length : +el.dataset.r, c = +el.dataset.c;
     const up = e.key === 'ArrowUp' || (e.key === 'Enter' && e.shiftKey);
     const down = e.key === 'ArrowDown' || (e.key === 'Enter' && !e.shiftKey);
     if (!up && !down) return;
     e.preventDefault();
+    if (t.flip) return this.focusBelowFlipped(el, up ? -1 : 1);
+    const r = ghost ? t.rows.length : +el.dataset.r, c = +el.dataset.c;
     if (up) return this.focusCell(r - 1, c);
     if (r === t.rows.length - 1) return this.focusGhostRow(c);
     this.focusCell(r + 1, c);
+  }
+
+  // 세로 보기에서 화면상 위·아래 칸 = 같은 데이터 행의 이전·다음 컬럼
+  focusBelowFlipped(el, d) {
+    const c = +el.dataset.c + d;
+    if (c < 0 || c >= this.t.cols.length) return;
+    const same = el.hasAttribute('data-ghostrow') ? '[data-ghostrow]' : `[data-r="${el.dataset.r}"]`;
+    const next = this.el.querySelector(`input${same}[data-c="${c}"]`);
+    if (next) { next.focus(); if (next.select) next.select(); }
   }
 
   // ---------- 붙여넣기 ----------

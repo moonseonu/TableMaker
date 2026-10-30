@@ -6,12 +6,13 @@ import {JsonPanel} from './json/JsonPanel.js';
 import {Exporter} from './json/Exporter.js';
 import {MetaPanel} from './meta/MetaPanel.js';
 import {Importer} from './import/Importer.js';
+import {SettingsMenu} from './settings/SettingsMenu.js';
 import {SheetText} from './import/SheetText.js';
 
 // 각 영역을 만들고 서로 잇는다. 영역끼리는 직접 부르지 않고 App을 거친다
 //   table/  테이블 작성 영역 (표, 탭)      json/   JSON 보기·다운로드
 //   meta/   테이블 설명 · 설명서          import/ 불러오기 · 붙여넣기 해석
-//   data/   데이터와 규칙 (화면과 무관)
+//   data/   데이터와 규칙 (화면과 무관)        settings/ ☰ 메뉴 (화면 테마)
 export class App {
   constructor() {
     this.workbook = Workbook.load();
@@ -22,6 +23,7 @@ export class App {
     this.meta = new MetaPanel(this);
     this.exporter = new Exporter(this);
     this.importer = new Importer(this);
+    this.settings = new SettingsMenu();
     document.addEventListener('paste', e => this.onPaste(e));
     // ▾, ⚙ 같은 작은 설정 창은 바깥을 누르면 닫는다
     document.addEventListener('click', e => document.querySelectorAll('details[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }));

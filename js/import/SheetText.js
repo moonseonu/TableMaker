@@ -36,9 +36,8 @@ export class SheetText {
   static csv(text) { return SheetText.toList(SheetText.rows(text, ',')); }
 
   // 한국어 엑셀이 저장한 CSV는 UTF-8이 아니라 EUC-KR인 경우가 많다
-  static async readFile(f) {
-    const buf = await f.arrayBuffer();
-    try { return new TextDecoder('utf-8', {fatal: true}).decode(buf); }
-    catch { return new TextDecoder('euc-kr').decode(buf); }
+  static decode(bytes) {
+    try { return new TextDecoder('utf-8', {fatal: true}).decode(bytes); }
+    catch { return new TextDecoder('euc-kr').decode(bytes); }
   }
 }
