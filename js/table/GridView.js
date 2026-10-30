@@ -233,6 +233,8 @@ export class GridView {
       if (box ? e.type !== 'change' : e.type === 'change' || e.isComposing || !el.value) return;
       const r = t.newRow();
       r[c] = box ? 'true' : el.value;
+      // ID가 아닌 칸(Name 등)부터 적으면 ID는 지금 가장 큰 번호의 다음 번호로 채운다 (ID가 하나도 없으면 비워 둠)
+      if (t.hasId && !t.cols[c].id) r[0] = t.nextId(t.maxId() || '') || '';
       t.rows.push(r);
       this.render(true); // 다 적기 전엔 자리를 옮기지 않는다. 칸을 떠날 때 resortKeepFocus가 정렬한다
       const nel = this.el.querySelector(`input[data-r="${t.rows.length - 1}"][data-c="${c}"]`);

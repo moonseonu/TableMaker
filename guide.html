@@ -51,11 +51,12 @@
     </table>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>새 열</b> — 맨 오른쪽 점선 칸에 컬럼 이름을 적으면 열이 생깁니다. 비워 두면 JSON에 나오지 않습니다.</span></li>
-    <li><i class="mk">2</i><span><b>새 행</b> — 맨 아래 점선 줄에 적으면 행이 생깁니다. 마지막 행에서 <kbd>Enter</kbd>를 치면 그 줄로 내려가고, 긴 표에서는 <kbd>Ctrl</kbd>+<kbd>↓</kbd>로 한 번에 갑니다.</span></li>
-    <li><i class="mk">3</i><span><b>열 타입</b> — ID · 문자 · 정수 · 실수 · 참/거짓. JSON에 그 타입 그대로 나갑니다(<code>"900"</code>이 아니라 <code>900</code>).</span></li>
+    <li><i class="mk">1</i><span><b>새 열</b> — 맨 오른쪽 점선 칸에 컬럼 이름을 적으면 열이 생깁니다. 이름 대신 값부터 적어도 되고, 그러면 <code>col1</code> 같은 임시 이름이 붙습니다(위로 올라가 이름을 고치면 됩니다). 비워 두면 JSON에 나오지 않습니다.</span></li>
+    <li><i class="mk">2</i><span><b>새 행</b> — 맨 아래 점선 줄에 적으면 행이 생깁니다. Name처럼 ID가 아닌 칸부터 적으면 ID는 가장 큰 번호의 다음 번호가 자동으로 붙습니다. 마지막 행에서 <kbd>Enter</kbd>를 치면 그 줄로 내려가고, 긴 표에서는 <kbd>Ctrl</kbd>+<kbd>↓</kbd>로 한 번에 갑니다.</span></li>
+    <li><i class="mk">3</i><span><b>열 타입</b> — ID · 문자 · 정수 · 실수 · 참/거짓. JSON에 그 타입 그대로 나갑니다(<code>"900"</code>이 아니라 <code>900</code>). 새로 만든 열은 처음 적은 값을 보고 타입이 자동으로 정해지고, 드롭다운에서 언제든 바꿀 수 있습니다.</span></li>
     <li><i class="mk">4</i><span><b>빨간 칸</b> — 타입에 맞지 않는 값입니다(위 표의 <code>천원</code>). 위쪽에 오류 개수가 뜨고, 고치면 사라집니다.</span></li>
   </ol>
+  <div class="tip"><b>칸 고르기와 고치기 (엑셀과 같음)</b> — 칸을 클릭하면 고른 상태가 되고, 화살표로 옆 칸으로 움직입니다. 그대로 타이핑하면 기존 값을 지우고 새로 쓰고, 기존 값을 일부만 고치려면 더블클릭이나 <kbd>F2</kbd>. 고치던 것은 <kbd>Esc</kbd>로 취소, 고른 칸은 <kbd>Delete</kbd>로 비웁니다. 키 전체는 <a href="#keys" style="color:var(--accent-text)">보기 · 단축키</a>에 있습니다.</div>
   <div class="tip"><b>이미 엑셀로 만든 표가 있다면</b> — 엑셀에서 <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd> 한 뒤 TableMaker의 빈 곳을 누르고 <kbd>Ctrl</kbd>+<kbd>V</kbd>. 첫 줄이 컬럼 이름이 되고, 값을 보고 열 타입을 알아서 정합니다. 엑셀이 붙이는 <code>1,000</code> 같은 쉼표와 <code>TRUE</code>/<code>FALSE</code>도 알아봅니다.</div>
 </section>
 
@@ -86,6 +87,7 @@
   </div>
   <ol class="notes">
     <li><i class="mk">1</i><span><b>ID는 정수</b> — 번호에 의미를 담는 방식(1011 씨앗, 1012 작물…)을 그대로 씁니다. 비었거나, 숫자가 아니거나, 다른 행과 겹치면 빨간 칸입니다.</span></li>
+    <li><i class="mk">+</i><span><b>번호 이어서 적기</b> — ID 칸에 <code>1001</code>을 적고 <kbd>Enter</kbd>를 치면 맨 아래 빈 줄에 <code>1002</code>가 미리 채워집니다. 그대로 <kbd>Enter</kbd>면 1002 행이 생기고, <code>2001</code>처럼 다른 번호를 치면 그다음부터 2002, 2003…으로 이어집니다. 이미 있는 번호는 건너뜁니다.</span></li>
     <li><i class="mk">2</i><span><b>⚙ 접두사</b> — <code>item_</code>처럼 적으면 칸 앞에 이름표가 붙어 어떤 테이블의 ID인지 보입니다. 화면에만 붙고 JSON에는 <code>1001</code>로 나갑니다. <b>JSON에 포함</b>을 켜면 <code>"item_1001"</code> 문자로 나갑니다. 설정이 있으면 ⚙가 파랗게 보입니다.</span></li>
     <li><i class="mk">3</i><span><b>정렬</b> — ▼ 오름차순, ▲ 내림차순. 번호를 적고 칸을 떠나면 그 행이 순서에 맞는 자리로 갑니다.</span></li>
     <li><i class="mk">4</i><span><b>노란 칸</b> — 다른 테이블이 같은 자릿수의 ID를 쓰고 있다는 알림입니다(위 표의 <code>2001</code>). 테이블마다 100단위, 1000단위처럼 자릿수를 나눠 쓰면 겹치지 않습니다. 저장은 막지 않습니다.</span></li>

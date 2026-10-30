@@ -36,8 +36,14 @@ export class Table {
 
   newRow() { return this.cols.map(c => c.type === 'bool' ? 'false' : ''); }
 
-  // base 다음으로 아직 안 쓴 ID 번호 (1001 → 1002, 이미 있으면 1003…). 앞의 0 자릿수는 지킨다(001 → 002)
+  // 지금 ID 중 가장 큰 번호 (숫자 ID가 없으면 '')
+  maxId() {
+    return this.rows.map(r => r[0]).filter(v => /^\d+$/.test(v)).reduce((a, b) => (a === '' || +b > +a ? b : a), '');
+  }
+
+  // base 다음으로 아직 안 쓴 ID 번호 (1001 → 1002, 이미 있으면 1003…). 앞의 0 자릿수는 지킨다(001 → 002). base가 없으면 ''
   nextId(base) {
+    if (!/^\d+$/.test(base)) return '';
     const used = new Set(this.rows.map(r => String(+r[0])));
     let n = +base + 1;
     while (used.has(String(n))) n++;
