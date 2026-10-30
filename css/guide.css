@@ -1,7 +1,7 @@
 /* 사용 안내(guide.html) 전용. 색·표·탭 모양은 style.css를 그대로 쓰고, 번호 표시와 설명 목록만 더한다 */
 header .back{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--accent-text);text-decoration:none}
 header .back:hover{text-decoration:underline}
-.intro{padding:10px 12px;color:var(--dim)}
+.intro{margin:0;padding:10px 12px;font-size:15px}
 #tabs .tab{padding-right:12px}
 main.guide{padding:18px 20px 48px}
 /* 모든 주제를 한 페이지에 펼친다 (Ctrl+F로 찾을 수 있게). 위 탭 줄은 목차 */
