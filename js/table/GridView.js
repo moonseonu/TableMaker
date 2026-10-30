@@ -33,11 +33,13 @@ export class GridView {
 
   locked(el) { return !!el.closest('td.linked'); } // 참조로 가져온 칸은 늘 잠김
 
+  // 고른 상태도 칸은 편집 가능하게 둔다(커서만 숨김). 읽기 전용으로 두면 한글 입력기가 첫 키를 조합하지 못해
+  // '검'을 치면 'r검'처럼 첫 글자가 영어로 들어간다. 대신 첫 키를 누르는 순간 기존 값을 비운다(modeKey)
   setMode(el, mode, clear) {
     if (!this.isCellText(el)) return;
     if (mode !== 'select' && el.dataset.mode === 'select') el.dataset.orig = el.value; // Esc로 되돌릴 값
     el.dataset.mode = mode;
-    el.readOnly = mode === 'select' || this.locked(el);
+    el.readOnly = this.locked(el);
     if (clear) el.value = '';
     if (mode === 'edit') el.setSelectionRange(el.value.length, el.value.length);
   }
@@ -412,7 +414,7 @@ export class GridView {
   paste(rows, el) {
     if (rows.length === 1 && rows[0].length === 1) {
       // 한 칸짜리: 입력·수정 중이면 브라우저 기본 붙여넣기(커서 자리에), 고른 상태면 칸 값을 통째로 바꾼다(엑셀과 같게)
-      if (!el.readOnly || !this.isCellText(el)) return false;
+      if (!this.isCellText(el) || el.dataset.mode !== 'select') return false;
       if (!this.locked(el)) this.setValue(el, rows[0][0]);
       return true;
     }

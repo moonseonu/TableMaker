@@ -27,8 +27,10 @@ header .appmenu button.on .dot{border:3px solid var(--accent)}
 /* 가운데 작업 영역 양옆에 광고 자리. 화면이 좁으면 표 자리를 우선한다 */
 .layout{flex:1;min-height:0;display:flex}
 .work{flex:1;min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line)}
-.ad{flex:none;width:160px}
-@media (max-width:1100px){.ad{display:none}.work{border:0}}
+/* 양옆 여백(광고 자리): 20 / 60 / 20. 1100 이상이면 양옆이 220px 넘게 남아 160×600 광고가, 1500 이상이면 300×600 광고가 들어간다 */
+.ad{flex:none;width:20vw}
+/* 좁은 화면: 광고는 못 넣지만 여백은 조금 남겨 표 영역을 가운데에 둔다 */
+@media (max-width:1100px){.ad{width:clamp(16px,5vw,60px)}}
 .toolbar{display:flex;gap:8px;align-items:center;padding:8px 12px;flex-wrap:wrap}
 .spacer{flex:1}
 #status{color:var(--dim)}
