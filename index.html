@@ -8,6 +8,10 @@
 </head>
 <body>
 <header><h1>TableMaker</h1></header>
+<div class="layout">
+<!-- 광고 자리 (160×600 세로 광고). 좁은 화면에서는 숨긴다 -->
+<aside class="ad" id="adLeft"></aside>
+<div class="work">
 <div class="toolbar">
   <button id="import" title="JSON · CSV 파일을 새 탭으로 엽니다. 같은 이름의 설명서(.md)를 함께 고르면 설명도 불러옵니다.&#10;엑셀에서 복사한 표는 빈 곳을 누르고 Ctrl+V 하면 새 탭으로 열립니다">불러오기</button>
   <input type="file" id="file" accept=".json,.csv,.md" multiple hidden>
@@ -36,6 +40,9 @@
       <table><tbody id="cdesc"></tbody></table>
     </div>
   </section>
+</div>
+</div>
+<aside class="ad" id="adRight"></aside>
 </div>
 <script type="module">
 import {App} from './js/App.js';
