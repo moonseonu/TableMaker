@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TableMaker</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header><h1>TableMaker</h1></header>
+<div class="toolbar">
+  <button id="import" title="JSON · CSV 파일을 새 탭으로 엽니다. 같은 이름의 설명서(.md)를 함께 고르면 설명도 불러옵니다.&#10;엑셀에서 복사한 표는 빈 곳을 누르고 Ctrl+V 하면 새 탭으로 열립니다">불러오기</button>
+  <input type="file" id="file" accept=".json,.csv,.md" multiple hidden>
+  <span class="spacer"></span>
+  <span id="status"></span>
+  <button id="toggleJson">JSON 보기</button>
+  <button id="toggleMeta">테이블 설명</button>
+  <span class="dl">
+    <button id="download" class="primary">JSON 다운로드</button>
+    <details id="dlopt"><summary title="다운로드 설정">▾</summary>
+      <label><input type="checkbox" id="withMd"> 설명서(.md) 함께 받기</label>
+    </details>
+  </span>
+</div>
+<nav id="tabs"></nav>
+<main><table id="grid"></table></main>
+<div id="panels" hidden>
+  <section id="json" hidden>
+    <div class="bar"><b>JSON 미리보기</b><span class="spacer"></span><button id="copy">복사</button><button id="closeJson">닫기</button></div>
+    <pre id="out"></pre>
+  </section>
+  <section id="meta" hidden tabindex="-1"><!-- 창 아무 데나 눌러도 붙여넣기 대상이 되게 -->
+    <div class="bar"><b id="metaTitle"></b><span class="spacer"></span><button id="closeMeta">닫기</button></div>
+    <div class="metabody">
+      <textarea id="tdesc" placeholder="이 테이블은 무엇인가요? (예: 무기 아이템 목록. 상점·드롭에서 사용)&#10;엑셀 Meta 시트(Column · Description · Type)를 복사해 이 창에 붙여넣으면 아래 설명이 한 번에 채워집니다"></textarea>
+      <table><tbody id="cdesc"></tbody></table>
+    </div>
+  </section>
+</div>
+<script type="module">
+import {App} from './js/App.js';
+new App();
+</script>
+</body>
+</html>
