@@ -4,10 +4,18 @@ const KEY = 'tablemaker.v2';
 
 // 탭으로 열린 테이블 전체. 저장은 이 브라우저(localStorage)에만 한다
 export class Workbook {
-  constructor({tables, cur = 0, withMd = false}) {
+  constructor({tables, cur = 0}) {
     this.tables = tables.map(t => t instanceof Table ? t : new Table(t));
     this.cur = Math.max(0, Math.min(cur, this.tables.length - 1));
-    this.withMd = withMd; // 다운로드할 때 설명서(.md)도 함께 받기
+  }
+
+  // 프로젝트 파일(.tablemaker): 모든 탭과 설정을 그대로 담는다. 회원가입·서버 없이 PC에 저장하는 백업
+  toProject() { return JSON.stringify({format: 'tablemaker', version: 1, tables: this.tables}, null, 2); }
+
+  static readProject(text) {
+    const d = JSON.parse(text);
+    if (!d || d.format !== 'tablemaker' || !Array.isArray(d.tables)) throw new Error('TableMaker 프로젝트 파일이 아닙니다');
+    return d.tables.map(t => new Table(t));
   }
 
   static load() {

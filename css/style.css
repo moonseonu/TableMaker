@@ -68,11 +68,15 @@ td.ghost input{min-width:100px}
 .num .del{visibility:hidden}
 tr:hover .num .del{visibility:visible}
 .toolbar button.on{border-color:var(--accent);color:var(--accent)}
-.dl{display:flex;position:relative}
-.dl #download{border-radius:4px 0 0 4px}
-#dlopt summary{list-style:none;cursor:pointer;background:var(--accent);color:#fff;border:1px solid var(--accent);border-left-color:#fff4;border-radius:0 4px 4px 0;padding:4px 8px}
-#dlopt summary::-webkit-details-marker{display:none}
-#dlopt label{position:absolute;right:0;top:calc(100% + 4px);z-index:3;white-space:nowrap;display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:8px 12px;cursor:pointer}
+/* 파일 저장: 버튼을 누르면 목록이 열린다 (JSON · 설명서 · 프로젝트 전체) */
+.savemenu{position:relative}
+.savemenu summary{list-style:none;cursor:pointer;background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:4px;padding:4px 10px}
+.savemenu summary::-webkit-details-marker{display:none}
+.savemenu .menu{position:absolute;right:0;top:calc(100% + 4px);z-index:3;min-width:230px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px;box-shadow:0 6px 16px #0006}
+.savemenu .menu button{display:flex;justify-content:space-between;gap:12px;background:transparent;border:0;text-align:left;padding:7px 10px;white-space:nowrap}
+.savemenu .menu button:hover{background:#43464d}
+.savemenu .menu small{color:var(--dim)}
+.savemenu .menu hr{width:100%;border:0;border-top:1px solid var(--line);margin:4px 0}
 /* 하단 패널: JSON 왼쪽, 테이블 설명 오른쪽. 하나만 열면 전체 폭 */
 #panels{height:40vh;display:flex;border-top:1px solid var(--line);background:var(--panel)}
 #panels[hidden],#panels section[hidden]{display:none}

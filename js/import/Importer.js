@@ -1,9 +1,11 @@
 import {$} from '../common/util.js';
 import {Table} from '../data/Table.js';
+import {Workbook} from '../data/Workbook.js';
 import {MetaDoc} from '../meta/MetaDoc.js';
 import {SheetText} from './SheetText.js';
 
-// 불러오는 영역: 불러오기 버튼(JSON · CSV · 설명서 .md)과, 아무 칸도 고르지 않고 붙여넣은 표
+// 불러오는 영역: 불러오기 버튼(JSON · CSV · 설명서 .md · 프로젝트 .tablemaker)과, 아무 칸도 고르지 않고 붙여넣은 표.
+// 무엇을 열든 지금 탭은 그대로 두고 새 탭으로 더한다 (작업 중인 데이터를 덮어쓰지 않게)
 export class Importer {
   constructor(app) {
     this.app = app;
@@ -20,7 +22,8 @@ export class Importer {
     for (const f of files.filter(f => !isMd(f))) {
       try {
         const text = await SheetText.readFile(f);
-        wb.add(Table.fromData(/\.csv$/i.test(f.name) ? SheetText.csv(text) : JSON.parse(text), base(f)));
+        if (/\.tablemaker$/i.test(f.name)) Workbook.readProject(text).forEach(t => wb.add(t));
+        else wb.add(Table.fromData(/\.csv$/i.test(f.name) ? SheetText.csv(text) : JSON.parse(text), base(f)));
       } catch (err) { errors.push(`${f.name}: ${err instanceof SyntaxError ? 'JSON 문법 오류' : err.message}`); }
     }
     // 설명서는 이름이 같은 테이블에 붙인다 (방금 불러온 것 우선)
