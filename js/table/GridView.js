@@ -14,8 +14,38 @@ export class GridView {
     this.rendering = false;
     for (const ev of ['input', 'change', 'compositionend']) el.addEventListener(ev, e => this.onEdit(e));
     el.addEventListener('focusout', e => this.onFocusOut(e));
+    el.addEventListener('focusin', e => { if (!this.rendering) this.setMode(e.target, 'select'); });
+    el.addEventListener('dblclick', e => this.setMode(e.target, 'edit'));
     el.addEventListener('click', e => this.onClick(e));
     el.addEventListener('keydown', e => this.onKey(e));
+  }
+
+  // ---------- 칸 상태 (엑셀과 같게) ----------
+  // select: 칸을 고른 상태. 화살표로 옆 칸, 바로 타이핑하면 덮어쓰기(enter), Delete로 비우기
+  // enter : 타이핑으로 시작한 입력. 화살표를 누르면 입력을 마치고 옆 칸으로
+  // edit  : 더블클릭·F2로 시작한 수정. 기존 값에 커서가 들어가 화살표는 글자 사이를 움직인다. Esc는 취소, F2는 고른 상태로
+  // 표의 글자 칸(데이터 칸, 맨 아래 빈 줄, 맨 오른쪽 빈 열)만 해당한다. 컬럼 이름 칸과 체크박스는 늘 바로 고친다
+
+  isCellText(el) {
+    return el.tagName === 'INPUT' && el.type !== 'checkbox' && !el.classList.contains('cname')
+      && (el.dataset.r != null || el.hasAttribute('data-ghostrow') || el.dataset.gr != null);
+  }
+
+  locked(el) { return !!el.closest('td.linked'); } // 참조로 가져온 칸은 늘 잠김
+
+  setMode(el, mode, clear) {
+    if (!this.isCellText(el)) return;
+    if (mode !== 'select' && el.dataset.mode === 'select') el.dataset.orig = el.value; // Esc로 되돌릴 값
+    el.dataset.mode = mode;
+    el.readOnly = mode === 'select' || this.locked(el);
+    if (clear) el.value = '';
+    if (mode === 'edit') el.setSelectionRange(el.value.length, el.value.length);
+  }
+
+  // 코드로 칸 값을 바꾸고, 사람이 친 것처럼 저장·검사가 돌게 한다
+  setValue(el, v) {
+    el.value = v;
+    el.dispatchEvent(new Event('input', {bubbles: true}));
   }
 
   get t() { return this.app.table; }
@@ -131,22 +161,53 @@ export class GridView {
 
   focusCell(r, c) {
     const el = this.el.querySelector(`input[data-r="${r}"][data-c="${c}"]`);
-    if (el) { el.focus(); if (el.select) el.select(); }
+    if (el) this.focusEl(el);
   }
 
-  focusGhostRow(c) { this.el.querySelector(`[data-ghostrow][data-c="${c}"]`).focus(); }
+  // 표 칸은 고른 상태로만 두고(글자에 파란 선택 표시 없음), 컬럼 이름 칸은 이름을 전체 선택해 바로 고쳐 쓰게
+  focusEl(el) {
+    el.focus();
+    if (el.classList.contains('cname') && el.select) el.select();
+  }
 
-  focusEnd(el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+  // 맨 아래 빈 줄로. ID 칸이고 바로 위에서 적던 번호(base)가 있으면 다음 번호(1001 → 1002)를 미리 채워 고른 상태로 둔다:
+  // Enter면 그 번호로 행이 생기고, 다른 번호를 치면 덮어써서 거기부터 이어간다(2001 → 2002…)
+  focusGhostRow(c, base) {
+    const el = this.el.querySelector(`[data-ghostrow][data-c="${c}"]`);
+    el.focus();
+    if (this.t.cols[c] && this.t.cols[c].id && /^\d+$/.test(base || '')) { el.value = this.t.nextId(base); el.select(); }
+  }
 
-  // ID 칸을 떠나면 그 행을 제자리로 옮긴다. 포커스는 옮겨 간 칸에 그대로 둔다
+  // 미리 채운 번호를 받아들여(Enter) 행을 만들고, 다시 빈 줄에서 그다음 번호를 채운다
+  addFromGhost(v) {
+    const r = this.t.newRow();
+    r[0] = v;
+    this.t.rows.push(r);
+    this.render();
+    this.focusGhostRow(0, v);
+  }
+
+  // 빈 줄·빈 열에 치기 시작해서 새로 생긴 칸으로 옮겨 갈 때: 이어서 타이핑하도록 입력 상태로, 커서는 끝에
+  focusEnd(el) {
+    el.focus();
+    this.setMode(el, 'enter');
+    el.setSelectionRange(el.value.length, el.value.length);
+  }
+
+  // ID 칸을 떠나면 그 행을 제자리로 옮기고(새 열 타입이 정해질 때도 다시 그린다), 커서는 옮겨 간 칸에 그대로 둔다.
+  // 데이터 칸은 행이 자리를 옮기니 행 자체로 다시 찾고, 머리줄·빈 줄·빈 열은 화면 위치(pos)로 찾는다
   resortKeepFocus() {
     setTimeout(() => {
       const a = document.activeElement, t = this.t;
-      const row = a && a.dataset.r != null ? t.rows[+a.dataset.r] : null, col = a && a.dataset.c;
-      const ghost = a && a.hasAttribute('data-ghostrow');
+      const p = this.el.contains(a) && this.pos(a);
+      const row = p && a.dataset.r != null ? t.rows[+a.dataset.r] : null;
+      const filled = p && a.hasAttribute('data-ghostrow') && a.value; // 빈 줄에 미리 채운 다음 번호는 지키기
       this.render();
-      if (row) this.focusCell(t.rows.indexOf(row), col);
-      else if (ghost) this.focusGhostRow(col);
+      const el = p && this.at(row ? t.rows.indexOf(row) : p.r, p.c);
+      if (!el) return;
+      el.focus();
+      if (filled) el.value = filled;
+      if (filled || el.classList.contains('cname')) el.select();
     });
   }
 
@@ -158,6 +219,9 @@ export class GridView {
       if (e.isComposing || e.type === 'change' || !el.value) return; // 한글 조합 중에 다시 그리면 글자가 깨진다
       const nc = t.cols.length, header = el.classList.contains('cname');
       t.addCol(header ? el.value.trim() : '');
+      // 값부터 적으면 이름은 col1 같은 임시 이름. 이름부터 적든 값부터 적든, 타입은 처음 값을 적고 칸을 떠날 때
+      // 그 값을 보고 정한다(autoType, onFocusOut). 드롭다운에서 직접 고르면 그 뒤로는 정하지 않는다
+      t.cols[nc].autoType = true;
       if (!header) t.rows[+el.dataset.gr][nc] = el.value;
       this.render();
       this.focusEnd(this.el.querySelector(header ? `.cname[data-c="${nc}"]` : `input[data-r="${el.dataset.gr}"][data-c="${nc}"]`));
@@ -198,6 +262,7 @@ export class GridView {
       return;
     }
     if (el.tagName === 'SELECT') {
+      delete t.cols[c].autoType; // 사용자가 고른 타입을 우선한다
       if (el.value === 'id') t.makeId(c); else t.setType(c, el.value);
       this.render();
       return;
@@ -211,7 +276,16 @@ export class GridView {
   // (값을 바꿨는지와 상관없이: 빈 행에서 한 번에 붙여넣으면 change가 안 온다)
   onFocusOut(e) {
     const el = e.target, t = this.t;
-    if (!this.rendering && el.dataset.r != null && t.cols[el.dataset.c].id && (t.sortOf().c === 0 || t.ref)) this.resortKeepFocus();
+    if (this.rendering) return;
+    const col = el.dataset.r != null && t.cols[el.dataset.c];
+    if (col && col.autoType && el.value !== '') { // 새로 만든 열: 처음 값을 적고 칸을 떠날 때 적힌 값으로 타입을 정한다
+      t.setType(+el.dataset.c, Table.guessType(t.rows.map(r => r[el.dataset.c])));
+      delete col.autoType;
+      return this.resortKeepFocus();
+    }
+    if (col && col.id && (t.sortOf().c === 0 || t.ref)) this.resortKeepFocus();
+    // 빈 줄에 미리 채운 번호를 받지 않고 다른 데로 가면 지운다 (행으로 친 게 아니니까)
+    if (el.hasAttribute('data-ghostrow') && el.type !== 'checkbox') el.value = '';
   }
 
   onClick(e) {
@@ -227,35 +301,102 @@ export class GridView {
     } else if (b.dataset.delrow) { t.deleteRow(+b.dataset.delrow); this.render(); }
   }
 
-  // 엑셀처럼 Enter/↓ 아래 칸, Shift+Enter/↑ 위 칸. 마지막 행 아래는 빈 행.
+  // 엑셀처럼 칸 이동: Enter·↓ 아래, Shift+Enter·↑ 위, ←→ 옆 칸. 표 칸은 고른 상태·입력 상태에서 옆 칸으로,
+  // 수정 상태(더블클릭·F2)에서는 글자 사이로 움직인다(위 '칸 상태'). 컬럼 이름 칸은 글자 맨 앞·맨 끝에서만 옆 칸으로.
+  // 머리줄(컬럼 이름)과 맨 아래 빈 줄, 맨 오른쪽 빈 열까지 오간다.
+  // 이름 먼저 적든 값 먼저 적든 자유롭게: 빈 열 칸에 값부터 적으면 col1 같은 임시 이름이 붙는다
   // Ctrl+↓: 맨 아래 빈 줄로 한 번에 (긴 표에서 새 행·새 열 넣을 때)
   onKey(e) {
-    const el = e.target, ghost = el.hasAttribute('data-ghostrow'), t = this.t;
-    if (e.ctrlKey && e.key === 'ArrowDown' && this.el.contains(el)) {
+    const el = e.target, t = this.t, k = e.key;
+    if (this.isCellText(el) && this.modeKey(e)) return;
+    if (e.ctrlKey && k === 'ArrowDown' && this.el.contains(el)) {
       e.preventDefault();
       if (t.flip) this.el.querySelector('.cname[data-ghost]').focus();
-      else this.focusGhostRow(el.dataset.c != null && t.cols[el.dataset.c] ? el.dataset.c : 0);
+      else {
+        const c = el.dataset.c != null && t.cols[el.dataset.c] ? el.dataset.c : 0;
+        this.focusGhostRow(c, t.rows.length ? t.rows.at(-1)[0] : '');
+      }
       return;
     }
-    if (el.dataset.r == null && !ghost) return;
-    const up = e.key === 'ArrowUp' || (e.key === 'Enter' && e.shiftKey);
-    const down = e.key === 'ArrowDown' || (e.key === 'Enter' && !e.shiftKey);
-    if (!up && !down) return;
+    const p = this.pos(el);
+    if (!p) return;
+    let dir;
+    if (k === 'ArrowUp' || (k === 'Enter' && e.shiftKey)) dir = 'up';
+    else if (k === 'ArrowDown' || (k === 'Enter' && !e.shiftKey)) dir = 'down';
+    else if ((k === 'ArrowLeft' || k === 'ArrowRight') && (this.isCellText(el) ? el.dataset.mode !== 'edit' : this.atEdge(el, k === 'ArrowLeft'))) dir = k === 'ArrowLeft' ? 'left' : 'right';
+    if (!dir) return;
     e.preventDefault();
-    if (t.flip) return this.focusBelowFlipped(el, up ? -1 : 1);
-    const r = ghost ? t.rows.length : +el.dataset.r, c = +el.dataset.c;
-    if (up) return this.focusCell(r - 1, c);
-    if (r === t.rows.length - 1) return this.focusGhostRow(c);
-    this.focusCell(r + 1, c);
+    const n = t.rows.length, m = t.cols.length;
+    if (t.flip) return this.moveFlipped(el, p, dir);
+    if (p.r === n && dir === 'down' && k === 'Enter' && t.cols[p.c] && t.cols[p.c].id && el.value) return this.addFromGhost(el.value);
+    const [dr, dc] = {up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1]}[dir];
+    const r = p.r + dr, c = p.c + dc;
+    if (r === n && dr > 0 && c < m) return this.focusGhostRow(c, p.r >= 0 ? el.value : '');
+    const next = this.at(r, c);
+    if (next) this.focusEl(next);
   }
 
-  // 세로 보기에서 화면상 위·아래 칸 = 같은 데이터 행의 이전·다음 컬럼
-  focusBelowFlipped(el, d) {
-    const c = +el.dataset.c + d;
-    if (c < 0 || c >= this.t.cols.length) return;
-    const same = el.hasAttribute('data-ghostrow') ? '[data-ghostrow]' : `[data-r="${el.dataset.r}"]`;
-    const next = this.el.querySelector(`input${same}[data-c="${c}"]`);
-    if (next) { next.focus(); if (next.select) next.select(); }
+  // 가로 보기에서 칸의 화면 위치. 머리줄(컬럼 이름) = -1행, 맨 아래 빈 줄 = n행, 맨 오른쪽 빈 열 = m열
+  pos(el) {
+    const n = this.t.rows.length, m = this.t.cols.length;
+    if (el.classList.contains('cname')) return el.hasAttribute('data-ghost') ? {r: -1, c: m} : {r: -1, c: +el.dataset.c};
+    if (el.dataset.r != null) return {r: +el.dataset.r, c: +el.dataset.c};
+    if (el.hasAttribute('data-ghostrow')) return {r: n, c: +el.dataset.c};
+    if (el.dataset.gr != null) return {r: +el.dataset.gr, c: m};
+    return null;
+  }
+
+  // pos의 반대: 화면 위치의 입력칸 (없으면 null)
+  at(r, c) {
+    const n = this.t.rows.length, m = this.t.cols.length, q = s => this.el.querySelector(s);
+    if (c < 0 || c > m || r < -1 || r > n) return null;
+    if (r === -1) return c < m ? q(`.cname[data-c="${c}"]`) : q('.cname[data-ghost]');
+    if (r === n) return c < m ? q(`[data-ghostrow][data-c="${c}"]`) : null;
+    return c < m ? q(`input[data-r="${r}"][data-c="${c}"]`) : q(`[data-ghost][data-gr="${r}"]`);
+  }
+
+  // 세로 보기: 화면 위아래 = 컬럼, 좌우 = 행. 데이터 칸과 맨 오른쪽 새 행 칸 사이만 오간다
+  moveFlipped(el, p, dir) {
+    const t = this.t, n = t.rows.length, m = t.cols.length;
+    if (p.r < 0 || p.c >= m) return;
+    const along = dir === 'left' || dir === 'right', d = dir === 'up' || dir === 'left' ? -1 : 1;
+    const r = along ? p.r + d : p.r, c = along ? p.c : p.c + d;
+    if (c < 0 || c >= m || r < 0 || r > n) return;
+    if (r === n) return this.focusGhostRow(c);
+    this.focusCell(r, c);
+  }
+
+  // 칸 상태를 바꾸는 키. 처리했으면 true
+  modeKey(e) {
+    const el = e.target, k = e.key, mode = el.dataset.mode || 'select';
+    if (mode === 'select') {
+      if (k === 'F2') { e.preventDefault(); this.setMode(el, 'edit'); return true; }
+      if (k === 'Delete' || k === 'Backspace') { // 칸 비우기 (Backspace는 비우고 바로 입력)
+        e.preventDefault();
+        if (this.locked(el)) return true;
+        if (el.value !== '') this.setValue(el, '');
+        if (k === 'Backspace') this.setMode(el, 'enter');
+        return true;
+      }
+      // 글자(한글 입력기 'Process' 포함)를 치면 기존 값을 지우고 입력을 시작한다. 글자는 브라우저가 그대로 넣는다
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && (k.length === 1 || k === 'Process') && !this.locked(el)) this.setMode(el, 'enter', true);
+      return false;
+    }
+    if (k === 'Escape') { // 고치던 것 취소
+      e.preventDefault();
+      if (el.dataset.orig != null && el.value !== el.dataset.orig) this.setValue(el, el.dataset.orig);
+      this.setMode(el, 'select');
+      return true;
+    }
+    if (k === 'F2') { e.preventDefault(); this.setMode(el, 'select'); return true; }
+    return false;
+  }
+
+  // 컬럼 이름 칸: ←는 글자 맨 앞, →는 맨 끝에 커서가 있거나 칸 전체가 골라졌을 때만 옆 칸으로 (체크박스는 항상)
+  atEdge(el, left) {
+    if (el.type === 'checkbox') return true;
+    const {selectionStart: s, selectionEnd: e, value: v} = el;
+    return (s === 0 && e === v.length) || (left ? e === 0 : s === v.length);
   }
 
   // ---------- 붙여넣기 ----------
@@ -267,7 +408,12 @@ export class GridView {
 
   // 칸에 커서가 있을 때. 처리했으면 true (한 칸짜리는 브라우저 기본 붙여넣기에 맡긴다)
   paste(rows, el) {
-    if (rows.length === 1 && rows[0].length === 1) return false;
+    if (rows.length === 1 && rows[0].length === 1) {
+      // 한 칸짜리: 입력·수정 중이면 브라우저 기본 붙여넣기(커서 자리에), 고른 상태면 칸 값을 통째로 바꾼다(엑셀과 같게)
+      if (!el.readOnly || !this.isCellText(el)) return false;
+      if (!this.locked(el)) this.setValue(el, rows[0][0]);
+      return true;
+    }
     const t = this.t;
     // 빈 테이블(+로 막 만든 탭)에 붙이면 표 전체로 본다: 첫 줄이 컬럼 이름. 이름과 설명은 그대로 둔다
     if (!t.rows.length && rows.length > 1) {

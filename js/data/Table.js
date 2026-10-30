@@ -36,6 +36,14 @@ export class Table {
 
   newRow() { return this.cols.map(c => c.type === 'bool' ? 'false' : ''); }
 
+  // base 다음으로 아직 안 쓴 ID 번호 (1001 → 1002, 이미 있으면 1003…). 앞의 0 자릿수는 지킨다(001 → 002)
+  nextId(base) {
+    const used = new Set(this.rows.map(r => String(+r[0])));
+    let n = +base + 1;
+    while (used.has(String(n))) n++;
+    return String(n).padStart(base.length, '0');
+  }
+
   typeName(c) {
     if (c.linked) return `${Table.TYPES[c.type]} · ${this.ref}에서 가져옴`;
     return !c.id ? Table.TYPES[c.type] : this.prefixInJson ? 'ID · 문자' : 'ID · 정수';
@@ -56,6 +64,16 @@ export class Table {
     if (type === 'int') return parseInt(v, 10);
     if (type === 'float') return Number(v);
     return v;
+  }
+
+  // 적힌 값들로 열 타입 짐작: 모두 정수면 int, 숫자면 float, true/false면 bool, 아니면 string
+  static guessType(values) {
+    const vs = values.filter(v => v !== '');
+    if (!vs.length) return 'string';
+    if (vs.every(v => /^-?\d+$/.test(v))) return 'int';
+    if (vs.every(v => Table.valid(v, 'float'))) return 'float';
+    if (vs.every(v => /^(true|false)$/i.test(v))) return 'bool';
+    return 'string';
   }
 
   idOut(v) { return this.prefixInJson ? this.prefix + v : v === '' ? null : parseInt(v, 10); }
@@ -138,8 +156,9 @@ export class Table {
 
   // ---------- 구조 바꾸기 ----------
 
+  // 이름 없이 만들면 아직 안 쓴 col1, col2… 를 붙인다
   addCol(name) {
-    let n = this.cols.length;
+    let n = 1;
     if (!name) while (this.cols.some(c => c.name === (name = 'col' + n))) n++;
     this.cols.push({name, type: 'string'});
     this.rows.forEach(r => r.push(''));
