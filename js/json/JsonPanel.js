@@ -20,7 +20,10 @@ export class JsonPanel {
     this.refresh();
   }
 
-  text() { return JSON.stringify(this.app.table.toData(), null, 2); }
+  text() {
+    this.app.workbook.syncRef(this.app.table); // ID를 적는 중이어도 참조 열은 최신 값으로
+    return JSON.stringify(this.app.table.toData(), null, 2);
+  }
 
   refresh() { if (this.open) $('out').textContent = this.text(); }
 

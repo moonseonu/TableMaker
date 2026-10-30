@@ -42,10 +42,10 @@ export class TabsView {
     inp.focus(); inp.select();
     inp.onkeydown = ev => { if (ev.key === 'Enter') inp.blur(); };
     inp.onblur = () => {
-      t.name = inp.value.trim();
+      this.app.workbook.rename(t, inp.value.trim());
       this.app.workbook.save();
       this.render();
-      this.app.meta.refresh();
+      this.app.grid.render(); // 참조 설정 창·설명 패널 제목에 바뀐 이름이 보이게
     };
   }
 }

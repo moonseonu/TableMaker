@@ -2,6 +2,10 @@ import {esc, dups, confirm2} from '../common/util.js';
 import {Table} from '../data/Table.js';
 import {SheetText} from '../import/SheetText.js';
 
+// 사슬 모양 아이콘. 글자색(currentColor)을 따라서 켜짐·꺼짐을 색으로 보여줄 수 있다 (이모지는 색이 안 바뀐다)
+const LINK_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+
 // 테이블 작성 영역: 표 그리기, 칸 입력·검사 표시, 정렬, 맨 오른쪽 빈 열과 맨 아래 빈 행, 칸에 붙여넣기
 export class GridView {
   constructor(el, app) {
@@ -25,16 +29,26 @@ export class GridView {
     if (this.el.contains(document.activeElement)) document.activeElement.blur();
     this.rendering = false;
     if (!keepOrder) t.autoSort();
-    const sort = t.sortOf();
+    const wb = this.app.workbook;
+    wb.syncRef(t);
+    const sort = t.sortOf(), cands = wb.refCandidates(t);
     let h = '<thead><tr><th class="num"><button class="ico" id="addRow" title="행 추가 (맨 아래 빈 행으로 이동)">+</button></th>';
     t.cols.forEach((c, i) => {
       h += `<th data-c="${i}"><div class="col"><input class="cname${c.id ? ' idname' : ''}" data-c="${i}" value="${esc(c.name)}">`;
-      h += `<select data-c="${i}">${Object.entries({id: 'ID', ...Table.TYPES}).map(([k, v]) =>
+      h += `<select data-c="${i}"${c.linked ? ' disabled' : ''}>${Object.entries({id: 'ID', ...Table.TYPES}).map(([k, v]) =>
         `<option value="${k}"${k === (c.id ? 'id' : c.type) ? ' selected' : ''}>${v}</option>`).join('')}</select>`;
-      // 접두사는 처음 한 번 정하는 설정이라 ⚙ 안에 둔다. 설정돼 있으면 ⚙가 파랗다
-      if (c.id) h += `<details class="idopt"><summary class="ico${t.prefix ? ' set' : ''}" title="ID 설정 (접두사)">⚙</summary><div class="pop">` +
+      // 참조 대상에 같은 이름 열이 있으면 🔗 켜기/끄기. 기본은 켜짐(파랗게 눌린 상태)
+      if (c.linkable) h += `<button class="ico link${c.linked ? ' on' : ''}" data-link="${i}" title="${c.linked
+        ? `${esc(t.ref)}의 ${esc(c.name)}에서 가져오는 중. 누르면 연결을 끊고 직접 입력합니다`
+        : `연결 끊김. 누르면 ${esc(t.ref)}의 ${esc(c.name)} 값으로 다시 채웁니다`}">${LINK_ICON}</button>`;
+      // 접두사·참조는 처음 한 번 정하는 설정이라 ⚙ 안에 둔다. 설정돼 있으면 ⚙가 파랗다
+      if (c.id) h += `<details class="idopt"><summary class="ico${t.prefix || t.ref ? ' set' : ''}" title="ID 설정 (접두사 · 참조)">⚙</summary><div class="pop">` +
         `<label title="기본은 화면에만 표시되고 JSON에는 번호만 정수로 나갑니다">접두사 <input class="prefix" value="${esc(t.prefix)}" placeholder="예: item_"></label>` +
-        `<label title="켜면 JSON에 접두사까지 붙여 &quot;item_1001&quot; 같은 문자로 내보냅니다"><input type="checkbox" class="pout"${t.prefixOut ? ' checked' : ''}> JSON에 포함</label></div></details>`;
+        `<label title="켜면 JSON에 접두사까지 붙여 &quot;item_1001&quot; 같은 문자로 내보냅니다"><input type="checkbox" class="pout"${t.prefixOut ? ' checked' : ''}> JSON에 포함</label>` +
+        `<label title="${cands.length ? 'ID가 다른 테이블의 ID를 가리킬 때 (예: Localization → items). 이름이 같은 열은 그 테이블 값으로 채워집니다' : '참조할 수 있는 다른 테이블(ID 열이 있는 탭)이 없습니다'}">` +
+        `<input type="checkbox" class="refon"${t.ref ? ' checked' : ''}${cands.length ? '' : ' disabled'}> 다른 테이블 참조</label>` +
+        (t.ref ? `<select class="reftable">${cands.map(o => `<option${o.name === t.ref ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select>` : '') +
+        '</div></details>';
       h += `<button class="ico" data-sort="${i}" title="정렬">${sort.c === i ? (sort.dir > 0 ? '▲' : '▼') : '↕'}</button>`;
       h += `<button class="ico" data-delcol="${i}" title="열 삭제">✕</button>`;
       h += '</div></th>';
@@ -53,10 +67,11 @@ export class GridView {
     this.update();
   }
 
+  // 참조 대상에서 가져온 칸(linked)은 회색으로 잠근다. Tab 키로는 건너뛴다
   cellHtml(c, ci, v, attr) {
     if (c.id) return `<td><div class="idbox"><span class="pre">${esc(this.t.prefix)}</span><input ${attr} data-c="0" value="${esc(v)}" inputmode="numeric" placeholder="번호"></div></td>`;
-    if (c.type === 'bool') return `<td class="chk"><input type="checkbox" ${attr} data-c="${ci}"${v === 'true' ? ' checked' : ''}></td>`;
-    return `<td><input ${attr} data-c="${ci}" value="${esc(v)}"></td>`;
+    if (c.type === 'bool') return `<td class="chk${c.linked ? ' linked' : ''}"><input type="checkbox" ${attr} data-c="${ci}"${v === 'true' ? ' checked' : ''}${c.linked ? ' disabled' : ''}></td>`;
+    return `<td${c.linked ? ' class="linked"' : ''}><input ${attr} data-c="${ci}" value="${esc(v)}"${c.linked ? ' readonly tabindex="-1"' : ''}></td>`;
   }
 
   // 검사 결과만 칸에 칠하고 나머지(상태 줄·미리보기·저장)는 App에 알린다. 구조가 그대로일 때는 다시 그리지 않는다
@@ -67,7 +82,8 @@ export class GridView {
       this.el.querySelector(`th[data-c="${i}"]`).classList.toggle('bad', badCols.has(i));
       errors += badCols.has(i);
     });
-    const ctx = {dupIds: dups(t.rows.map(r => r[0])), otherLens: this.app.workbook.otherIdLengths(t)};
+    const wb = this.app.workbook;
+    const ctx = {dupIds: dups(t.rows.map(r => r[0])), otherLens: wb.otherIdLengths(t), refIds: wb.refIds(t)};
     this.el.querySelectorAll('td input[data-r]').forEach(el => {
       const {bad, warn} = t.checkCell(+el.dataset.r, +el.dataset.c, ctx);
       el.closest('td').classList.toggle('bad', !!bad);
@@ -128,14 +144,27 @@ export class GridView {
       return;
     }
     if (el.classList.contains('pout')) { t.prefixOut = el.checked; this.update(); return; }
+    if (el.classList.contains('refon') || el.classList.contains('reftable')) {
+      if (e.type !== 'change') return;
+      const first = this.app.workbook.refCandidates(t)[0];
+      t.ref = el.classList.contains('reftable') ? el.value : el.checked && first ? first.name : '';
+      this.render();
+      this.el.querySelector('.idopt').open = true; // 설정 창은 열어 둔 채로
+      return;
+    }
     if (el.classList.contains('prefix')) {
       t.prefix = el.value.trim();
       this.el.querySelectorAll('.pre').forEach(p => p.textContent = t.prefix);
-      this.el.querySelector('.idopt summary').classList.toggle('set', !!t.prefix);
+      this.el.querySelector('.idopt summary').classList.toggle('set', !!(t.prefix || t.ref));
       this.update();
       return;
     }
-    if (el.classList.contains('cname')) { t.cols[c].name = el.value.trim(); this.update(); return; }
+    if (el.classList.contains('cname')) {
+      t.cols[c].name = el.value.trim();
+      // 참조 중이면 이름이 바뀐 열의 연결(같은 이름 열 가져오기)을 칸을 떠날 때 다시 따진다
+      if (e.type === 'change' && t.ref) this.render(); else this.update();
+      return;
+    }
     if (el.tagName === 'SELECT') {
       if (el.value === 'id') t.makeId(c); else t.setType(c, el.value);
       this.render();
@@ -146,16 +175,18 @@ export class GridView {
     this.update();
   }
 
-  // ID 칸을 떠날 때 정렬 (값을 바꿨는지와 상관없이: 빈 행에서 한 번에 붙여넣으면 change가 안 온다)
+  // ID 칸을 떠날 때 정렬하고, 참조 중이면 가져온 열도 새 ID로 채운다
+  // (값을 바꿨는지와 상관없이: 빈 행에서 한 번에 붙여넣으면 change가 안 온다)
   onFocusOut(e) {
     const el = e.target, t = this.t;
-    if (!this.rendering && el.dataset.r != null && t.cols[el.dataset.c].id && t.sortOf().c === 0) this.resortKeepFocus();
+    if (!this.rendering && el.dataset.r != null && t.cols[el.dataset.c].id && (t.sortOf().c === 0 || t.ref)) this.resortKeepFocus();
   }
 
   onClick(e) {
     const b = e.target.closest('button'), t = this.t;
     if (!b) return;
     if (b.id === 'addRow') this.focusGhostRow(0);
+    else if (b.dataset.link) { const c = t.cols[+b.dataset.link]; c.unlink = !c.unlink; this.render(); }
     else if (b.dataset.sort) { t.sortBy(+b.dataset.sort); this.render(); }
     else if (b.dataset.delcol) {
       if (!confirm2(b, '삭제?')) return;

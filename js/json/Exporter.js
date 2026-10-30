@@ -16,6 +16,7 @@ export class Exporter {
   download(btn) {
     const t = this.app.table, errors = this.app.errors;
     if (errors && !confirm2(btn, `오류 ${errors}개 · 그래도 받기`)) return;
+    this.app.workbook.syncRef(t); // 참조 열은 내보내기 직전 값으로
     const base = (t.name || 'table').replace(/[\\/:*?"<>|]/g, '_');
     saveFile(base + '.json', JSON.stringify(t.toData(), null, 2), 'application/json');
     if (this.app.workbook.withMd) saveFile(base + '.md', MetaDoc.toMd(t), 'text/markdown');

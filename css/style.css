@@ -20,8 +20,10 @@ header h1{margin:0;font-size:16px}
 #status{color:var(--dim)}
 #status.bad{color:var(--badline)}
 #tabs{display:flex;gap:2px;align-items:flex-end;padding:8px 12px 0;border-bottom:1px solid var(--line);overflow-x:auto;overflow-y:hidden;flex:none}
-.tab{display:flex;align-items:center;gap:2px;padding:5px 6px 5px 12px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;background:var(--panel);color:var(--dim);cursor:pointer;white-space:nowrap}
-.tab.on{background:var(--cell);color:var(--text);font-weight:600;margin-bottom:-1px;padding-bottom:6px}
+/* 선택한 탭만 회색으로 채우고, 나머지는 어둡게 */
+.tab{display:flex;align-items:center;gap:2px;padding:5px 6px 5px 12px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;background:var(--bg);color:var(--dim);cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--text)}
+.tab.on{background:var(--panel);color:var(--text);font-weight:600}
 .tab input{width:120px;background:var(--bg);border:1px solid var(--accent);border-radius:3px;padding:0 4px}
 #addTab{margin:0 0 3px 4px}
 main{flex:1;overflow:auto}
@@ -49,6 +51,10 @@ td input:focus{outline:2px solid var(--accent);outline-offset:-2px}
 .idbox .pre{color:var(--dim);padding-left:8px}
 .idbox input:not([type]){min-width:70px;padding-left:1px}
 td.chk{text-align:center}
+td.linked input{color:var(--dim);cursor:default}
+.link{display:flex;align-items:center;padding:2px 4px;border-radius:3px}
+.link.on,.link.on:hover{color:var(--accent);background:#4c8dff2e}
+.idopt .pop select{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:2px 4px}
 td.bad{background:var(--bad)}
 td.warn{background:#3d3418}
 #status.warn{color:#d9a63a}
@@ -64,7 +70,7 @@ tr:hover .num .del{visibility:visible}
 .toolbar button.on{border-color:var(--accent);color:var(--accent)}
 .dl{display:flex;position:relative}
 .dl #download{border-radius:4px 0 0 4px}
-#dlopt summary{list-style:none;cursor:pointer;background:var(--accent);color:#fff;border-left:1px solid #fff4;border-radius:0 4px 4px 0;padding:4px 8px}
+#dlopt summary{list-style:none;cursor:pointer;background:var(--accent);color:#fff;border:1px solid var(--accent);border-left-color:#fff4;border-radius:0 4px 4px 0;padding:4px 8px}
 #dlopt summary::-webkit-details-marker{display:none}
 #dlopt label{position:absolute;right:0;top:calc(100% + 4px);z-index:3;white-space:nowrap;display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:8px 12px;cursor:pointer}
 /* 하단 패널: JSON 왼쪽, 테이블 설명 오른쪽. 하나만 열면 전체 폭 */

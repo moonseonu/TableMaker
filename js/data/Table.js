@@ -6,8 +6,9 @@ import {dups, unComma} from '../common/util.js';
 export class Table {
   static TYPES = {string: '문자', int: '정수', float: '실수', bool: '참/거짓'};
 
-  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null} = {}) {
-    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort});
+  // ref: 이 테이블의 ID가 가리키는 다른 테이블 이름 (Localization → items). 이름이 같은 열은 그 테이블 값으로 채운다 (Workbook.syncRef)
+  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = ''} = {}) {
+    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, ref});
   }
 
   static sample() {
@@ -34,7 +35,10 @@ export class Table {
 
   newRow() { return this.cols.map(c => c.type === 'bool' ? 'false' : ''); }
 
-  typeName(c) { return !c.id ? Table.TYPES[c.type] : this.prefixInJson ? 'ID · 문자' : 'ID · 정수'; }
+  typeName(c) {
+    if (c.linked) return `${Table.TYPES[c.type]} · ${this.ref}에서 가져옴`;
+    return !c.id ? Table.TYPES[c.type] : this.prefixInJson ? 'ID · 문자' : 'ID · 정수';
+  }
 
   // ---------- 값 검사 · JSON 변환 ----------
 
@@ -91,11 +95,14 @@ export class Table {
     return new Set(this.cols.flatMap((c, i) => !c.name || d.has(c.name) ? [i] : []));
   }
 
-  // 칸 하나의 문제. 오류면 {bad}, 다른 테이블과 ID 자릿수가 겹치면 {warn} (ctx: 겹치는 ID, 다른 테이블 자릿수)
+  // 칸 하나의 문제. 오류면 {bad}, 다른 테이블과 ID 자릿수가 겹치면 {warn}
+  // ctx: 겹치는 ID, 다른 테이블 자릿수, 참조 대상의 ID 목록(참조할 때만)
   checkCell(r, c, ctx) {
     const v = this.rows[r][c], col = this.cols[c];
+    if (col.linked) return {}; // 참조 대상에서 가져온 값
     if (col.id) {
       if (!/^\d+$/.test(v) || ctx.dupIds.has(v)) return {bad: 'ID 번호가 비었거나, 숫자가 아니거나, 다른 행과 겹칩니다'};
+      if (ctx.refIds && !ctx.refIds.has(String(+v))) return {bad: `${this.ref}에 ${+v}이(가) 없습니다`};
       const w = ctx.otherLens.get(String(+v).length);
       return w ? {warn: `${w.name} 테이블도 ${String(+v).length}자리 ID를 씁니다 (예: ${w.ex})`} : {};
     }

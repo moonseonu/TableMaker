@@ -37,12 +37,12 @@ export class App {
   }
 
   // 표가 바뀔 때마다 GridView가 부른다: 상태 줄, 미리보기, 설명 패널, 저장
+  // 상태 줄은 알릴 게 있을 때만 보인다 (행·열 수는 표를 보면 아니까 안 적는다)
   changed({errors, warns}) {
-    const t = this.table;
     this.errors = errors;
-    this.status(errors ? `오류 ${errors}개`
-      : `${t.rows.length}행 · ${t.cols.length}열` + (warns ? ` · 다른 테이블과 자릿수 겹침 ${warns}개` : ''),
-      errors ? 'bad' : warns ? 'warn' : '');
+    if (errors) this.status(`오류 ${errors}개`, 'bad');
+    else if (warns) this.status(`다른 테이블과 자릿수 겹침 ${warns}개`, 'warn');
+    else this.status('');
     this.json.refresh();
     this.meta.refresh();
     this.workbook.save();
