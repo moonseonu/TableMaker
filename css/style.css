@@ -1,9 +1,9 @@
 /* 색은 모두 여기서만 정한다. 기본은 다크, ☰ 메뉴에서 라이트·시스템 설정 따름을 고른다 (data-theme, js/settings/SettingsMenu.js).
    color-scheme: 스크롤바·드롭다운·체크박스 같은 브라우저 기본 부품도 테마 색으로 */
-:root{color-scheme:dark;--bg:#1e1f22;--panel:#2b2d31;--head:#2b2d31;--cell:#232428;--line:#3a3c42;--text:#e6e6e6;--dim:#8b9097;--accent:#4c8dff;--accent-text:#8fb5ff;--accent-tint:#4c8dff2e;--bad:#4a2326;--badline:#e5534b;--warnbg:#3d3418;--warntext:#d9a63a;--btn:#383a40;--hover:#43464d;--code:#c9d1d9;--shadow:#0006}
-:root[data-theme="light"]{color-scheme:light;--bg:#f5f6f8;--panel:#ffffff;--head:#eceef1;--cell:#ffffff;--line:#d9dce1;--text:#1f2328;--dim:#6b7280;--accent:#2f6fe4;--accent-text:#2f6fe4;--accent-tint:#2f6fe41f;--bad:#fde8e8;--badline:#d93a3a;--warnbg:#fdf3d6;--warntext:#a86b00;--btn:#ffffff;--hover:#eceef1;--code:#24292f;--shadow:#0002}
+:root{color-scheme:dark;--bg:#1e1f22;--panel:#2b2d31;--head:#303134;--headline:#5c5d61;--cell:#232428;--line:#46484d;--text:#e6e6e6;--dim:#8b9097;--accent:#4c8dff;--accent-text:#8fb5ff;--accent-tint:#4c8dff2e;--bad:#4a2326;--badline:#e5534b;--warnbg:#3d3418;--warntext:#d9a63a;--btn:#383a40;--hover:#43464d;--code:#c9d1d9;--shadow:#0006}
+:root[data-theme="light"]{color-scheme:light;--bg:#f5f6f8;--panel:#ffffff;--head:#ececec;--headline:#b4b4b4;--cell:#ffffff;--line:#cdcdcd;--text:#1f2328;--dim:#6b7280;--accent:#2f6fe4;--accent-text:#2f6fe4;--accent-tint:#2f6fe41f;--bad:#fde8e8;--badline:#d93a3a;--warnbg:#fdf3d6;--warntext:#a86b00;--btn:#ffffff;--hover:#eceef1;--code:#24292f;--shadow:#0002}
 /* 시스템 설정 따름(data-theme 없음): 윈도우가 라이트면 위의 라이트 값과 같게 */
-@media (prefers-color-scheme:light){:root:not([data-theme]){color-scheme:light;--bg:#f5f6f8;--panel:#ffffff;--head:#eceef1;--cell:#ffffff;--line:#d9dce1;--text:#1f2328;--dim:#6b7280;--accent:#2f6fe4;--accent-text:#2f6fe4;--accent-tint:#2f6fe41f;--bad:#fde8e8;--badline:#d93a3a;--warnbg:#fdf3d6;--warntext:#a86b00;--btn:#ffffff;--hover:#eceef1;--code:#24292f;--shadow:#0002}}
+@media (prefers-color-scheme:light){:root:not([data-theme]){color-scheme:light;--bg:#f5f6f8;--panel:#ffffff;--head:#ececec;--headline:#b4b4b4;--cell:#ffffff;--line:#cdcdcd;--text:#1f2328;--dim:#6b7280;--accent:#2f6fe4;--accent-text:#2f6fe4;--accent-tint:#2f6fe41f;--bad:#fde8e8;--badline:#d93a3a;--warnbg:#fdf3d6;--warntext:#a86b00;--btn:#ffffff;--hover:#eceef1;--code:#24292f;--shadow:#0002}}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:13px/1.4 system-ui,"Malgun Gothic",sans-serif}
 body{display:flex;flex-direction:column}
@@ -131,6 +131,11 @@ th.corner{padding:0 4px}
 td:has([data-ghostrow]),th.ghostcell{background:transparent;border-style:dashed}
 /* 표 안은 모두 왼쪽 정렬 (글자 시작선이 한 줄로 맞게). 모서리 ⇄ 버튼만 가운데 */
 .num{width:52px;text-align:left;color:var(--dim);padding:0 8px}
+/* 머리(컬럼 이름·타입 줄, 행 번호, 세로 보기의 이름·타입 열)는 값 칸과 확실히 다른 색, 값 칸과 닿는 쪽은 굵은 선 */
+#grid td.num{background:var(--head)}
+#grid thead tr:last-child th{border-bottom:2px solid var(--headline)}
+#grid.flip th.colhead.tcol,#grid.flip.notype th.colhead:not(.tcol){border-right:2px solid var(--headline)}
+#grid:not(.flip) td.num{border-right:2px solid var(--headline)}
 th.corner{text-align:center}
 .num .del{margin-left:4px}
 .num .del{visibility:hidden}
@@ -173,13 +178,16 @@ dialog.popup::backdrop{background:rgba(0,0,0,.4)}
 .popup h3{margin:0 0 4px;font-size:15px}
 .popup .dim{color:var(--dim)}
 .popup p{margin:0 0 10px;white-space:pre-line}
-.sheetpick .list{display:grid;gap:2px;max-height:60vh;overflow:auto;margin-bottom:14px}
-.sheetpick label{display:flex;gap:8px;align-items:baseline;padding:5px 6px;border-radius:4px;cursor:pointer}
-.sheetpick label:hover{background:var(--hover)}
-.sheetpick small{color:var(--dim)}
-.sheetpick .rename{display:flex;gap:8px;align-items:center;padding:0 6px 6px 30px;color:var(--dim)}
-.sheetpick .rename input{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:2px 6px;color:var(--text);width:200px}
-.sheetpick .rename .warn{color:var(--warntext)}
+.sheetpick .list{max-height:60vh;overflow:auto;margin-bottom:14px}
+.sheetpick table{width:100%}
+.sheetpick th,.sheetpick td{padding:5px 10px;text-align:left;vertical-align:middle;background:transparent}
+.sheetpick thead th{position:sticky;top:0;background:var(--head);color:var(--dim);font-weight:400;font-size:12px}
+.sheetpick tbody tr{cursor:pointer}
+.sheetpick tbody tr:hover td{background:var(--hover)}
+.sheetpick tr.dim{color:var(--dim);cursor:default}
+.sheetpick td:nth-child(3){color:var(--dim);white-space:nowrap}
+.sheetpick .rename{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:2px 6px;color:var(--text);width:180px}
+.sheetpick .warn{display:block;color:var(--warntext);margin-top:2px}
 .popup .btns{display:flex;justify-content:flex-end;gap:8px}
 .donate img{display:block;margin:10px auto;border-radius:6px} /* QR은 흰 바탕째로 그려 다크 테마에서도 찍힌다 */
 .donate p{text-align:center}
