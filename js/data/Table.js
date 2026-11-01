@@ -107,7 +107,8 @@ export class Table {
   }
 
   // toData의 반대: 객체 배열 → 테이블. 열 타입은 값을 보고 추정한다
-  static fromData(list, name) {
+  // types: 시트에 적혀 있던 타입 {컬럼 이름: 타입} (SheetText.splitTypes). 적혀 있으면 값으로 짐작하지 않고 그대로 쓴다
+  static fromData(list, name, types = {}) {
     if (!Array.isArray(list)) list = [list];
     if (!list.every(o => o && typeof o === 'object' && !Array.isArray(o))) throw new Error('객체 배열 형식이 아닙니다');
     const keys = [...new Set(list.flatMap(Object.keys))];
@@ -118,6 +119,8 @@ export class Table {
       if (!vs.length) return list.some(o => o[k] === null) ? 'int' : 'string'; // null은 빈 숫자 칸에서만 나온다
       if (vs.every(v => typeof v === 'boolean')) return 'bool';
       if (vs.every(v => typeof v === 'number')) return vs.every(Number.isInteger) ? 'int' : 'float';
+      // 같은 글자가 여러 행에 반복되면 정해진 값 중 하나(Team: Friendly·Enemy)로 보고 Enum. 행마다 다르면(Name) 글자
+      if (vs.every(v => typeof v === 'string') && new Set(vs).size < vs.length) return 'enum';
       return 'string';
     };
     const str = v => v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
@@ -127,7 +130,7 @@ export class Table {
     const split = parts.every(m => !m || m[1] === pre);
     return new Table({
       name, prefix: split ? pre : '', prefixOut: !!(split && pre),
-      cols: keys.map(k => k === idKey ? {name: k, type: 'string', id: true} : {name: k, type: typeOf(k)}),
+      cols: keys.map(k => k === idKey ? {name: k, type: 'string', id: true} : {name: k, type: types[k] && types[k] !== 'id' ? types[k] : typeOf(k)}),
       rows: list.map((o, n) => keys.map(k => k === idKey && split && parts[n] ? parts[n][2] : str(o[k]))),
     });
   }

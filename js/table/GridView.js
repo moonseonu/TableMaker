@@ -905,7 +905,7 @@ export class GridView {
     }
     // 빈 테이블(+로 막 만든 탭)에 붙이면 표 전체로 본다: 첫 줄이 컬럼 이름. 이름과 설명은 그대로 둔다
     if (!t.rows.length && rows.length > 1) {
-      t.replaceWith(Table.fromData(SheetText.toList(rows), t.name));
+      t.replaceWith(SheetText.toTable(rows, t.name));
       this.render();
       return true;
     }

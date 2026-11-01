@@ -48,16 +48,16 @@ export class Importer {
   async openXlsx(f, errors) {
     const sheets = await Xlsx.read(f), wb = this.app.workbook;
     const list = sheets.map(s => {
-      const body = Importer.sheetBody(s.rows);
+      const body = SheetText.splitTypes(Importer.sheetBody(s.rows)).rows; // 크기는 타입 줄을 빼고 센다
       const n = body.slice(1).filter(r => r.some(v => v !== '')).length;
-      return {name: s.name, suggest: wb.freeName(s.name), body, empty: !body.length,
+      return {name: s.name, sheet: s.name, suggest: wb.freeName(s.name), body, empty: !body.length,
         size: body.length ? `${n}행 × ${body[0].filter(v => v !== '').length}열` : '빈 시트'};
     });
     // 이미 있는 탭과 이름이 겹치는 시트는 고르는 창에서 이름을 고칠 수 있다(기본은 _2)
     const added = [];
     for (const s of await SheetPicker.pick(f.name, list, new Set(wb.tables.map(t => t.name))) || []) {
       try {
-        const t = Table.fromData(SheetText.toList(s.body), s.name);
+        const t = SheetText.toTable(Importer.sheetBody(sheets.find(x => x.name === s.sheet).rows), s.name);
         wb.add(t);
         added.push(t);
       } catch (err) { errors.push(`${s.name}: ${err.message}`); }
@@ -95,7 +95,7 @@ export class Importer {
     for (const f of data) {
       try {
         const text = SheetText.decode(f.bytes);
-        const t = Table.fromData(ext(f.name) === 'csv' ? SheetText.csv(text) : JSON.parse(text), baseName(f.name));
+        const t = ext(f.name) === 'csv' ? SheetText.csvTable(text, baseName(f.name)) : Table.fromData(JSON.parse(text), baseName(f.name));
         wb.add(t);
         added.set(baseName(f.name), t);
       } catch (err) { errors.push(`${baseName(f.name)}: ${err instanceof SyntaxError ? 'JSON 문법 오류' : err.message}`); }
@@ -117,6 +117,6 @@ export class Importer {
   // 첫 줄을 컬럼 이름으로 보고 새 테이블(탭)로 연다
   pasteAsTable(rows) {
     const wb = this.app.workbook;
-    this.app.show(wb.add(Table.fromData(SheetText.toList(rows), wb.newName())));
+    this.app.show(wb.add(SheetText.toTable(rows, wb.newName())));
   }
 }
