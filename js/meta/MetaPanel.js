@@ -9,8 +9,12 @@ export class MetaPanel {
     this.btn = $('toggleMeta');
     this.btn.onclick = () => this.setOpen(!this.open);
     $('closeMeta').onclick = () => this.setOpen(false);
-    $('tdesc').oninput = e => { app.table.desc = e.target.value; app.workbook.save(); };
-    $('cdesc').oninput = e => { app.table.cols[+e.target.dataset.desc].desc = e.target.value; app.workbook.save(); };
+    // 설명도 되돌리기에 남긴다 (한 칸에 이어 쓴 것은 한 번으로)
+    $('tdesc').oninput = e => { app.table.desc = e.target.value; app.commit('desc'); };
+    $('cdesc').oninput = e => {
+      app.table.cols[+e.target.dataset.desc].desc = e.target.value;
+      app.commit('desc' + e.target.dataset.desc);
+    };
   }
 
   get open() { return !this.el.hidden; }

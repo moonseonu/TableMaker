@@ -16,7 +16,7 @@ export class Workbook {
     return new Workbook({tables: [Table.sample()]});
   }
 
-  save() { try { localStorage.setItem(KEY, JSON.stringify(this)); } catch {} }
+  save(json = JSON.stringify(this)) { try { localStorage.setItem(KEY, json); } catch {} }
 
   get current() { return this.tables[this.cur]; }
 

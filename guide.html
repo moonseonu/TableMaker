@@ -53,10 +53,10 @@
   <ol class="notes">
     <li><i class="mk">1</i><span><b>새 열</b> — 맨 오른쪽 점선 칸에 컬럼 이름을 적으면 열이 생깁니다. 이름 대신 값부터 적어도 되고, 그러면 <code>col1</code> 같은 임시 이름이 붙습니다(위로 올라가 이름을 고치면 됩니다). 비워 두면 JSON에 나오지 않습니다.</span></li>
     <li><i class="mk">2</i><span><b>새 행</b> — 맨 아래 점선 줄에 적으면 행이 생깁니다. Name처럼 ID가 아닌 칸부터 적으면 ID는 가장 큰 번호의 다음 번호가 자동으로 붙습니다. 마지막 행에서 <kbd>Enter</kbd>를 치면 그 줄로 내려가고, 긴 표에서는 <kbd>Ctrl</kbd>+<kbd>↓</kbd>로 한 번에 갑니다.</span></li>
-    <li><i class="mk">3</i><span><b>열 타입</b> — ID · 문자 · 정수 · 실수 · 참/거짓. JSON에 그 타입 그대로 나갑니다(<code>"900"</code>이 아니라 <code>900</code>). 새로 만든 열은 처음 적은 값을 보고 타입이 자동으로 정해지고, 드롭다운에서 언제든 바꿀 수 있습니다.</span></li>
+    <li><i class="mk">3</i><span><b>열 타입</b> — ID · 문자 · 정수 · 실수 · 참/거짓. JSON에 그 타입 그대로 나갑니다(<code>"900"</code>이 아니라 <code>900</code>). 새로 만든 열은 처음 적은 값을 보고 타입이 자동으로 정해지고, 드롭다운에서 언제든 바꿀 수 있습니다. 타입을 바꿔도 칸의 값은 그대로이고, 맞지 않는 값만 빨간 칸으로 알려줍니다(참/거짓 열은 값이 true · false · 빈칸일 때만 체크박스).</span></li>
     <li><i class="mk">4</i><span><b>빨간 칸</b> — 타입에 맞지 않는 값입니다(위 표의 <code>천원</code>). 위쪽에 오류 개수가 뜨고, 고치면 사라집니다.</span></li>
   </ol>
-  <div class="tip"><b>칸 고르기와 고치기 (엑셀과 같음)</b> — 칸을 클릭하면 고른 상태가 되고, 화살표로 옆 칸으로 움직입니다. 그대로 타이핑하면 기존 값을 지우고 새로 쓰고, 기존 값을 일부만 고치려면 더블클릭이나 <kbd>F2</kbd>. 고치던 것은 <kbd>Esc</kbd>로 취소, 고른 칸은 <kbd>Delete</kbd>로 비웁니다. 키 전체는 <a href="#keys" style="color:var(--accent-text)">보기 · 단축키</a>에 있습니다.</div>
+  <div class="tip"><b>칸 고르기와 고치기 (엑셀과 같음)</b> — 칸을 클릭하면 고른 상태가 되고, 화살표로 옆 칸으로 움직입니다. 그대로 타이핑하면 기존 값을 지우고 새로 쓰고, 기존 값을 일부만 고치려면 더블클릭이나 <kbd>F2</kbd>. 고치던 것은 <kbd>Esc</kbd>로 취소, 고른 칸은 <kbd>Delete</kbd>로 비웁니다. 여러 칸은 드래그해서 고르고(컬럼 이름 칸이나 행 번호를 끌면 열·행 통째로) <kbd>Ctrl</kbd>+<kbd>C</kbd>로 복사하거나 <kbd>Delete</kbd>로 한꺼번에 비우며, 잘못 고친 것은 <kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌립니다. 열 순서는 컬럼 이름 칸을 꾹 눌러 끌어서 바꿉니다. 키 전체는 <a href="#keys" style="color:var(--accent-text)">보기 · 단축키</a>에 있습니다.</div>
   <div class="tip"><b>이미 엑셀로 만든 표가 있다면</b> — 엑셀에서 <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd> 한 뒤 TableMaker의 빈 곳을 누르고 <kbd>Ctrl</kbd>+<kbd>V</kbd>. 첫 줄이 컬럼 이름이 되고, 값을 보고 열 타입을 알아서 정합니다. 엑셀이 붙이는 <code>1,000</code> 같은 쉼표와 <code>TRUE</code>/<code>FALSE</code>도 알아봅니다.</div>
 </section>
 
@@ -205,13 +205,18 @@
     <tr><th>칸 클릭</th><td>칸 고르기. 그대로 타이핑하면 기존 값을 지우고 새로 씁니다 (엑셀과 같음)</td></tr>
     <tr><th>더블클릭 · <kbd>F2</kbd></th><td>기존 값을 그대로 두고 고치기. 이때 <kbd>←</kbd><kbd>→</kbd>는 글자 사이를 움직입니다</td></tr>
     <tr><th><kbd>Esc</kbd></th><td>고치던 내용 취소</td></tr>
-    <tr><th><kbd>Delete</kbd></th><td>고른 칸 비우기</td></tr>
+    <tr><th><kbd>Delete</kbd></th><td>고른 칸 비우기 (범위를 골랐으면 범위 전체)</td></tr>
+    <tr><th>드래그 · <kbd>Shift</kbd>+클릭 · <kbd>Shift</kbd>+<kbd>←↑↓→</kbd></th><td>여러 칸 범위 고르기. 드래그하다 표 가장자리로 끌면 그쪽으로 표가 저절로 넘어가며 계속 고를 수 있습니다. <kbd>Esc</kbd>나 다른 칸 클릭으로 풀기</td></tr>
+    <tr><th>컬럼 이름 칸에서 끌기 · 행 번호 클릭·끌기</th><td>열 · 행을 통째로 고르기 (컬럼 이름 칸을 짧게 클릭하면 이름 고치기)</td></tr>
+    <tr><th>컬럼 이름 칸을 꾹 눌러 끌기</th><td>열 순서 바꾸기. 0.4초 누르면 열이 흐려지고, 끌면 파란 선이 끼울 자리를 보여줍니다. 놓으면 그 자리로 옮겨지고 JSON 키 순서도 바뀝니다(<kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌리기). ID 열은 맨 앞 고정, 세로 보기(⇄)에서는 위아래로 끕니다</td></tr>
+    <tr><th><kbd>Ctrl</kbd>+<kbd>C</kbd></th><td>고른 칸(범위)을 복사. 엑셀에 붙여넣으면 표 모양 그대로 들어갑니다</td></tr>
+    <tr><th><kbd>Ctrl</kbd>+<kbd>Z</kbd> · <kbd>Ctrl</kbd>+<kbd>Y</kbd></th><td>되돌리기 · 다시 하기 (최근 100번까지. 한 칸에 이어서 친 것은 한 번으로)</td></tr>
     <tr><th><kbd>Enter</kbd> · <kbd>↓</kbd></th><td>아래 칸. 마지막 행에서는 맨 아래 빈 줄로. ID 칸이면 다음 번호(1001 → 1002)가 미리 채워집니다</td></tr>
     <tr><th><kbd>Shift</kbd>+<kbd>Enter</kbd> · <kbd>↑</kbd></th><td>위 칸. 첫 행에서는 컬럼 이름 칸으로</td></tr>
     <tr><th><kbd>←</kbd> · <kbd>→</kbd></th><td>옆 칸. 마지막 열 다음은 빈 열 칸으로 (값부터 적으면 <code>col1</code> 같은 임시 이름이 붙습니다)</td></tr>
     <tr><th><kbd>Ctrl</kbd>+<kbd>↓</kbd></th><td>맨 아래 빈 줄로 한 번에 (긴 표에서 새 행 넣을 때)</td></tr>
     <tr><th><kbd>Shift</kbd>+마우스 휠</th><td>표를 옆으로 스크롤</td></tr>
-    <tr><th><kbd>Ctrl</kbd>+<kbd>V</kbd></th><td>칸을 고른 채로: 그 칸부터 채움 · 빈 테이블에: 표 전체로 · 빈 곳에서: 새 테이블 · 테이블 설명 창에서: Meta 시트로 읽기</td></tr>
+    <tr><th><kbd>Ctrl</kbd>+<kbd>V</kbd></th><td>칸을 고른 채로: 그 칸부터 채움 (범위를 골랐으면 범위 왼쪽 위부터, 한 값이면 범위 전체를 그 값으로) · 빈 테이블에: 표 전체로 · 빈 곳에서: 새 테이블 · 테이블 설명 창에서: Meta 시트로 읽기</td></tr>
   </table>
 </section>
 

@@ -14,10 +14,235 @@ export class GridView {
     this.rendering = false;
     for (const ev of ['input', 'change', 'compositionend']) el.addEventListener(ev, e => this.onEdit(e));
     el.addEventListener('focusout', e => this.onFocusOut(e));
-    el.addEventListener('focusin', e => { if (!this.rendering) this.setMode(e.target, 'select'); });
+    el.addEventListener('focusin', e => this.onFocusIn(e));
     el.addEventListener('dblclick', e => this.setMode(e.target, 'edit'));
     el.addEventListener('click', e => this.onClick(e));
     el.addEventListener('keydown', e => this.onKey(e));
+    el.addEventListener('mousedown', e => this.onMouseDown(e));
+    el.addEventListener('mouseover', e => this.onMouseOver(e));
+    document.addEventListener('mouseup', () => this.onMouseUp());
+    document.addEventListener('mousemove', e => this.onMouseMove(e));
+    this.line = document.body.appendChild(document.createElement('div')); // 열을 옮길 때 끼워 넣을 자리를 보여주는 파란 선
+    this.line.className = 'moveline';
+    document.addEventListener('copy', e => this.onCopy(e));
+  }
+
+  onFocusIn(e) {
+    if (this.rendering) return;
+    this.setMode(e.target, 'select');
+    // 칸을 옮기면 범위 선택은 풀리고, 새 칸이 다음 범위의 시작점이 된다
+    if (e.target.dataset.r != null) { this.anchor = {r: +e.target.dataset.r, c: +e.target.dataset.c}; this.clearSel(); }
+  }
+
+  // ---------- 범위 선택 (드래그 · Shift+클릭 · Shift+화살표) ----------
+  // anchor: 범위를 시작한 칸(커서가 있는 칸), sel: {r1, c1, r2, c2} = anchor부터 끝 칸까지. 데이터 칸만, 가로 보기에서만.
+  // 범위로 하는 일: Ctrl+C 복사(엑셀에 표 모양 그대로), Delete 한꺼번에 비우기, Ctrl+V 왼쪽 위부터 붙여넣기(한 값이면 범위 전체)
+  // drag: 지금 끄는 중인 것. cell 칸 범위, col 컬럼 머리에서 끌어 열 통째로, row 행 번호에서 끌어 행 통째로, move 열 순서 바꾸기
+  // 컬럼 머리칸(press): 짧게 클릭 → 이름 고치기, 누른 채 바로 끌기 → 열 고르기, 꾹(0.4초) 누른 뒤 끌기 → 열 옮기기
+
+  cellOf(target) {
+    const td = target.closest && target.closest('td');
+    return td && this.el.contains(td) ? td.querySelector('input[data-r]') : null;
+  }
+
+  // 마우스 아래의 데이터 칸 위치. 컬럼 머리칸이면 그 열, 행 번호 칸이면 그 행
+  pointOf(target) {
+    const cell = this.cellOf(target);
+    if (cell) return {r: +cell.dataset.r, c: +cell.dataset.c};
+    const th = target.closest && target.closest('th[data-c]');
+    if (th && this.el.contains(th)) return {r: 0, c: +th.dataset.c};
+    const num = target.closest && target.closest('td.num'), first = num && num.parentElement.querySelector('input[data-r]');
+    return first && this.el.contains(num) ? {r: +first.dataset.r, c: 0} : null;
+  }
+
+  onMouseDown(e) {
+    if (e.button !== 0) return;
+    const t = this.t, th = e.target.closest('th[data-c]');
+    // 머리칸의 타입·버튼·⚙과 이미 고치고 있는 이름 칸은 평소대로
+    if (th && !e.target.closest('select, button, details') && e.target !== document.activeElement) return this.pressHead(e, +th.dataset.c);
+    const num = !t.flip && !e.target.closest('button') && e.target.closest('td.num');
+    const first = num && num.parentElement.querySelector('input[data-r]');
+    if (first) { e.preventDefault(); return this.startDrag('row', {r: +first.dataset.r, c: 0}); }
+    const cell = this.cellOf(e.target);
+    if (!cell || t.flip) return this.clearSel();
+    const p = {r: +cell.dataset.r, c: +cell.dataset.c};
+    if (e.shiftKey && this.anchor) { // Shift+클릭: 커서는 그대로 두고 범위만 늘린다
+      e.preventDefault();
+      this.setSel(p);
+      return;
+    }
+    this.startDrag('cell', p);
+  }
+
+  // 행 번호·컬럼 머리에서 시작하면 그 줄 첫 칸에 커서를 두고 줄 전체를 고른다
+  startDrag(mode, p) {
+    this.drag = mode;
+    if (mode === 'cell') this.clearSel(); else this.focusCell(p.r, p.c);
+    this.anchor = p;
+    if (mode !== 'cell') this.dragTo(p);
+    requestAnimationFrame(() => this.dragScroll());
+  }
+
+  dragTo(p) {
+    const n = this.t.rows.length, m = this.t.cols.length;
+    this.setSel(this.drag === 'col' ? {r: n - 1, c: p.c} : this.drag === 'row' ? {r: p.r, c: m - 1} : p);
+  }
+
+  // 컬럼 머리칸을 누름. 이름 칸에 바로 커서를 넣지 않고(끌 수도 있으니) 떼거나 움직일 때 정한다.
+  // 고치던 칸은 먼저 내보낸다: 열을 옮긴 뒤에 늦게 저장되면 옮겨 간 다른 열에 들어간다
+  pressHead(e, c) {
+    e.preventDefault();
+    if (this.el.contains(document.activeElement)) document.activeElement.blur();
+    this.clearSel();
+    this.pointer = {x: e.clientX, y: e.clientY};
+    this.press = {c, x: e.clientX, y: e.clientY};
+    if (!this.t.cols[c].id) this.press.timer = setTimeout(() => this.startMove(), 400); // ID 열은 맨 앞 고정
+  }
+
+  onMouseMove(e) {
+    this.pointer = {x: e.clientX, y: e.clientY};
+    const p = this.press;
+    if (p && !this.drag && Math.hypot(e.clientX - p.x, e.clientY - p.y) > 4) { // 꾹 누르기 전에 움직임 → 열 고르기
+      clearTimeout(p.timer);
+      if (!this.t.flip && this.t.rows.length) this.startDrag('col', {r: 0, c: p.c});
+      else this.press = null;
+    }
+    if (this.drag === 'move') this.moveLine();
+  }
+
+  onMouseUp() {
+    const p = this.press, d = this.drag;
+    this.press = this.drag = null;
+    if (p) clearTimeout(p.timer);
+    if (d === 'move') this.endMove();
+    else if (p && !d) this.focusEl(this.at(-1, p.c)); // 짧게 클릭: 이름 고치기
+  }
+
+  // ---------- 열 순서 바꾸기 (꾹 눌러 끌기) ----------
+  // 든 열은 흐려지고, 마우스 쪽 열 사이에 파란 선이 생긴다. 놓으면 그 자리로. 세로 보기에서는 위아래로.
+  // ID 열 앞으로는 못 간다. 다시 그리면 App이 기록하니 Ctrl+Z로 되돌릴 수 있다
+
+  startMove() {
+    if (!this.press || this.drag) return;
+    const c = this.press.c;
+    this.drag = 'move';
+    this.move = {from: c, to: null};
+    this.el.querySelectorAll(`[data-c="${c}"]`).forEach(x => x.closest('td, th').classList.add('lift'));
+    document.body.classList.add('colmove');
+    this.moveLine();
+    requestAnimationFrame(() => this.dragScroll());
+  }
+
+  // 마우스가 어느 열 사이에 있는지(to = 그 앞에 끼울 열 번호)를 정하고 선을 그린다
+  moveLine() {
+    const flip = this.t.flip, ths = [...this.el.querySelectorAll('th[data-c]')], at = flip ? this.pointer.y : this.pointer.x;
+    const rect = th => th.getBoundingClientRect();
+    let to = ths.filter(th => { const r = rect(th); return (flip ? r.top + r.bottom : r.left + r.right) / 2 < at; }).length;
+    if (this.t.hasId) to = Math.max(to, 1);
+    this.move.to = to;
+    const box = this.el.parentElement.getBoundingClientRect(), tbl = this.el.getBoundingClientRect();
+    const edge = to < ths.length ? rect(ths[to]) : rect(ths.at(-1)), px = v => Math.round(v) + 'px';
+    const a = Math.max(box.top, tbl.top), b = Math.min(box.bottom, tbl.bottom), l = Math.max(box.left, tbl.left), r = Math.min(box.right, tbl.right);
+    Object.assign(this.line.style, flip
+      ? {left: px(l), width: px(r - l), top: px((to < ths.length ? edge.top : edge.bottom) - 1), height: '3px'}
+      : {top: px(a), height: px(b - a), left: px((to < ths.length ? edge.left : edge.right) - 1), width: '3px'});
+  }
+
+  endMove() {
+    const {from, to} = this.move;
+    this.move = null;
+    document.body.classList.remove('colmove');
+    this.el.querySelectorAll('.lift').forEach(x => x.classList.remove('lift'));
+    if (to == null || to === from || to === from + 1) return;
+    this.t.moveCol(from, to > from ? to - 1 : to);
+    this.render();
+  }
+
+  // 드래그하다 표 가장자리(안쪽 40px)에 닿거나 밖으로 나가면 그쪽으로 표를 저절로 넘기고, 넘어온 칸까지 범위를 늘린다.
+  // 멀리 끌수록 빨리 넘어간다. 마우스를 떼면 멈춘다. 열·행을 통째로 고를 때와 열을 옮길 때는 그 방향으로만
+  dragScroll() {
+    if (!this.drag) return;
+    const box = this.el.parentElement, r = box.getBoundingClientRect(), {x, y} = this.pointer, EDGE = 40, d = this.drag;
+    const top = this.el.tHead ? this.el.tHead.getBoundingClientRect().bottom : r.top; // 위에 붙어 있는 머리줄 아래부터
+    const speed = d => Math.min(40, Math.ceil(d / 3) + 4);
+    const across = d === 'col' || (d === 'move' && !this.t.flip), down = d === 'row' || (d === 'move' && this.t.flip);
+    const dx = down ? 0 : x < r.left + EDGE ? -speed(r.left + EDGE - x) : x > r.right - EDGE ? speed(x - r.right + EDGE) : 0;
+    const dy = across ? 0 : y < top + EDGE ? -speed(top + EDGE - y) : y > r.bottom - EDGE ? speed(y - r.bottom + EDGE) : 0;
+    if (dx || dy) {
+      box.scrollLeft += dx;
+      box.scrollTop += dy;
+      if (d === 'move') this.moveLine();
+      else { // 마우스가 표 밖에 있어도 가장 가까운 안쪽 칸까지 범위를 늘린다
+        const cx = Math.min(Math.max(x, r.left + 2), r.right - 2), cy = Math.min(Math.max(y, top + 2), r.bottom - 2);
+        const p = this.pointOf(document.elementFromPoint(cx, cy) || box);
+        if (p) this.dragTo(p);
+      }
+    }
+    requestAnimationFrame(() => this.dragScroll());
+  }
+
+  onMouseOver(e) {
+    if (!this.drag || this.drag === 'move') return;
+    const p = this.pointOf(e.target);
+    if (p) this.dragTo(p);
+  }
+
+  setSel(end) {
+    this.sel = {r1: this.anchor.r, c1: this.anchor.c, r2: end.r, c2: end.c};
+    this.paintSel();
+  }
+
+  clearSel() { this.sel = null; this.paintSel(); }
+
+  hasRange() { const s = this.sel; return !!s && (s.r1 !== s.r2 || s.c1 !== s.c2); }
+
+  // 범위를 위·아래·왼쪽·오른쪽 끝으로 (드래그 방향과 상관없이)
+  range() {
+    const s = this.sel;
+    return {top: Math.min(s.r1, s.r2), bottom: Math.max(s.r1, s.r2), left: Math.min(s.c1, s.c2), right: Math.max(s.c1, s.c2)};
+  }
+
+  paintSel() {
+    this.el.querySelectorAll('td.insel').forEach(td => td.classList.remove('insel'));
+    if (!this.hasRange()) return;
+    const g = this.range();
+    for (let r = g.top; r <= g.bottom; r++) for (let c = g.left; c <= g.right; c++) {
+      const el = this.at(r, c);
+      if (el) el.closest('td').classList.add('insel');
+    }
+  }
+
+  // 범위의 값을 탭으로 나눈 글자로 (엑셀이 복사하는 모양과 같다). 접두사를 JSON에 넣는 테이블은 ID에도 붙인다
+  rangeText(g) {
+    const t = this.t, quote = v => /[\t\n"]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v, lines = [];
+    for (let r = g.top; r <= g.bottom; r++) {
+      const cells = [];
+      for (let c = g.left; c <= g.right; c++) {
+        const v = t.rows[r][c];
+        cells.push(quote(t.cols[c].id && t.prefixInJson && v ? t.prefix + v : v));
+      }
+      lines.push(cells.join('\t'));
+    }
+    return lines.join('\n');
+  }
+
+  // 고른 상태에서 Ctrl+C: 범위(없으면 그 칸)를 복사. 입력·수정 중이면 브라우저 기본 복사(고른 글자만)
+  onCopy(e) {
+    const a = document.activeElement;
+    if (!this.el.contains(a) || a.dataset.r == null || (this.isCellText(a) && a.dataset.mode !== 'select')) return;
+    const r = +a.dataset.r, c = +a.dataset.c;
+    e.preventDefault();
+    e.clipboardData.setData('text/plain', this.rangeText(this.hasRange() ? this.range() : {top: r, bottom: r, left: c, right: c}));
+  }
+
+  // 범위를 한꺼번에 비운다 (참조로 가져온 칸은 빼고). 행 순서는 그대로 두고, 범위와 커서도 그대로 둔다
+  clearRange() {
+    const g = this.range(), t = this.t, keep = this.sel;
+    for (let r = g.top; r <= g.bottom; r++) for (let c = g.left; c <= g.right; c++) if (!t.cols[c].linked) t.rows[r][c] = '';
+    this.render(true);
+    this.focusCell(this.anchor.r, this.anchor.c);
+    this.sel = keep;
+    this.paintSel();
   }
 
   // ---------- 칸 상태 (엑셀과 같게) ----------
@@ -61,6 +286,7 @@ export class GridView {
     if (this.el.contains(document.activeElement)) document.activeElement.blur();
     this.rendering = false;
     if (!keepOrder) t.autoSort();
+    this.sel = null; // 다시 그리면 행 자리가 바뀔 수 있어 범위는 푼다 (clearRange는 다시 그린 뒤 되살린다)
     this.app.workbook.syncRef(t);
     // 모서리 칸: 행/열 바꿔 보기. 바꾼 상태면 파랗게 눌린 상태
     const corner = `<th class="num corner"><button class="ico flip${t.flip ? ' on' : ''}" id="flipView" title="${t.flip
@@ -75,7 +301,7 @@ export class GridView {
   normalHtml(corner, ghostColHead) {
     const t = this.t;
     let h = '<thead><tr>' + corner;
-    t.cols.forEach((c, i) => h += `<th data-c="${i}">${this.colHead(c, i)}</th>`);
+    t.cols.forEach((c, i) => h += `<th data-c="${i}"${this.moveTip(c)}>${this.colHead(c, i)}</th>`);
     // 맨 오른쪽 빈 열: 채우는 순간 진짜 열이 되고, 비어 있으면 JSON에 안 나온다
     h += `<th class="ghost">${ghostColHead}</th></tr></thead><tbody>`;
     t.rows.forEach((r, ri) => {
@@ -96,7 +322,7 @@ export class GridView {
     t.rows.forEach((r, ri) => h += `<th class="num rowhead"><button class="ico del" data-delrow="${ri}" title="행 삭제">✕</button>${ri + 1}</th>`);
     h += '<th class="num rowhead ghostcell"></th></tr></thead><tbody>';
     t.cols.forEach((c, ci) => {
-      h += `<tr><th class="colhead" data-c="${ci}">${this.colHead(c, ci)}</th>`;
+      h += `<tr><th class="colhead" data-c="${ci}"${this.moveTip(c)}>${this.colHead(c, ci)}</th>`;
       t.rows.forEach((r, ri) => h += this.cellHtml(c, ci, r[ci], `data-r="${ri}"`));
       h += this.cellHtml(c, ci, '', 'data-ghostrow') + '</tr>'; // 맨 오른쪽: 새 행
     });
@@ -104,6 +330,8 @@ export class GridView {
     h += `<tr><th class="colhead ghost">${ghostColHead}</th>` + t.rows.map((r, ri) => `<td class="ghost"><input data-ghost data-gr="${ri}"></td>`).join('') + '<td></td></tr>';
     return h + '</tbody>';
   }
+
+  moveTip(c) { return c.id ? '' : ' title="꾹 눌러 끌면 순서 바꾸기"'; }
 
   // 컬럼 머리칸 내용: 이름, 타입, 🔗, ⚙, 정렬, 삭제 (가로·세로 보기 모두 같은 것을 쓴다)
   colHead(c, i) {
@@ -134,7 +362,8 @@ export class GridView {
   // 참조 대상에서 가져온 칸(linked)은 회색으로 잠근다. Tab 키로는 건너뛴다
   cellHtml(c, ci, v, attr) {
     if (c.id) return `<td><div class="idbox"><span class="pre">${esc(this.t.prefix)}</span><input ${attr} data-c="0" value="${esc(v)}" inputmode="numeric" placeholder="번호"></div></td>`;
-    if (c.type === 'bool') return `<td class="chk${c.linked ? ' linked' : ''}"><input type="checkbox" ${attr} data-c="${ci}"${v === 'true' ? ' checked' : ''}${c.linked ? ' disabled' : ''}></td>`;
+    // Bool 칸은 값이 true · false · 빈칸일 때만 체크박스. 그 외 값은 글자 그대로 보여주고 빨간 칸이 된다(타입을 바꿔도 값은 그대로라서)
+    if (c.type === 'bool' && /^(true|false|)$/.test(v)) return `<td class="chk${c.linked ? ' linked' : ''}"><input type="checkbox" ${attr} data-c="${ci}"${v === 'true' ? ' checked' : ''}${c.linked ? ' disabled' : ''}></td>`;
     return `<td${c.linked ? ' class="linked"' : ''}><input ${attr} data-c="${ci}" value="${esc(v)}"${c.linked ? ' readonly tabindex="-1"' : ''}></td>`;
   }
 
@@ -273,6 +502,8 @@ export class GridView {
     }
     if (el.dataset.r == null) return;
     t.rows[+el.dataset.r][c] = el.type === 'checkbox' ? String(el.checked) : el.value;
+    // 한 칸에 이어서 친 글자는 되돌리기 한 번에 묶는다
+    if (el.type !== 'checkbox') this.app.group = `cell:${this.app.workbook.cur}:${el.dataset.r}:${c}`;
     this.update();
   }
 
@@ -283,8 +514,15 @@ export class GridView {
     if (this.rendering) return;
     const col = el.dataset.r != null && t.cols[el.dataset.c];
     if (col && col.autoType && el.value !== '') { // 새로 만든 열: 처음 값을 적고 칸을 떠날 때 적힌 값으로 타입을 정한다
-      t.setType(+el.dataset.c, Table.guessType(t.rows.map(r => r[el.dataset.c])));
+      const ty = Table.guessType(t.rows.map(r => r[el.dataset.c]));
+      t.setType(+el.dataset.c, ty);
+      if (ty === 'bool') t.rows.forEach(r => r[el.dataset.c] = r[el.dataset.c].toLowerCase()); // TRUE → true (체크박스가 되게)
       delete col.autoType;
+      return this.resortKeepFocus();
+    }
+    // Bool 열에서 글자로 보이던 칸을 비우거나 true/false로 고치면, 칸을 떠날 때 체크박스로 바꿔 그린다
+    if (col && col.type === 'bool' && el.type !== 'checkbox' && /^(true|false|)$/i.test(el.value)) {
+      t.rows[+el.dataset.r][el.dataset.c] = el.value.toLowerCase();
       return this.resortKeepFocus();
     }
     if (col && col.id && (t.sortOf().c === 0 || t.ref)) this.resortKeepFocus();
@@ -312,6 +550,15 @@ export class GridView {
   // Ctrl+↓: 맨 아래 빈 줄로 한 번에 (긴 표에서 새 행·새 열 넣을 때)
   onKey(e) {
     const el = e.target, t = this.t, k = e.key;
+    const picked = el.dataset.r != null && !t.flip && (el.type === 'checkbox' || el.dataset.mode === 'select'); // 고른 데이터 칸
+    if (picked && k === 'Delete' && this.hasRange()) { e.preventDefault(); return this.clearRange(); }
+    if (picked && e.shiftKey && k.startsWith('Arrow')) { // Shift+화살표: 커서는 두고 범위 끝만 움직인다
+      e.preventDefault();
+      const s = this.sel || {r2: this.anchor.r, c2: this.anchor.c};
+      const [dr, dc] = {ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1]}[k];
+      this.setSel({r: Math.min(Math.max(s.r2 + dr, 0), t.rows.length - 1), c: Math.min(Math.max(s.c2 + dc, 0), t.cols.length - 1)});
+      return;
+    }
     if (this.isCellText(el) && this.modeKey(e)) return;
     if (e.ctrlKey && k === 'ArrowDown' && this.el.contains(el)) {
       e.preventDefault();
@@ -374,6 +621,7 @@ export class GridView {
   modeKey(e) {
     const el = e.target, k = e.key, mode = el.dataset.mode || 'select';
     if (mode === 'select') {
+      if (k === 'Escape' && this.sel) { this.clearSel(); return true; }
       if (k === 'F2') { e.preventDefault(); this.setMode(el, 'edit'); return true; }
       if (k === 'Delete' || k === 'Backspace') { // 칸 비우기 (Backspace는 비우고 바로 입력)
         e.preventDefault();
@@ -412,21 +660,29 @@ export class GridView {
 
   // 칸에 커서가 있을 때. 처리했으면 true (한 칸짜리는 브라우저 기본 붙여넣기에 맡긴다)
   paste(rows, el) {
+    const t = this.t, g = this.hasRange() && this.range();
+    if (g && rows.length === 1 && rows[0].length === 1) { // 범위에 한 값: 범위 전체를 그 값으로 (엑셀과 같게)
+      for (let r = g.top; r <= g.bottom; r++) for (let c = g.left; c <= g.right; c++) {
+        if (!t.cols[c].linked) t.rows[r][c] = t.pasteValue(t.cols[c], rows[0][0]);
+      }
+      this.render();
+      return true;
+    }
     if (rows.length === 1 && rows[0].length === 1) {
       // 한 칸짜리: 입력·수정 중이면 브라우저 기본 붙여넣기(커서 자리에), 고른 상태면 칸 값을 통째로 바꾼다(엑셀과 같게)
       if (!this.isCellText(el) || el.dataset.mode !== 'select') return false;
       if (!this.locked(el)) this.setValue(el, rows[0][0]);
       return true;
     }
-    const t = this.t;
     // 빈 테이블(+로 막 만든 탭)에 붙이면 표 전체로 본다: 첫 줄이 컬럼 이름. 이름과 설명은 그대로 둔다
     if (!t.rows.length && rows.length > 1) {
       t.replaceWith(Table.fromData(SheetText.toList(rows), t.name));
       this.render();
       return true;
     }
-    const r0 = el.dataset.r != null ? +el.dataset.r : el.dataset.gr != null ? +el.dataset.gr : t.rows.length;
-    const c0 = el.dataset.c != null ? +el.dataset.c : t.cols.length;
+    // 범위가 있으면 범위의 왼쪽 위 칸부터, 없으면 커서가 있는 칸부터
+    const r0 = g ? g.top : el.dataset.r != null ? +el.dataset.r : el.dataset.gr != null ? +el.dataset.gr : t.rows.length;
+    const c0 = g ? g.left : el.dataset.c != null ? +el.dataset.c : t.cols.length;
     // Ctrl+A로 시트를 통째로 복사해 오면 첫 줄이 컬럼 이름이다. 지금 열 이름과 같으면 데이터로 넣지 않는다
     if (rows[0].every((v, j) => t.cols[c0 + j] && t.cols[c0 + j].name.toLowerCase() === v.trim().toLowerCase())) rows = rows.slice(1);
     if (rows.length) { t.pasteAt(rows, r0, c0); this.render(); }

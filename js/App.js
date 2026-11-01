@@ -1,5 +1,6 @@
 import {$} from './common/util.js';
 import {Workbook} from './data/Workbook.js';
+import {History} from './data/History.js';
 import {GridView} from './table/GridView.js';
 import {TabsView} from './table/TabsView.js';
 import {JsonPanel} from './json/JsonPanel.js';
@@ -16,6 +17,9 @@ import {SheetText} from './import/SheetText.js';
 export class App {
   constructor() {
     this.workbook = Workbook.load();
+    this.history = new History(JSON.stringify(this.workbook));
+    this.group = null;     // 다음 commit을 어느 묶음으로 기록할지 (한 칸 연속 타이핑 등)
+    this.restoring = false; // 되돌리는 중에는 기록하지 않는다
     this.errors = 0;
     this.grid = new GridView($('grid'), this);
     this.tabs = new TabsView($('tabs'), this);
@@ -25,6 +29,7 @@ export class App {
     this.importer = new Importer(this);
     this.settings = new SettingsMenu();
     document.addEventListener('paste', e => this.onPaste(e));
+    document.addEventListener('keydown', e => this.onUndoKey(e));
     // ▾, ⚙ 같은 작은 설정 창은 바깥을 누르면 닫는다
     document.addEventListener('click', e => document.querySelectorAll('details[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }));
     this.show(this.workbook.cur);
@@ -47,7 +52,37 @@ export class App {
     else this.status('');
     this.json.refresh();
     this.meta.refresh();
-    this.workbook.save();
+    this.commit(this.group);
+    this.group = null;
+  }
+
+  // 저장하고 되돌리기 기록에 남긴다
+  commit(group) {
+    const json = JSON.stringify(this.workbook);
+    if (!this.restoring) this.history.record(json, group);
+    this.workbook.save(json);
+  }
+
+  // Ctrl+Z 되돌리기, Ctrl+Y · Ctrl+Shift+Z 다시 하기. 한글 자판에서도 되게 글자(key) 대신 자판 위치(code)로 본다.
+  // 컬럼 이름·접두사·설명처럼 글을 쓰는 칸에서는 브라우저 기본 되돌리기(그 칸 글자만)를 그대로 둔다
+  onUndoKey(e) {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || !['KeyZ', 'KeyY'].includes(e.code)) return;
+    const t = e.target;
+    if (t.closest && (t.closest('#meta') || t.closest('.tab') || t.matches('.cname, .prefix'))) return;
+    e.preventDefault();
+    this.undo(e.code === 'KeyY' || e.shiftKey);
+  }
+
+  undo(redo) {
+    const json = redo ? this.history.redo() : this.history.undo();
+    if (json == null) return this.status(redo ? '다시 할 것이 없습니다' : '되돌릴 것이 없습니다');
+    const a = document.activeElement, p = this.grid.el.contains(a) && this.grid.pos(a);
+    this.restoring = true;
+    this.workbook = new Workbook(JSON.parse(json));
+    this.show(this.workbook.cur);
+    this.restoring = false;
+    const el = p && this.grid.at(p.r, p.c); // 커서는 같은 자리로
+    if (el) this.grid.focusEl(el);
   }
 
   status(text, cls = '') {

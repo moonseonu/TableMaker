@@ -61,6 +61,7 @@ export class Table {
     if (v === '') return true;
     if (type === 'int') return /^-?\d+$/.test(v);
     if (type === 'float') return /^-?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(v);
+    if (type === 'bool') return v === 'true' || v === 'false';
     return true;
   }
 
@@ -176,14 +177,20 @@ export class Table {
     this.sort = null;
   }
 
+  // 열 순서 바꾸기 (JSON 키 순서도 바뀐다). ID 열은 맨 앞 고정이라 부르는 쪽(GridView)이 0번으로는 옮기지 않는다
+  moveCol(from, to) {
+    const move = a => a.splice(to, 0, a.splice(from, 1)[0]);
+    move(this.cols);
+    this.rows.forEach(move);
+  }
+
   deleteRow(r) { this.rows.splice(r, 1); }
 
+  // 타입은 검사·내보내기 규칙일 뿐, 바꿔도 칸의 값은 건드리지 않는다(엑셀의 셀 서식처럼). 맞지 않는 값은 빨간 칸으로 남아
+  // 사용자가 고치거나 타입을 되돌리면 된다. 예전에는 Bool로 바꿀 때 값을 false로 고쳐 써서, 되돌려도 원래 값이 사라졌다
   setType(c, to) {
-    const col = this.cols[c];
-    if (col.id) this.unId(c);
-    if (to === 'bool') this.rows.forEach(r => r[c] = String(['true', '1', 'yes', 'y'].includes(r[c].toLowerCase())));
-    else if (col.type === 'bool') this.rows.forEach(r => r[c] = '');
-    col.type = to;
+    if (this.cols[c].id) this.unId(c);
+    this.cols[c].type = to;
   }
 
   // ID 해제: JSON에 나가던 값 그대로 일반 열이 된다 (번호 → 정수, 접두사 포함이었으면 "item_1001" → 문자)
@@ -231,7 +238,10 @@ export class Table {
   pasteValue(c, v) {
     v = v.trim();
     if (c.id) return this.prefix && v.startsWith(this.prefix) ? v.slice(this.prefix.length) : v;
-    if (c.type === 'bool') return String(['true', '1', 'yes', 'y', 'o'].includes(v.toLowerCase()));
+    if (c.type === 'bool') { // 엑셀의 TRUE/FALSE, 1/0 등은 알아보고, 모르는 값은 그대로 둔다(빨간 칸)
+      const b = v.toLowerCase();
+      return ['true', '1', 'yes', 'y', 'o'].includes(b) ? 'true' : ['false', '0', 'no', 'n', 'x', ''].includes(b) ? 'false' : v;
+    }
     return c.type === 'int' || c.type === 'float' ? unComma(v) : v;
   }
 }
