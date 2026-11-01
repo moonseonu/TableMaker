@@ -225,7 +225,7 @@
     <tr><th>더블클릭 · <kbd>F2</kbd></th><td>기존 값을 그대로 두고 고치기. 이때 <kbd>←</kbd><kbd>→</kbd>는 글자 사이를 움직입니다</td></tr>
     <tr><th><kbd>Esc</kbd></th><td>고치던 내용 취소</td></tr>
     <tr><th><kbd>Delete</kbd></th><td>고른 칸 비우기 (범위를 골랐으면 범위 전체)</td></tr>
-    <tr><th>드래그 · <kbd>Shift</kbd>+클릭 · <kbd>Shift</kbd>+<kbd>←↑↓→</kbd></th><td>여러 칸 범위 고르기. 드래그하다 표 가장자리로 끌면 그쪽으로 표가 저절로 넘어가며 계속 고를 수 있습니다. <kbd>Esc</kbd>나 다른 칸 클릭으로 풀기</td></tr>
+    <tr><th>드래그 · <kbd>Shift</kbd>+클릭 · <kbd>Shift</kbd>+<kbd>←↑↓→</kbd></th><td>여러 칸 범위 고르기. 드래그하다 표 가장자리로 끌면 그쪽으로 표가 저절로 넘어가며 계속 고를 수 있습니다. 세로 보기(⇄)에서도 똑같이 되고, 빨간 오류 칸도 고르면 파랗게 덮입니다. <kbd>Esc</kbd>나 다른 칸 클릭으로 풀기</td></tr>
     <tr><th>컬럼 이름 칸에서 끌기 · 행 번호 클릭·끌기</th><td>열 · 행을 통째로 고르기 (컬럼 이름 칸을 짧게 클릭하면 이름 고치기)</td></tr>
     <tr><th>컬럼 이름 칸을 꾹 눌러 끌기</th><td>열 순서 바꾸기. 0.4초 누르면 열이 흐려지고, 끌면 파란 선이 끼울 자리를 보여줍니다. 놓으면 그 자리로 옮겨지고 JSON 키 순서도 바뀝니다(<kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌리기). ID 열은 맨 앞 고정, 세로 보기(⇄)에서는 위아래로 끕니다</td></tr>
     <tr><th>탭 더블클릭 · 탭·열의 ✕</th><td>테이블 이름 바꾸기 · 테이블·열 삭제 (확인 창에서 <b>삭제</b>를 누르면 지워지고, <kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌릴 수 있습니다)</td></tr>
@@ -234,6 +234,7 @@
     <tr><th><kbd>Enter</kbd> · <kbd>↓</kbd></th><td>아래 칸. 마지막 행에서는 맨 아래 빈 줄로. ID 칸이면 다음 번호(1001 → 1002)가 미리 채워집니다</td></tr>
     <tr><th><kbd>Shift</kbd>+<kbd>Enter</kbd> · <kbd>↑</kbd></th><td>위 칸. 첫 행에서는 컬럼 이름 칸으로</td></tr>
     <tr><th><kbd>←</kbd> · <kbd>→</kbd></th><td>옆 칸. 마지막 열 다음은 빈 열 칸으로 (값부터 적으면 <code>col1</code> 같은 임시 이름이 붙습니다)</td></tr>
+    <tr><th>세로 보기(⇄)에서</th><td><kbd>↑</kbd><kbd>↓</kbd> · <kbd>Enter</kbd>는 컬럼 사이, <kbd>←</kbd><kbd>→</kbd>는 행 사이를 움직입니다. 마지막 컬럼에서 <kbd>Enter</kbd>·<kbd>↓</kbd>를 누르면 맨 아래 <b>+ 새 열</b> 줄로 가서 바로 새 열을 적을 수 있고, 맨 왼쪽에서 <kbd>←</kbd>를 누르면 컬럼 이름 칸으로 갑니다</td></tr>
     <tr><th><kbd>Ctrl</kbd>+<kbd>↓</kbd></th><td>맨 아래 빈 줄로 한 번에 (긴 표에서 새 행 넣을 때)</td></tr>
     <tr><th><kbd>Shift</kbd>+마우스 휠</th><td>표를 옆으로 스크롤</td></tr>
     <tr><th><kbd>Ctrl</kbd>+<kbd>V</kbd></th><td>칸을 고른 채로: 그 칸부터 채움 (범위를 골랐으면 범위 왼쪽 위부터, 한 값이면 범위 전체를 그 값으로) · 빈 테이블에: 표 전체로 · 빈 곳에서: 새 테이블 · 테이블 설명 창에서: Meta 시트로 읽기</td></tr>

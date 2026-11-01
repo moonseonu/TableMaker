@@ -59,7 +59,8 @@ export class GridView {
   }
 
   // ---------- 범위 선택 (드래그 · Shift+클릭 · Shift+화살표) ----------
-  // anchor: 범위를 시작한 칸(커서가 있는 칸), sel: {r1, c1, r2, c2} = anchor부터 끝 칸까지. 데이터 칸만, 가로 보기에서만.
+  // anchor: 범위를 시작한 칸(커서가 있는 칸), sel: {r1, c1, r2, c2} = anchor부터 끝 칸까지. 데이터 칸만.
+  // 범위는 데이터의 행·열로 잡아서 세로 보기에서도 같다(화면에서는 돌려서 보일 뿐)
   // 범위로 하는 일: Ctrl+C 복사(엑셀에 표 모양 그대로), Delete 한꺼번에 비우기, Ctrl+V 왼쪽 위부터 붙여넣기(한 값이면 범위 전체)
   // drag: 지금 끄는 중인 것. cell 칸 범위, col 컬럼 머리에서 끌어 열 통째로, row 행 번호에서 끌어 행 통째로, move 열 순서 바꾸기
   // 컬럼 머리칸(press): 짧게 클릭 → 이름 고치기, 누른 채 바로 끌기 → 열 고르기, 꾹(0.4초) 누른 뒤 끌기 → 열 옮기기
@@ -75,8 +76,14 @@ export class GridView {
     if (cell) return {r: +cell.dataset.r, c: +cell.dataset.c};
     const th = target.closest && target.closest('th[data-c], th[data-tc]'); // 이름 칸·타입 칸
     if (th && this.el.contains(th)) return {r: 0, c: +(th.dataset.c ?? th.dataset.tc)};
-    const num = target.closest && target.closest('td.num'), first = num && num.parentElement.querySelector('input[data-r]');
-    return first && this.el.contains(num) ? {r: +first.dataset.r, c: 0} : null;
+    const r = this.rowOfNum(target);
+    return r == null ? null : {r, c: 0};
+  }
+
+  // 행 번호 칸이면 그 행 (가로 보기는 왼쪽 td.num, 세로 보기는 위쪽 th.rowhead. 둘 다 행 삭제 ✕에 행 번호가 있다)
+  rowOfNum(target) {
+    const num = target.closest && target.closest('td.num, th.rowhead'), b = num && num.querySelector('[data-delrow]');
+    return b && this.el.contains(num) ? +b.dataset.delrow : null;
   }
 
   onMouseDown(e) {
@@ -84,11 +91,10 @@ export class GridView {
     const t = this.t, th = e.target.closest('th[data-c]');
     // 머리칸의 타입·버튼·⚙과 이미 고치고 있는 이름 칸은 평소대로
     if (th && !e.target.closest('select, button, details') && e.target !== document.activeElement) return this.pressHead(e, +th.dataset.c);
-    const num = !t.flip && !e.target.closest('button') && e.target.closest('td.num');
-    const first = num && num.parentElement.querySelector('input[data-r]');
-    if (first) { e.preventDefault(); return this.startDrag('row', {r: +first.dataset.r, c: 0}); }
+    const r = e.target.closest('button') ? null : this.rowOfNum(e.target);
+    if (r != null) { e.preventDefault(); return this.startDrag('row', {r, c: 0}); }
     const cell = this.cellOf(e.target);
-    if (!cell || t.flip) return this.clearSel();
+    if (!cell) return this.clearSel();
     const p = {r: +cell.dataset.r, c: +cell.dataset.c};
     if (e.shiftKey && this.anchor) { // Shift+클릭: 커서는 그대로 두고 범위만 늘린다
       e.preventDefault();
@@ -128,7 +134,7 @@ export class GridView {
     const p = this.press;
     if (p && !this.drag && Math.hypot(e.clientX - p.x, e.clientY - p.y) > 4) { // 꾹 누르기 전에 움직임 → 열 고르기
       clearTimeout(p.timer);
-      if (!this.t.flip && this.t.rows.length) this.startDrag('col', {r: 0, c: p.c});
+      if (this.t.rows.length) this.startDrag('col', {r: 0, c: p.c});
       else this.press = null;
     }
     if (this.drag === 'move') this.moveLine();
@@ -189,7 +195,9 @@ export class GridView {
     const box = this.el.parentElement, r = box.getBoundingClientRect(), {x, y} = this.pointer, EDGE = 40, d = this.drag;
     const top = this.headBottom(); // 위에 붙어 있는 머리줄 아래부터
     const speed = d => Math.min(40, Math.ceil(d / 3) + 4);
-    const across = d === 'col' || (d === 'move' && !this.t.flip), down = d === 'row' || (d === 'move' && this.t.flip);
+    // 열은 가로 보기에서 좌우, 세로 보기에서 위아래로 늘어선다 (행은 그 반대)
+    const flip = this.t.flip, colAxis = d === 'col' || d === 'move';
+    const across = colAxis ? !flip : d === 'row' && flip, down = colAxis ? flip : d === 'row' && !flip;
     const dx = down ? 0 : x < r.left + EDGE ? -speed(r.left + EDGE - x) : x > r.right - EDGE ? speed(x - r.right + EDGE) : 0;
     const dy = across ? 0 : y < top + EDGE ? -speed(top + EDGE - y) : y > r.bottom - EDGE ? speed(y - r.bottom + EDGE) : 0;
     if (dx || dy) {
@@ -349,7 +357,8 @@ export class GridView {
   // 두 번째 머리(가로: 타입 행, 세로: 타입 열)가 스크롤해도 첫 머리 바로 옆에 붙어 있게 첫 머리의 높이·너비를 CSS에 알려 준다
   stickHeads() {
     const first = this.el.querySelector(this.t.flip ? 'tbody th.colhead' : 'thead tr');
-    if (first) this.el.style.setProperty(this.t.flip ? '--w1' : '--h1', (this.t.flip ? first.offsetWidth : first.offsetHeight) + 'px');
+    // 소수점까지 (정수로 자르면 두 머리 사이에 0.x px 틈이 생긴다)
+    if (first) this.el.style.setProperty(this.t.flip ? '--w1' : '--h1', first.getBoundingClientRect()[this.t.flip ? 'width' : 'height'] + 'px');
   }
 
   // 가로 보기: 열 = 컬럼, 행 = 데이터 한 줄
@@ -758,12 +767,13 @@ export class GridView {
   onKey(e) {
     const el = e.target === this.el ? this.active() : e.target, t = this.t, k = e.key;
     if (el === this.el) return;
-    const picked = el.dataset.r != null && !t.flip && (el.type === 'checkbox' || el.dataset.mode === 'select'); // 고른 데이터 칸
+    const picked = el.dataset.r != null && (el.type === 'checkbox' || el.dataset.mode === 'select'); // 고른 데이터 칸
     if (picked && k === 'Delete' && this.hasRange()) { e.preventDefault(); return this.clearRange(); }
     if (picked && e.shiftKey && k.startsWith('Arrow')) { // Shift+화살표: 커서는 두고 범위 끝만 움직인다
       e.preventDefault();
       const s = this.sel || {r2: this.anchor.r, c2: this.anchor.c};
-      const [dr, dc] = {ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1]}[k];
+      let [dr, dc] = {ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1]}[k];
+      if (t.flip) [dr, dc] = [dc, dr]; // 세로 보기: 위아래가 컬럼, 좌우가 행
       this.setSel({r: Math.min(Math.max(s.r2 + dr, 0), t.rows.length - 1), c: Math.min(Math.max(s.c2 + dc, 0), t.cols.length - 1)});
       return;
     }
@@ -815,15 +825,16 @@ export class GridView {
     return c < m ? q(`input[data-r="${r}"][data-c="${c}"]`) : q(`[data-ghost][data-gr="${r}"]`);
   }
 
-  // 세로 보기: 화면 위아래 = 컬럼, 좌우 = 행. 데이터 칸과 맨 오른쪽 새 행 칸 사이만 오간다
+  // 세로 보기: 화면 위아래 = 컬럼, 좌우 = 행. 왼쪽 이름 칸(-1행)부터 맨 오른쪽 새 행 칸(n행)까지, 맨 아래 '+ 새 열' 줄(m열)까지 오간다.
+  // 가로 보기에서 → 로 빈 열에 가는 것처럼, 마지막 컬럼에서 Enter·↓를 누르면 새 열 줄로 가서 바로 새 열을 적는다
   moveFlipped(el, p, dir) {
     const t = this.t, n = t.rows.length, m = t.cols.length;
-    if (p.r < 0 || p.c >= m) return;
     const along = dir === 'left' || dir === 'right', d = dir === 'up' || dir === 'left' ? -1 : 1;
     const r = along ? p.r + d : p.r, c = along ? p.c : p.c + d;
-    if (c < 0 || c >= m || r < 0 || r > n) return;
-    if (r === n) return this.focusGhostRow(c);
-    this.focusCell(r, c);
+    if (c < 0 || c > m || r < -1 || r > n) return;
+    if (r === n && c < m) return this.focusGhostRow(c);
+    const next = this.at(r, c);
+    if (next) this.focusEl(next);
   }
 
   // 칸 상태를 바꾸는 키. 처리했으면 true
