@@ -4,7 +4,7 @@ import {$, ask} from '../common/util.js';
 const DONATE_URL = 'https://qr.kakaopay.com/FdjS44LQo';
 // 같은 링크의 QR 코드. 링크를 바꾸면 다시 만든다 (segno로 한 번 만들어 둔 파일)
 const QR_IMG = 'img/donate-qr.svg';
-// 송금 화면에는 받는 사람 실명이 떠서, 낯설지 않게 미리 초성으로 알려 준다
+// 송금 화면에는 받는 사람 실명이 떠서, 낯설지 않게 QR 창에서 미리 초성으로 알려 준다
 const PAYEE = "카카오페이 송금 화면의 받는 사람 이름은 초성으로 'ㅁㅅㅇ'입니다.";
 
 // ☰ 메뉴의 커피 후원. 바로 보내지 않고 "진짜요?"를 한 번 묻는다. 네 →
@@ -15,7 +15,7 @@ export class Donate {
     b.hidden = !DONATE_URL && location.hostname !== 'localhost';
     b.onclick = async () => {
       $('appMenu').open = false;
-      if (!await ask('진짜요?', `TableMaker는 무료이고, 후원하지 않아도 모든 기능을 그대로 쓸 수 있어요.\n${PAYEE}`, '네', 'primary', '아니요') || !DONATE_URL) return;
+      if (!await ask('진짜요?', 'TableMaker는 무료이고, 후원하지 않아도 모든 기능을 그대로 쓸 수 있어요.', '네', 'primary', '아니요') || !DONATE_URL) return;
       if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) window.open(DONATE_URL, '_blank', 'noopener');
       else this.showQr();
     };
