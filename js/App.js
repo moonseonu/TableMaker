@@ -1,5 +1,6 @@
 import {$} from './common/util.js';
 import {Workbook} from './data/Workbook.js';
+import {Projects} from './data/Projects.js';
 import {History} from './data/History.js';
 import {GridView} from './table/GridView.js';
 import {TabsView} from './table/TabsView.js';
@@ -10,14 +11,18 @@ import {Importer} from './import/Importer.js';
 import {SettingsMenu} from './settings/SettingsMenu.js';
 import {UpdateCheck} from './settings/UpdateCheck.js';
 import {Donate} from './settings/Donate.js';
+import {ProjectMenu} from './settings/ProjectMenu.js';
 import {SheetText} from './import/SheetText.js';
 
 // 각 영역을 만들고 서로 잇는다. 영역끼리는 직접 부르지 않고 App을 거친다
 //   table/  테이블 작성 영역 (표, 탭)      json/   JSON 보기·다운로드
 //   meta/   테이블 설명 · 설명서          import/ 불러오기 · 붙여넣기 해석
-//   data/   데이터와 규칙 (화면과 무관)        settings/ ☰ 메뉴 (화면 테마, 후원), 새 버전 알림
+//   data/   데이터와 규칙 (화면과 무관)        settings/ ☰ 메뉴 (화면 테마, 후원), 새 버전 알림, 제목줄 왼쪽 프로젝트 메뉴
 export class App {
   constructor() {
+    this.projects = Projects.load();
+    this.projects.save();
+    Workbook.key = Projects.key(this.projects.cur);
     this.workbook = Workbook.load();
     this.history = new History(JSON.stringify(this.workbook));
     this.group = null;     // 다음 commit을 어느 묶음으로 기록할지 (한 칸 연속 타이핑 등)
@@ -32,6 +37,7 @@ export class App {
     this.settings = new SettingsMenu();
     this.updateCheck = new UpdateCheck();
     this.donate = new Donate();
+    this.projectMenu = new ProjectMenu(this);
     document.addEventListener('paste', e => this.onPaste(e));
     document.addEventListener('keydown', e => this.onUndoKey(e));
     // ▾, ⚙ 같은 작은 설정 창은 바깥을 누르면 닫는다

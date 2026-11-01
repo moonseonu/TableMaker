@@ -18,6 +18,18 @@ header h1{margin:0;font-size:20px}
 /* 제목 줄 오른쪽 ☰: 화면 테마 같은 가끔 바꾸는 설정 (아래 .dropmenu 공통 모양보다 우선하도록 header를 붙였다) */
 header .appmenu{position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:10;text-align:left}
 header .appmenu summary{padding:4px 12px;font-size:20px;line-height:1.3}
+/* 제목줄 왼쪽 프로젝트 버튼 (☰와 같은 메뉴 모양) */
+header .projmenu{position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:10;text-align:left}
+header .projmenu summary{display:flex;align-items:center;gap:6px;padding:5px 12px;font-weight:600}
+header .projmenu .menu{min-width:220px}
+header .projmenu .menu .h{color:var(--dim);font-size:12px;padding:6px 10px 2px}
+header .projmenu .menu button{justify-content:flex-start;align-items:center}
+header .projmenu .dot{width:11px;height:11px;border-radius:50%;border:1px solid var(--dim);flex:none}
+header .projmenu button.on{background:var(--hover)}
+header .projmenu button.on .dot{border:3px solid var(--accent)}
+header .projmenu button:disabled{color:var(--dim);cursor:default}
+.asktext{display:flex;gap:8px;align-items:center;margin:8px 0 14px;color:var(--dim)}
+.asktext input{flex:1;min-width:220px;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 8px;color:var(--text)}
 header .appmenu .menu{min-width:190px}
 .updatebar{flex:none;border:0;border-radius:0;padding:8px 12px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
 header .appmenu .menu .h{color:var(--dim);font-size:12px;padding:6px 10px 2px}

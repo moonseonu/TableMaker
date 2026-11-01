@@ -1,22 +1,22 @@
 import {Table} from './Table.js';
 
-const KEY = 'tablemaker.v2';
-
-// 탭으로 열린 테이블 전체. 저장은 이 브라우저(localStorage)에만 한다
+// 탭으로 열린 테이블 전체(= 프로젝트 하나). 저장은 이 브라우저(localStorage)에만 한다
 export class Workbook {
+  static key = 'tablemaker.v2'; // 저장할 자리. App이 지금 프로젝트의 자리(Projects.key)로 정한다
+
   constructor({tables, cur = 0}) {
     this.tables = tables.map(t => t instanceof Table ? t : new Table(t));
     this.cur = Math.max(0, Math.min(cur, this.tables.length - 1));
   }
   static load() {
     try {
-      const d = JSON.parse(localStorage.getItem(KEY));
+      const d = JSON.parse(localStorage.getItem(Workbook.key));
       if (d && d.tables && d.tables.length) return new Workbook(d);
     } catch {}
     return new Workbook({tables: [Table.sample()]});
   }
 
-  save(json = JSON.stringify(this)) { try { localStorage.setItem(KEY, json); } catch {} }
+  save(json = JSON.stringify(this)) { try { localStorage.setItem(Workbook.key, json); } catch {} }
 
   get current() { return this.tables[this.cur]; }
 

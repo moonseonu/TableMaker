@@ -29,6 +29,23 @@ export function ask(title, text, ok, kind = 'warn', cancel = '취소') {
   return new Promise(done => d.addEventListener('close', () => { d.remove(); done(d.returnValue === 'ok'); }));
 }
 
+// 글자 하나를 받는 창 (prompt()는 막힌 브라우저가 있다). 확인하면 적은 글자(앞뒤 공백 뺌), 취소하거나 비우면 null
+export function askText(title, label, value, ok) {
+  const d = document.createElement('dialog');
+  d.className = 'popup';
+  d.innerHTML = `<form method="dialog"><h3>${esc(title)}</h3><label class="asktext">${esc(label)} <input value="${esc(value)}" autofocus></label>` +
+    `<div class="btns"><button type="button" class="cancel">취소</button><button value="ok" class="primary">${esc(ok)}</button></div></form>`;
+  d.querySelector('.cancel').onclick = () => d.close('');
+  document.body.append(d);
+  d.showModal();
+  d.querySelector('input').select();
+  return new Promise(done => d.addEventListener('close', () => {
+    const v = d.querySelector('input').value.trim();
+    d.remove();
+    done(d.returnValue === 'ok' && v ? v : null);
+  }));
+}
+
 export function saveFile(name, text, type) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([text], {type}));
