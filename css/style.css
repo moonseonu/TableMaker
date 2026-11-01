@@ -47,10 +47,13 @@ main{flex:1;overflow:auto}
 table{border-collapse:collapse}
 th,td{border:1px solid var(--line);padding:0;white-space:nowrap;background:var(--cell)}
 thead th{position:sticky;top:0;z-index:1;background:var(--head)}
+thead tr.htype th{top:var(--h1,33px)} /* 타입 행은 이름 행 바로 아래에 붙는다 (GridView.stickHeads) */
 th.bad{box-shadow:inset 0 -2px var(--badline)}
+/* 컬럼 머리는 이름 칸·타입 칸 두 개 (가로 보기는 두 행, 세로 보기는 두 열). 이름 칸은 글자 길이에 맞춰 늘어나서(field-sizing)
+   긴 이름이면 그만큼 열이 넓어진다 (엑셀처럼 손으로 맞출 필요 없게). field-sizing을 모르는 브라우저는 최소 너비로 */
 .col{display:flex;gap:4px;align-items:center;padding:4px 6px}
-.col .cname{width:96px;background:transparent;border:1px solid transparent;border-radius:3px;padding:2px 4px;font-weight:600}
-.col .cname.idname{width:60px}
+.col .cname{flex:1;min-width:80px;field-sizing:content;background:transparent;border:1px solid transparent;border-radius:3px;padding:2px 4px;font-weight:600}
+.col [data-delcol]{margin-left:auto}
 .col .cname:focus{border-color:var(--accent);outline:0}
 .col select,.col .prefix{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:1px 4px;color:var(--dim)}
 .col .prefix{width:80px}
@@ -86,7 +89,7 @@ body.colmove, body.colmove *{cursor:grabbing !important}
 .idbox{display:flex;align-items:center}
 .idbox .pre{color:var(--dim);padding-left:8px}
 .idbox input:not([type]){min-width:70px;padding-left:1px}
-td.chk{text-align:center}
+td.chk{text-align:left;padding-left:8px}
 td.linked input{color:var(--dim);cursor:default}
 .link{display:flex;align-items:center;padding:2px 4px;border-radius:3px}
 .link.on,.link.on:hover{color:var(--accent);background:var(--accent-tint)}
@@ -99,16 +102,30 @@ thead th.ghost{background:var(--panel)}
 .ghost input::placeholder{color:var(--dim)}
 td.ghost input{min-width:100px}
 .ghostrow td{background:transparent;border-style:dashed}
-#flipView{padding:1px 7px;font-size:15px;border-radius:3px}
-#flipView.on{color:var(--accent);background:var(--accent-tint)}
+/* 모서리 버튼 둘(⇄, 타입 줄 접기)은 같은 크기로 가운데. 가로 보기에서 타입 행이 펼쳐져 있으면 두 줄 높이라 위아래로 */
+.cornerbtns{display:flex;justify-content:center;align-items:center;gap:2px}
+#grid:not(.flip):not(.notype) .cornerbtns{flex-direction:column}
+/* 세로 보기에서 펼쳐져 있으면 ⇄는 이름 열 위, «는 타입 열 위 가운데 (가로 보기에서 버튼이 제 줄 옆에 있는 것과 같게) */
+#grid.flip:not(.notype) th.corner{padding:0}
+#grid.flip:not(.notype) .cornerbtns{display:grid;grid-template-columns:var(--w1,52px) 1fr;justify-items:center}
+.cbtn{width:28px;height:24px;padding:0;font-size:15px;line-height:1;border-radius:3px}
+.cbtn.on{color:var(--accent);background:var(--accent-tint)}
+#typeToggle{font-size:20px} /* « ︽ 글자는 ⇄보다 작게 그려져서 키워 맞춘다 */
 /* 세로 보기: 왼쪽 컬럼 머리칸을 고정, 맨 오른쪽 새 행 칸은 점선 */
 #grid.flip th.colhead{position:sticky;left:0;z-index:2;background:var(--head);text-align:left}
 #grid.flip thead th.corner{left:0;z-index:3}
-#grid.flip th.rowhead{color:var(--dim);font-weight:400;text-align:center;min-width:130px}
+#grid.flip th.tcol{left:var(--w1,52px)} /* 타입 열은 이름 열 바로 오른쪽에 붙는다 */
+#grid.notype tr.htype,#grid.notype .tcol{display:none} /* ⇄ 옆 버튼으로 타입 줄 접기 */
+/* 머리 칸들은 위·왼쪽에 붙어 있어(sticky) 서로 겹쳐 그려진다. ⚙ 창을 연 칸은 맨 위로 올려 다음 칸에 가리지 않게 (위 z-index들보다 뒤에 둔다) */
+#grid th:has(.opt[open]){z-index:5}
+#grid.flip th.rowhead{color:var(--dim);font-weight:400;min-width:130px}
 #grid.flip tr:hover th.rowhead .del{visibility:hidden}
 #grid.flip tr:hover th.rowhead:hover .del{visibility:visible}
 td:has([data-ghostrow]),th.ghostcell{background:transparent;border-style:dashed}
-.num{width:52px;text-align:right;color:var(--dim);padding:0 6px}
+/* 표 안은 모두 왼쪽 정렬 (글자 시작선이 한 줄로 맞게). 모서리 ⇄ 버튼만 가운데 */
+.num{width:52px;text-align:left;color:var(--dim);padding:0 8px}
+th.corner{text-align:center}
+.num .del{margin-left:4px}
 .num .del{visibility:hidden}
 tr:hover .num .del{visibility:visible}
 .toolbar button.on{border-color:var(--accent);color:var(--accent)}

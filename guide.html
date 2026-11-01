@@ -36,12 +36,17 @@
   <p class="lead">엑셀처럼 칸에 바로 적습니다. 점선으로 된 빈 칸에 적으면 그 순간 새 열·새 행이 됩니다.</p>
   <div class="sheet" inert>
     <table>
-      <thead><tr>
-        <th class="num corner"><span class="ico">⇄</span></th>
-        <th><div class="col"><input class="cname idname" value="id"><select><option>ID</option></select><span class="ico">⚙</span><span class="ico sort">▼</span><span class="ico">✕</span></div></th>
-        <th><div class="col"><input class="cname" value="name"><select><option>String</option></select><span class="ico">✕</span><i class="mk">3</i></div></th>
-        <th><div class="col"><input class="cname" value="price"><select><option>Int</option></select><span class="ico">✕</span></div></th>
+      <thead><tr class="hname">
+        <th class="num corner" rowspan="2"><span class="ico">⇄</span></th>
+        <th><div class="col"><input class="cname" value="id"></div></th>
+        <th><div class="col"><input class="cname" value="name"></div></th>
+        <th><div class="col"><input class="cname" value="price"></div></th>
         <th class="ghost"><div class="col"><input class="cname" placeholder="+ 새 열"><i class="mk">1</i></div></th>
+      </tr><tr class="htype">
+        <th><div class="col"><select><option>ID</option></select><span class="ico">⚙</span><span class="ico sort">▼</span><span class="ico">✕</span></div></th>
+        <th><div class="col"><select><option>String</option></select><span class="ico">✕</span><i class="mk">3</i></div></th>
+        <th><div class="col"><select><option>Int</option></select><span class="ico">✕</span></div></th>
+        <th class="ghost"></th>
       </tr></thead>
       <tbody>
         <tr><td class="num">1</td><td><div class="idbox"><span class="pre"></span><input value="1001"></div></td><td><input value="Iron Sword"></td><td><input value="900"></td><td class="ghost"><input></td></tr>
@@ -51,7 +56,7 @@
     </table>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>새 열</b> — 맨 오른쪽 점선 칸에 컬럼 이름을 적으면 열이 생깁니다. 이름 대신 값부터 적어도 되고, 그러면 <code>col1</code> 같은 임시 이름이 붙습니다(위로 올라가 이름을 고치면 됩니다). 비워 두면 JSON에 나오지 않습니다.</span></li>
+    <li><i class="mk">1</i><span><b>새 열</b> — 맨 오른쪽 점선 칸에 컬럼 이름을 적으면 열이 생깁니다. 이름 대신 값부터 적어도 되고, 그러면 <code>col1</code> 같은 임시 이름이 붙습니다(위로 올라가 이름을 고치면 됩니다). 비워 두면 JSON에 나오지 않습니다. 머리줄은 이름 줄과 그 아래 타입 줄(타입·버튼)로 나뉘고(세로 보기에서는 왼쪽의 이름 열·타입 열), 이름이 길면 그 길이만큼 열이 저절로 넓어집니다.</span></li>
     <li><i class="mk">2</i><span><b>새 행</b> — 맨 아래 점선 줄에 적으면 행이 생깁니다. Name처럼 ID가 아닌 칸부터 적으면 ID는 가장 큰 번호의 다음 번호가 자동으로 붙습니다. 마지막 행에서 <kbd>Enter</kbd>를 치면 그 줄로 내려가고, 긴 표에서는 <kbd>Ctrl</kbd>+<kbd>↓</kbd>로 한 번에 갑니다.</span></li>
     <li><i class="mk">3</i><span><b>열 타입</b> — ID · String(문자열) · Int(정수) · Float(실수) · Bool(참/거짓) · Enum(정해진 값 중 하나). 드롭다운에 마우스를 올리면 타입 설명이 보입니다. JSON에 그 타입 그대로 나갑니다(<code>"900"</code>이 아니라 <code>900</code>). 새로 만든 열은 처음 적은 값을 보고 타입이 자동으로 정해지고, 드롭다운에서 언제든 바꿀 수 있습니다. 타입을 바꿔도 칸의 값은 그대로이고, 맞지 않는 값만 빨간 칸으로 알려줍니다(Bool 열은 값이 true · false · 빈칸일 때만 체크박스).<br><b>Enum</b>은 엑셀처럼 칸에 바로 적습니다. 그 열에 적힌 값들이 곧 값 목록이고, 앞 글자만 쳐도 나머지가 흐리게 보여 Enter·Tab으로 채워집니다(그대로 두려면 Backspace나 Delete). 옆의 ⚙를 누르면 지금 목록이 보입니다. 잘못 적은 값은 칸을 고치면 목록에서도 사라집니다. JSON에는 글자로 나갑니다.</span></li>
     <li><i class="mk">4</i><span><b>빨간 칸</b> — 타입에 맞지 않는 값입니다(위 표의 <code>천원</code>). 위쪽에 오류 개수가 뜨고, 고치면 사라집니다.</span></li>
@@ -67,10 +72,13 @@
   <div class="row">
     <div class="sheet" inert>
       <table>
-        <thead><tr>
-          <th class="num corner"><span class="ico">⇄</span></th>
-          <th><div class="col"><input class="cname idname" value="id"><select><option>ID</option></select><span class="ico set" style="color:var(--accent)">⚙</span><i class="mk">2</i><span class="ico sort">▼</span><i class="mk">3</i></div></th>
-          <th><div class="col"><input class="cname" value="name"><select><option>String</option></select></div></th>
+        <thead><tr class="hname">
+          <th class="num corner" rowspan="2"><span class="ico">⇄</span></th>
+          <th><div class="col"><input class="cname" value="id"></div></th>
+          <th><div class="col"><input class="cname" value="name"></div></th>
+        </tr><tr class="htype">
+          <th><div class="col"><select><option>ID</option></select><span class="ico set" style="color:var(--accent)">⚙</span><i class="mk">2</i><span class="ico sort">▼</span><i class="mk">3</i></div></th>
+          <th><div class="col"><select><option>String</option></select></div></th>
         </tr></thead>
         <tbody>
           <tr><td class="num">1</td><td><div class="idbox"><span class="pre">item_</span><input value="1001"></div></td><td><input value="Iron Sword"></td></tr>
@@ -101,11 +109,15 @@
   <p class="lead">번역 테이블처럼 행 하나가 다른 테이블의 행 하나와 짝인 경우, 이름이 같은 열을 자동으로 가져옵니다.</p>
   <div class="sheet" inert>
     <table>
-      <thead><tr>
-        <th class="num corner"><span class="ico">⇄</span></th>
-        <th><div class="col"><input class="cname idname" value="ID"><select><option>ID</option></select><span class="ico" style="color:var(--accent)">⚙</span><i class="mk">1</i><span class="ico sort">▼</span></div></th>
-        <th><div class="col"><input class="cname" value="Name"><select disabled><option>String</option></select><span class="ico link on"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span><i class="mk">3</i></div></th>
-        <th><div class="col"><input class="cname" value="Korean"><select><option>String</option></select></div></th>
+      <thead><tr class="hname">
+        <th class="num corner" rowspan="2"><span class="ico">⇄</span></th>
+        <th><div class="col"><input class="cname" value="ID"></div></th>
+        <th><div class="col"><input class="cname" value="Name"></div></th>
+        <th><div class="col"><input class="cname" value="Korean"></div></th>
+      </tr><tr class="htype">
+        <th><div class="col"><select><option>ID</option></select><span class="ico" style="color:var(--accent)">⚙</span><i class="mk">1</i><span class="ico sort">▼</span></div></th>
+        <th><div class="col"><select disabled><option>String</option></select><span class="ico link on"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span><i class="mk">3</i></div></th>
+        <th><div class="col"><select><option>String</option></select></div></th>
       </tr></thead>
       <tbody>
         <tr><td class="num">1</td><td><div class="idbox"><span class="pre"></span><input value="1011"></div></td><td class="linked"><div class="idbox"><input value="CornSeed"><i class="mk">2</i></div></td><td><input value="옥수수 씨앗"></td></tr>
@@ -189,18 +201,19 @@
   <div class="sheet" inert>
     <table>
       <thead><tr>
-        <th class="num corner"><span class="ico flip on" id="flipView">⇄</span><i class="mk">1</i></th>
+        <th class="num corner" colspan="2"><span class="ico cbtn flip on">⇄</span><i class="mk">1</i></th>
         <th class="num rowhead">1</th>
       </tr></thead>
       <tbody>
-        <tr><th class="colhead"><div class="col"><input class="cname" value="RealTimePerDay"><select><option>Int</option></select></div></th><td><input value="600"></td></tr>
-        <tr><th class="colhead"><div class="col"><input class="cname" value="DaysPerYear"><select><option>Int</option></select></div></th><td><input value="336"></td></tr>
-        <tr><th class="colhead"><div class="col"><input class="cname" value="GraceInterest"><select><option>Float</option></select></div></th><td><input value="0.1"></td></tr>
+        <tr><th class="colhead"><div class="col"><input class="cname" value="RealTimePerDay"></div></th><th class="colhead"><div class="col"><select><option>Int</option></select></div></th><td><input value="600"></td></tr>
+        <tr><th class="colhead"><div class="col"><input class="cname" value="DaysPerYear"></div></th><th class="colhead"><div class="col"><select><option>Int</option></select></div></th><td><input value="336"></td></tr>
+        <tr><th class="colhead"><div class="col"><input class="cname" value="GraceInterest"></div></th><th class="colhead"><div class="col"><select><option>Float</option></select></div></th><td><input value="0.1"></td></tr>
       </tbody>
     </table>
   </div>
   <ol class="notes">
     <li><i class="mk">1</i><span><b>⇄ 행/열 바꿔 보기</b> — 표 왼쪽 위 모서리. Config처럼 한 줄에 열이 수십 개인 테이블을 위아래로 훑어볼 수 있습니다. 보는 방향만 바뀌고 JSON은 그대로이며, 테이블마다 따로 기억합니다. 행이 수천 개인 테이블은 가로 보기가 훨씬 빠릅니다(가로 보기는 화면에 보이는 행만 그립니다).</span></li>
+    <li><i class="mk">1</i><span><b>︽ 타입 줄 접기</b> — ⇄ 바로 옆 버튼. 타입 줄(세로 보기에서는 타입 열, 버튼은 «)을 통째로 접어 값만 보이게 합니다. 타입을 바꾸거나 열을 지울 때는 ︾(»)로 다시 펴세요. 접은 상태는 이 브라우저에 기억됩니다.</span></li>
   </ol>
   <h3>단축키</h3>
   <table class="keys">

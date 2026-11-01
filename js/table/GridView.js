@@ -3,6 +3,9 @@ import {Table} from '../data/Table.js';
 import {SheetText} from '../import/SheetText.js';
 
 // 사슬 모양 아이콘. 글자색(currentColor)을 따라서 켜짐·꺼짐을 색으로 보여줄 수 있다 (이모지는 색이 안 바뀐다)
+// 타입 줄을 접었는지 이 브라우저에 기억하는 키 (테이블마다가 아니라 화면 설정)
+const TYPES_KEY = 'tablemaker.hideTypes';
+
 // 보이는 행만 그리기(아래 '보이는 행만 그리기'): 화면 위아래로 더 그려 두는 행 수, 다시 그리는 단위(행)
 const BUF = 15, STEP = 10;
 
@@ -70,8 +73,8 @@ export class GridView {
   pointOf(target) {
     const cell = this.cellOf(target);
     if (cell) return {r: +cell.dataset.r, c: +cell.dataset.c};
-    const th = target.closest && target.closest('th[data-c]');
-    if (th && this.el.contains(th)) return {r: 0, c: +th.dataset.c};
+    const th = target.closest && target.closest('th[data-c], th[data-tc]'); // 이름 칸·타입 칸
+    if (th && this.el.contains(th)) return {r: 0, c: +(th.dataset.c ?? th.dataset.tc)};
     const num = target.closest && target.closest('td.num'), first = num && num.parentElement.querySelector('input[data-r]');
     return first && this.el.contains(num) ? {r: +first.dataset.r, c: 0} : null;
   }
@@ -314,24 +317,52 @@ export class GridView {
     this.sel = null; // 다시 그리면 행 자리가 바뀔 수 있어 범위는 푼다 (clearRange는 다시 그린 뒤 되살린다)
     this.app.workbook.syncRef(t);
     // 모서리 칸: 행/열 바꿔 보기. 바꾼 상태면 파랗게 눌린 상태
-    const corner = `<th class="num corner"><button class="ico flip${t.flip ? ' on' : ''}" id="flipView" title="${t.flip
-      ? '행/열을 원래대로 (가로로 보기)' : '행/열 바꿔 보기 (열이 많은 테이블을 세로로)'}">⇄</button></th>`;
+    // 모서리 칸: ⇄ 행/열 바꾸기와 타입 줄 접기. 이름 줄과 타입 줄에 걸친 한 칸이다(showTypes가 rowSpan·colSpan을 맞춘다)
+    const corner = `<th class="num corner"><div class="cornerbtns"><button class="ico cbtn flip${t.flip ? ' on' : ''}" id="flipView" title="${t.flip
+      ? '행/열을 원래대로 (가로로 보기)' : '행/열 바꿔 보기 (열이 많은 테이블을 세로로)'}">⇄</button><button class="ico cbtn" id="typeToggle"></button></div></th>`;
     const ghostColHead = '<div class="col"><input class="cname" data-ghost placeholder="+ 새 열"></div>';
     this.el.classList.toggle('flip', !!t.flip);
     this.win = t.flip ? null : {first: 0, last: -1}; // 아직 그린 행 없음. 아래 fillRows가 보이는 행을 그린다
     this.el.innerHTML = t.flip ? this.flippedHtml(corner, ghostColHead) : this.normalHtml(corner, ghostColHead);
+    this.showTypes(!this.typesHidden);
     this.setPads();
     this.fillRows();
     this.update();
   }
 
+  // ⇄ 옆 버튼: 타입 줄(가로 보기는 타입 행, 세로 보기는 타입 열)을 통째로 접고 편다. 타입은 처음 한 번 정하고
+  // 그 뒤로는 값만 적는 일이 많아서, 입력할 때 접어 두면 화면이 덜 붐빈다. 접어도 오류 칸 표시는 그대로
+  get typesHidden() {
+    try { return localStorage.getItem(TYPES_KEY) === '1'; } catch { return false; }
+  }
+
+  showTypes(on) {
+    try { on ? localStorage.removeItem(TYPES_KEY) : localStorage.setItem(TYPES_KEY, '1'); } catch {}
+    this.el.classList.toggle('notype', !on);
+    const b = this.el.querySelector('#typeToggle'), flip = this.t.flip, corner = this.el.querySelector('th.corner');
+    // 접힌 줄은 그려지지 않아 모서리 칸이 그 줄까지 걸치면 칸이 어긋난다
+    corner.rowSpan = !flip && on ? 2 : 1;
+    corner.colSpan = flip && on ? 2 : 1;
+    b.textContent = on ? (flip ? '«' : '︽') : (flip ? '»' : '︾');
+    b.title = on ? '타입 줄 접기' : '타입 줄 펴기 (타입 바꾸기 · 열 삭제)';
+    b.classList.toggle('on', !on);
+  }
+
+  // 두 번째 머리(가로: 타입 행, 세로: 타입 열)가 스크롤해도 첫 머리 바로 옆에 붙어 있게 첫 머리의 높이·너비를 CSS에 알려 준다
+  stickHeads() {
+    const first = this.el.querySelector(this.t.flip ? 'tbody th.colhead' : 'thead tr');
+    if (first) this.el.style.setProperty(this.t.flip ? '--w1' : '--h1', (this.t.flip ? first.offsetWidth : first.offsetHeight) + 'px');
+  }
+
   // 가로 보기: 열 = 컬럼, 행 = 데이터 한 줄
   normalHtml(corner, ghostColHead) {
     const t = this.t;
-    let h = '<thead><tr>' + corner;
-    t.cols.forEach((c, i) => h += `<th data-c="${i}"${this.moveTip(c)}>${this.colHead(c, i)}</th>`);
-    // 맨 오른쪽 빈 열: 채우는 순간 진짜 열이 되고, 비어 있으면 JSON에 안 나온다
-    h += `<th class="ghost">${ghostColHead}</th></tr></thead><tbody>`;
+    // 머리줄 두 행: 이름, 타입. 맨 오른쪽 빈 열은 채우는 순간 진짜 열이 되고, 비어 있으면 JSON에 안 나온다
+    let h = '<thead><tr class="hname">' + corner;
+    t.cols.forEach((c, i) => h += `<th data-c="${i}"${this.moveTip(c)}>${this.nameHead(c, i)}</th>`);
+    h += `<th class="ghost">${ghostColHead}</th></tr><tr class="htype">`;
+    t.cols.forEach((c, i) => h += `<th data-tc="${i}">${this.typeHead(c, i)}</th>`);
+    h += '<th class="ghost"></th></tr></thead><tbody>';
     // 데이터 행은 두 빈 줄(padtop · padbot) 사이에 보이는 것만 들어간다 (fillRows)
     const pad = cls => `<tr class="pad ${cls}"><td colspan="${t.cols.length + 2}"></td></tr>`;
     h += pad('padtop') + pad('padbot');
@@ -345,7 +376,7 @@ export class GridView {
     let h = '';
     for (let ri = first; ri <= last; ri++) {
       const r = t.rows[ri];
-      h += `<tr><td class="num"><button class="ico del" data-delrow="${ri}" title="행 삭제">✕</button>${ri + 1}</td>`;
+      h += `<tr><td class="num">${ri + 1}<button class="ico del" data-delrow="${ri}" title="행 삭제">✕</button></td>`;
       t.cols.forEach((c, ci) => h += this.cellHtml(c, ci, r[ci], `data-r="${ri}"`));
       h += `<td class="ghost"><input data-ghost data-gr="${ri}"></td></tr>`;
     }
@@ -422,9 +453,9 @@ export class GridView {
     if (this.move) this.el.querySelectorAll(`[data-c="${this.move.from}"]`).forEach(x => x.closest('td, th').classList.add('lift'));
   }
 
-  // 화면 위에 붙어 있는 머리줄의 아래 끝. thead 자체는 스크롤과 함께 올라가고 칸(th)만 붙어 있어서 th로 잰다
+  // 화면 위에 붙어 있는 머리줄의 아래 끝. thead 자체는 스크롤과 함께 올라가고 칸(th)만 붙어 있어서 보이는 마지막 머리 행의 th로 잰다
   headBottom() {
-    const th = this.el.querySelector('thead th');
+    const tr = this.el.tHead && [...this.el.tHead.rows].filter(r => r.offsetHeight).at(-1), th = tr && tr.cells[0];
     return th ? th.getBoundingClientRect().bottom : this.el.parentElement.getBoundingClientRect().top;
   }
 
@@ -450,26 +481,29 @@ export class GridView {
   // 칸의 data-r · data-c는 가로 보기와 같은 뜻이라 입력·검사·붙여넣기 코드는 그대로 쓴다
   flippedHtml(corner, ghostColHead) {
     const t = this.t;
+    // 머리 열 두 개: 이름, 타입 (가로 보기의 두 머리 행을 돌린 것)
     let h = '<thead><tr>' + corner;
-    t.rows.forEach((r, ri) => h += `<th class="num rowhead"><button class="ico del" data-delrow="${ri}" title="행 삭제">✕</button>${ri + 1}</th>`);
+    t.rows.forEach((r, ri) => h += `<th class="num rowhead">${ri + 1}<button class="ico del" data-delrow="${ri}" title="행 삭제">✕</button></th>`);
     h += '<th class="num rowhead ghostcell"></th></tr></thead><tbody>';
     t.cols.forEach((c, ci) => {
-      h += `<tr><th class="colhead" data-c="${ci}"${this.moveTip(c)}>${this.colHead(c, ci)}</th>`;
+      h += `<tr><th class="colhead" data-c="${ci}"${this.moveTip(c)}>${this.nameHead(c, ci)}</th><th class="colhead tcol" data-tc="${ci}">${this.typeHead(c, ci)}</th>`;
       t.rows.forEach((r, ri) => h += this.cellHtml(c, ci, r[ci], `data-r="${ri}"`));
       h += this.cellHtml(c, ci, '', 'data-ghostrow') + '</tr>'; // 맨 오른쪽: 새 행
     });
     // 맨 아래: 새 열
-    h += `<tr><th class="colhead ghost">${ghostColHead}</th>` + t.rows.map((r, ri) => `<td class="ghost"><input data-ghost data-gr="${ri}"></td>`).join('') + '<td></td></tr>';
+    h += `<tr><th class="colhead ghost">${ghostColHead}</th><th class="colhead tcol"></th>` + t.rows.map((r, ri) => `<td class="ghost"><input data-ghost data-gr="${ri}"></td>`).join('') + '<td></td></tr>';
     return h + '</tbody>';
   }
 
   moveTip(c) { return c.id ? '' : ' title="꾹 눌러 끌면 순서 바꾸기"'; }
 
-  // 컬럼 머리칸 내용: 이름, 타입, 🔗, ⚙, 정렬, 삭제 (가로·세로 보기 모두 같은 것을 쓴다)
-  colHead(c, i) {
+  // 컬럼 머리는 두 칸: 이름 칸(nameHead, th[data-c])과 타입·버튼 칸(typeHead, th[data-tc]).
+  // 가로 보기는 위아래 두 행, 세로 보기는 왼쪽 두 열이 된다. 열 고르기·옮기기·오류 표시는 이름 칸(th[data-c])으로 한다
+  nameHead(c, i) { return `<div class="col"><input class="cname" data-c="${i}" value="${esc(c.name)}"></div>`; }
+
+  typeHead(c, i) {
     const t = this.t, sort = t.sortOf(), cands = this.app.workbook.refCandidates(t);
-    let h = `<div class="col"><input class="cname${c.id ? ' idname' : ''}" data-c="${i}" value="${esc(c.name)}">`;
-    h += `<select data-c="${i}" title="${Table.TIPS[c.id ? 'id' : c.type]}"${c.linked ? ' disabled' : ''}>${Object.entries({id: 'ID', ...Table.TYPES}).map(([k, v]) =>
+    let h = `<div class="col"><select data-c="${i}" title="${Table.TIPS[c.id ? 'id' : c.type]}"${c.linked ? ' disabled' : ''}>${Object.entries({id: 'ID', ...Table.TYPES}).map(([k, v]) =>
       `<option value="${k}" title="${Table.TIPS[k]}"${k === (c.id ? 'id' : c.type) ? ' selected' : ''}>${v}</option>`).join('')}</select>`;
     // 참조 대상에 같은 이름 열이 있으면 🔗 켜기/끄기. 기본은 켜짐(파랗게 눌린 상태)
     if (c.linkable) h += `<button class="ico link${c.linked ? ' on' : ''}" data-link="${i}" title="${c.linked
@@ -504,6 +538,7 @@ export class GridView {
   // 검사 결과만 칸에 칠하고 나머지(상태 줄·미리보기·저장)는 App에 알린다. 구조가 그대로일 때는 다시 그리지 않는다
   update() {
     const t = this.t, badCols = t.badColumns();
+    this.stickHeads(); // 이름을 고치면 이름 열 너비가 바뀐다
     let errors = 0, warns = 0;
     t.cols.forEach((c, i) => {
       this.el.querySelector(`th[data-c="${i}"]`).classList.toggle('bad', badCols.has(i));
@@ -704,6 +739,7 @@ export class GridView {
     const b = e.target.closest('button'), t = this.t;
     if (!b) return;
     if (b.id === 'flipView') { t.flip = !t.flip; this.render(); }
+    else if (b.id === 'typeToggle') { this.showTypes(this.typesHidden); this.stickHeads(); }
     else if (b.dataset.link) { const c = t.cols[+b.dataset.link]; c.unlink = !c.unlink; this.render(); }
     else if (b.dataset.sort) { t.sortBy(+b.dataset.sort); this.render(); }
     else if (b.dataset.delcol) {
