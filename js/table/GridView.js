@@ -88,6 +88,7 @@ export class GridView {
 
   onMouseDown(e) {
     if (e.button !== 0) return;
+    this.pointer = {x: e.clientX, y: e.clientY}; // 마우스를 움직이기 전에 바로 끌어도 가장자리 자동 스크롤이 위치를 안다
     const t = this.t, th = e.target.closest('th[data-c]');
     // 머리칸의 타입·버튼·⚙과 이미 고치고 있는 이름 칸은 평소대로
     if (th && !e.target.closest('select, button, details') && e.target !== document.activeElement) return this.pressHead(e, +th.dataset.c);
@@ -101,6 +102,8 @@ export class GridView {
       this.setSel(p);
       return;
     }
+    // Bool 칸: 체크박스 밖(칸)을 누르면 값은 그대로 두고 칸만 고른다. 체크박스를 누르면 평소처럼 켜고 끈다(고른 상태에서 Space도)
+    if (cell.type === 'checkbox' && e.target !== cell) { e.preventDefault(); cell.focus(); }
     this.startDrag('cell', p);
   }
 
@@ -219,8 +222,11 @@ export class GridView {
     if (p) this.dragTo(p);
   }
 
+  // 범위가 생기면 커서 칸은 고른 상태로 (글자를 고치던 칸에서 끌기 시작해도 Delete·복사가 범위에 먹게. 고친 글자는 이미 저장돼 있다)
   setSel(end) {
     this.sel = {r1: this.anchor.r, c1: this.anchor.c, r2: end.r, c2: end.c};
+    const a = document.activeElement;
+    if (this.hasRange() && this.el.contains(a) && this.isCellText(a) && a.dataset.mode !== 'select') this.setMode(a, 'select');
     this.paintSel();
   }
 
@@ -514,15 +520,16 @@ export class GridView {
       `<option value="${k}" title="${Table.TIPS[k]}"${k === (c.id ? 'id' : c.type) ? ' selected' : ''}>${v}</option>`).join('')}</select>`;
     // 참조 대상에 같은 이름 열이 있으면 🔗 켜기/끄기. 기본은 켜짐(파랗게 눌린 상태)
     if (c.linkable) h += `<button class="ico link${c.linked ? ' on' : ''}" data-link="${i}" title="${c.linked
-      ? `${esc(t.ref)}의 ${esc(c.name)}에서 가져오는 중. 누르면 연결을 끊고 직접 입력합니다`
-      : `연결 끊김. 누르면 ${esc(t.ref)}의 ${esc(c.name)} 값으로 다시 채웁니다`}">${LINK_ICON}</button>`;
+      ? `${esc(t.refs.join(' · '))}의 ${esc(c.name)}에서 가져오는 중. 누르면 연결을 끊고 직접 입력합니다`
+      : `연결 끊김. 누르면 ${esc(t.refs.join(' · '))}의 ${esc(c.name)} 값으로 다시 채웁니다`}">${LINK_ICON}</button>`;
     // 접두사·참조는 처음 한 번 정하는 설정이라 ⚙ 안에 둔다. 설정돼 있으면 ⚙가 파랗다
-    if (c.id) h += `<details class="opt idopt"><summary class="ico${t.prefix || t.ref ? ' set' : ''}" title="ID 설정 (접두사 · 참조)">⚙</summary><div class="pop">` +
+    if (c.id) h += `<details class="opt idopt"><summary class="ico${t.prefix || t.refs.length ? ' set' : ''}" title="ID 설정 (접두사 · 참조)">⚙</summary><div class="pop">` +
       `<label title="기본은 화면에만 표시되고 JSON에는 번호만 정수로 나갑니다">접두사 <input class="prefix" value="${esc(t.prefix)}" placeholder="예: item_"></label>` +
       `<label title="켜면 JSON에 접두사까지 붙여 &quot;item_1001&quot; 같은 문자로 내보냅니다"><input type="checkbox" class="pout"${t.prefixOut ? ' checked' : ''}> JSON에 포함</label>` +
-      `<label title="${cands.length ? 'ID가 다른 테이블의 ID를 가리킬 때 (예: Localization → items). 이름이 같은 열은 그 테이블 값으로 채워집니다' : '참조할 수 있는 다른 테이블(ID 열이 있는 탭)이 없습니다'}">` +
-      `<input type="checkbox" class="refon"${t.ref ? ' checked' : ''}${cands.length ? '' : ' disabled'}> 다른 테이블 참조</label>` +
-      (t.ref ? `<select class="reftable">${cands.map(o => `<option${o.name === t.ref ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select>` : '') +
+      `<label title="${cands.length ? 'ID가 다른 테이블의 ID를 가리킬 때 (예: Localization → items). 여러 테이블을 고를 수 있고, 이름이 같은 열은 그 ID가 있는 테이블 값으로 채워집니다' : '참조할 수 있는 다른 테이블(ID 열이 있는 탭)이 없습니다'}">` +
+      `<input type="checkbox" class="refon"${t.refs.length ? ' checked' : ''}${cands.length ? '' : ' disabled'}> 다른 테이블 참조</label>` +
+      // 참조 중이면 대상 테이블을 체크로 고른다 (여러 개 가능)
+      (t.refs.length ? '<div class="refs">' + cands.map(o => `<label><input type="checkbox" class="refpick" value="${esc(o.name)}"${t.refs.includes(o.name) ? ' checked' : ''}> ${esc(o.name)}</label>`).join('') + '</div>' : '') +
       '</div></details>';
     // Enum 값 목록 보기(보기만). 칸을 고칠 때마다 바뀌어서 열 때 채운다(onToggle)
     if (c.type === 'enum' && !c.linked) h += `<details class="opt enumopt" data-c="${i}"><summary class="ico" title="Enum 값 목록 보기">⚙</summary><div class="pop"></div></details>`;
@@ -663,10 +670,11 @@ export class GridView {
       return;
     }
     if (el.classList.contains('pout')) { t.prefixOut = el.checked; this.update(); return; }
-    if (el.classList.contains('refon') || el.classList.contains('reftable')) {
+    if (el.classList.contains('refon') || el.classList.contains('refpick')) {
       if (e.type !== 'change') return;
-      const first = this.app.workbook.refCandidates(t)[0];
-      t.ref = el.classList.contains('reftable') ? el.value : el.checked && first ? first.name : '';
+      // 켜면 ID가 겹치는 테이블들을 골라 둔다(체크로 바꿀 수 있다). 대상 체크는 후보 순서대로 모은다
+      if (el.classList.contains('refon')) t.refs = el.checked ? this.app.workbook.bestRefs(t) : [];
+      else t.refs = [...this.el.querySelectorAll('.refpick:checked')].map(x => x.value);
       this.render();
       this.el.querySelector('.idopt').open = true; // 설정 창은 열어 둔 채로
       return;
@@ -674,14 +682,14 @@ export class GridView {
     if (el.classList.contains('prefix')) {
       t.prefix = el.value.trim();
       this.el.querySelectorAll('.pre').forEach(p => p.textContent = t.prefix);
-      this.el.querySelector('.idopt summary').classList.toggle('set', !!(t.prefix || t.ref));
+      this.el.querySelector('.idopt summary').classList.toggle('set', !!(t.prefix || t.refs.length));
       this.update();
       return;
     }
     if (el.classList.contains('cname')) {
       t.cols[c].name = el.value.trim();
       // 참조 중이면 이름이 바뀐 열의 연결(같은 이름 열 가져오기)을 칸을 떠날 때 다시 따진다
-      if (e.type === 'change' && t.ref) this.render(); else this.update();
+      if (e.type === 'change' && t.refs.length) this.render(); else this.update();
       return;
     }
     if (el.tagName === 'SELECT') {
@@ -737,7 +745,7 @@ export class GridView {
       t.rows[+el.dataset.r][el.dataset.c] = el.value.toLowerCase();
       return this.resortKeepFocus();
     }
-    if (col && col.id && (t.sortOf().c === 0 || t.ref)) this.resortKeepFocus();
+    if (col && col.id && (t.sortOf().c === 0 || t.refs.length)) this.resortKeepFocus();
     // 빈 줄에 미리 채운 번호를 받지 않고 다른 데로 가면 지운다 (행으로 친 게 아니니까)
     if (el.hasAttribute('data-ghostrow') && el.type !== 'checkbox') el.value = '';
   }

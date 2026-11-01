@@ -1,7 +1,7 @@
 import {esc} from '../common/util.js';
 
 // 엑셀 불러오기에서 가져올 시트를 체크박스로 고르는 창 (브라우저 기본 <dialog>).
-// sheets: [{name, size(설명 글자), meta(같이 들어갈 _Meta 시트 이름), empty, suggest(이름이 겹칠 때 쓸 이름)}]
+// sheets: [{name, size(설명 글자), empty, suggest(이름이 겹칠 때 쓸 이름)}]
 // taken: 이미 있는 탭 이름들. 이름이 겹치는 시트는 아래에 이름 칸이 나와 suggest(ItemDataTable_2)로 채워 두고 바로 고칠 수 있다
 // → 고른 시트 배열(name은 고친 이름), 취소하면 null
 export class SheetPicker {
@@ -12,7 +12,7 @@ export class SheetPicker {
       '<p class="dim">가져올 시트를 고르세요. 시트마다 새 탭으로 열립니다.</p>' +
       '<div class="list">' +
       sheets.map((s, i) => `<div class="item"><label${s.empty ? ' class="dim"' : ''}><input type="checkbox" value="${i}"${s.empty ? ' disabled' : ' checked'}>` +
-        `<b>${esc(s.name)}</b><small>${s.size}${s.meta ? ` · 설명은 ${esc(s.meta)}에서` : ''}</small></label>` +
+        `<b>${esc(s.name)}</b><small>${s.size}</small></label>` +
         (taken.has(s.name) && !s.empty ? `<div class="rename">이름 <input data-i="${i}" value="${esc(s.suggest)}"><small class="warn">⚠ 같은 이름의 탭이 이미 있습니다</small></div>` : '') +
         '</div>').join('') +
       '</div><div class="btns"><button type="button" class="cancel">취소</button><button value="ok" class="primary">가져오기</button></div></form>';

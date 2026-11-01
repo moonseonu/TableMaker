@@ -42,25 +42,40 @@ export class Importer {
     this.load(entries, errors, before, blank);
   }
 
-  // 엑셀: 가져올 시트를 고르면(SheetPicker) 시트마다 새 탭으로 연다.
-  // <이름>_Meta 시트는 따로 고르지 않고, 같은 이름 시트를 가져올 때 그 테이블의 컬럼 설명·타입으로 들어간다
+  // 엑셀: 모든 시트를 보여 주고 고른 시트만(SheetPicker) 시트마다 새 탭으로 연다.
+  // _Meta 같은 설명 시트도 다른 시트와 똑같이 취급한다. 설명 시트를 자동으로 읽어 붙이면, 시트의 줄이 밀려 있을 때
+  // 타입·설명이 엉뚱한 열에 들어가는 사고가 나서다. 설명은 테이블 설명 창에 붙여넣어 넣는다(MetaPanel)
   async openXlsx(f, errors) {
-    const sheets = await Xlsx.read(f), isMeta = s => /_meta$/i.test(s.name), wb = this.app.workbook;
-    const metas = new Map(sheets.filter(isMeta).map(s => [s.name.slice(0, -5).toLowerCase(), s]));
-    const list = sheets.filter(s => !isMeta(s)).map(s => {
-      const body = Importer.sheetBody(s.rows), meta = metas.get(s.name.toLowerCase());
+    const sheets = await Xlsx.read(f), wb = this.app.workbook;
+    const list = sheets.map(s => {
+      const body = Importer.sheetBody(s.rows);
       const n = body.slice(1).filter(r => r.some(v => v !== '')).length;
-      return {name: s.name, suggest: wb.freeName(s.name), body, meta: meta && meta.name, metaRows: meta && meta.rows, empty: !body.length,
+      return {name: s.name, suggest: wb.freeName(s.name), body, empty: !body.length,
         size: body.length ? `${n}행 × ${body[0].filter(v => v !== '').length}열` : '빈 시트'};
     });
     // 이미 있는 탭과 이름이 겹치는 시트는 고르는 창에서 이름을 고칠 수 있다(기본은 _2)
+    const added = [];
     for (const s of await SheetPicker.pick(f.name, list, new Set(wb.tables.map(t => t.name))) || []) {
       try {
         const t = Table.fromData(SheetText.toList(s.body), s.name);
-        if (s.metaRows) MetaDoc.readSheet(t, s.metaRows);
         wb.add(t);
+        added.push(t);
       } catch (err) { errors.push(`${s.name}: ${err.message}`); }
     }
+    this.autoRef(added);
+  }
+
+  // 엑셀 시트끼리 참조를 저절로 잇는다: 뒤 시트의 ID가 앞 시트들에 빠짐없이 다 있으면 그 앞 시트들을 참조한다
+  // (Production → Structure, Cost → Structure + Unit). 앞 시트가 뒤 시트를 참조하는 일은 드물어 보지 않는다.
+  // 일부만 겹치면 우연일 수 있어 잇지 않는다. 이름이 같은 열은 값이 대상과 같을 때만 🔗로 연결한다
+  autoRef(tables) {
+    const wb = this.app.workbook;
+    tables.forEach((t, k) => {
+      const refs = t.hasId && wb.coverRefs(t, tables.slice(0, k));
+      if (!refs) return;
+      t.refs = refs;
+      wb.keepOwnValues(t);
+    });
   }
 
   // 시트에서 표 부분: 맨 위에 제목 한 줄이 있는 시트도 있어서, 칸이 두 개 이상 찬 첫 줄부터를 표로 본다(그 줄이 컬럼 이름)

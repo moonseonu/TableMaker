@@ -49,7 +49,7 @@ export class MetaDoc {
         if (pre && !t.prefix) t.prefix = pre[1];
         t.prefixOut = /^ID · (String|문자)/.test(type) && !!t.prefix;
       } else if ((m = /^(.+?) · (.+)에서 가져옴$/.exec(type))) {
-        if (t.hasId) t.ref = m[2]; // 이 열은 참조를 켜면 다시 연결된다
+        if (t.hasId) for (const n of m[2].split(/\s*,\s*/)) if (!t.refs.includes(n)) t.refs.push(n); // 이 열은 참조를 켜면 다시 연결된다
       } else if (/^Enum(:|$)/.test(type)) { // 'Enum: 검, 활'의 목록은 칸 값에서 다시 나온다
         if (col.type !== 'enum') t.setType(i, 'enum');
       } else if (typeKey[type] && typeKey[type] !== col.type) t.setType(i, typeKey[type]);

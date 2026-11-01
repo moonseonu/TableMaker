@@ -15,10 +15,12 @@ export class Table {
     enum: 'Enum — 정해진 값 중 하나 (예: 검, 활, 지팡이). 칸에 적은 값이 목록이 되고, 앞 글자만 쳐도 자동 완성됩니다. JSON에는 글자로 나갑니다',
   };
 
-  // ref: 이 테이블의 ID가 가리키는 다른 테이블 이름 (Localization → items). 이름이 같은 열은 그 테이블 값으로 채운다 (Workbook.syncRef)
+  // refs: 이 테이블의 ID가 가리키는 다른 테이블 이름들 (Localization → items, Cost → Structure·Unit).
+  //   ID는 그중 어느 테이블에든 있으면 되고, 이름이 같은 열은 그 ID가 있는 테이블 값으로 채운다 (Workbook.syncRef).
+  //   예전 저장본은 대상이 하나인 ref라 refs로 옮긴다
   // flip: 행/열 바꿔 보기 (화면만, 데이터는 그대로)
-  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = '', flip = false} = {}) {
-    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, ref, flip});
+  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = '', refs = ref ? [ref] : [], flip = false} = {}) {
+    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, refs, flip});
   }
 
   static sample() {
@@ -65,7 +67,7 @@ export class Table {
   }
 
   typeName(c) {
-    if (c.linked) return `${Table.TYPES[c.type]} · ${this.ref}에서 가져옴`;
+    if (c.linked) return `${Table.TYPES[c.type]} · ${this.refs.join(', ')}에서 가져옴`;
     if (c.type === 'enum') return `Enum: ${this.enumValues(this.cols.indexOf(c)).join(', ')}`;
     return !c.id ? Table.TYPES[c.type] : this.prefixInJson ? 'ID · String' : 'ID · Int';
   }
@@ -143,7 +145,7 @@ export class Table {
     if (col.linked) return {}; // 참조 대상에서 가져온 값
     if (col.id) {
       if (!/^\d+$/.test(v) || ctx.dupIds.has(v)) return {bad: 'ID 번호가 비었거나, 숫자가 아니거나, 다른 행과 겹칩니다'};
-      if (ctx.refIds && !ctx.refIds.has(String(+v))) return {bad: `${this.ref}에 ${+v}이(가) 없습니다`};
+      if (ctx.refIds && !ctx.refIds.has(String(+v))) return {bad: `${this.refs.join(' · ')}에 ${+v}이(가) 없습니다`};
       const w = ctx.otherLens.get(String(+v).length);
       return w ? {warn: `${w.name} 테이블도 ${String(+v).length}자리 ID를 씁니다 (예: ${w.ex})`} : {};
     }
