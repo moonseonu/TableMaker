@@ -248,14 +248,23 @@ export class GridView {
   }
 
   // 그려진 칸만 칠한다 (안 그려진 행은 스크롤해서 그릴 때 fillRows가 다시 부른다)
+  // 열을 통째로(모든 행) 골랐으면 그 열들의 머리 칸, 행을 통째로(모든 열) 골랐으면 그 행들의 번호 칸도 칠한다(hsel)
   paintSel() {
-    this.el.querySelectorAll('td.insel').forEach(td => td.classList.remove('insel'));
+    this.el.querySelectorAll('td.insel, .hsel').forEach(x => x.classList.remove('insel', 'hsel'));
     if (!this.hasRange()) return;
-    const g = this.range();
+    const g = this.range(), t = this.t;
     this.el.querySelectorAll('td input[data-r]').forEach(el => {
       const r = +el.dataset.r, c = +el.dataset.c;
       if (r >= g.top && r <= g.bottom && c >= g.left && c <= g.right) el.closest('td').classList.add('insel');
     });
+    if (g.top === 0 && g.bottom === t.rows.length - 1) {
+      for (let c = g.left; c <= g.right; c++) this.el.querySelectorAll(`th[data-c="${c}"], th[data-tc="${c}"]`).forEach(th => th.classList.add('hsel'));
+    }
+    if (g.left === 0 && g.right === t.cols.length - 1) {
+      this.el.querySelectorAll('[data-delrow]').forEach(b => {
+        if (+b.dataset.delrow >= g.top && +b.dataset.delrow <= g.bottom) b.closest('td, th').classList.add('hsel');
+      });
+    }
   }
 
   // 범위의 값을 탭으로 나눈 글자로 (엑셀이 복사하는 모양과 같다). 접두사를 JSON에 넣는 테이블은 ID에도 붙인다
