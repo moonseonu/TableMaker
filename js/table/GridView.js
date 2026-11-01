@@ -25,7 +25,7 @@ export class GridView {
     el.addEventListener('focusout', e => this.onFocusOut(e));
     el.addEventListener('toggle', e => this.onToggle(e), true); // toggle은 버블링이 안 돼서 capture로
     el.addEventListener('focusin', e => this.onFocusIn(e));
-    el.addEventListener('dblclick', e => this.setMode(e.target, 'edit'));
+    el.addEventListener('dblclick', e => e.target.classList.contains('cname') ? this.focusEl(e.target) : this.setMode(e.target, 'edit')); // 이름 칸은 더블클릭으로 고친다
     el.addEventListener('click', e => this.onClick(e));
     el.addEventListener('keydown', e => this.onKey(e));
     el.addEventListener('mousedown', e => this.onMouseDown(e));
@@ -63,7 +63,7 @@ export class GridView {
   // 범위는 데이터의 행·열로 잡아서 세로 보기에서도 같다(화면에서는 돌려서 보일 뿐)
   // 범위로 하는 일: Ctrl+C 복사(엑셀에 표 모양 그대로), Delete 한꺼번에 비우기, Ctrl+V 왼쪽 위부터 붙여넣기(한 값이면 범위 전체)
   // drag: 지금 끄는 중인 것. cell 칸 범위, col 컬럼 머리에서 끌어 열 통째로, row 행 번호에서 끌어 행 통째로, move 열 순서 바꾸기
-  // 컬럼 머리칸(press): 짧게 클릭 → 이름 고치기, 누른 채 바로 끌기 → 열 고르기, 꾹(0.4초) 누른 뒤 끌기 → 열 옮기기
+  // 컬럼 머리칸(press): 클릭 → 열 통째로 고르기, 더블클릭 → 이름 고치기, 누른 채 바로 끌기 → 여러 열 고르기, 꾹(0.4초) 누른 뒤 끌기 → 열 옮기기
 
   cellOf(target) {
     const td = target.closest && target.closest('td');
@@ -148,7 +148,14 @@ export class GridView {
     this.press = this.drag = null;
     if (p) clearTimeout(p.timer);
     if (d === 'move') this.endMove();
-    else if (p && !d) this.focusEl(this.at(-1, p.c)); // 짧게 클릭: 이름 고치기
+    else if (p && !d) this.selectCol(p.c);
+  }
+
+  // 컬럼 이름 칸을 클릭: 엑셀에서 열 머리를 누를 때처럼 그 열을 통째로 고른다(행이 없으면 바로 이름 고치기)
+  selectCol(c) {
+    if (!this.t.rows.length) return this.focusEl(this.at(-1, c));
+    this.startDrag('col', {r: 0, c});
+    this.drag = null;
   }
 
   // ---------- 열 순서 바꾸기 (꾹 눌러 끌기) ----------

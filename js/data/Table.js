@@ -124,13 +124,16 @@ export class Table {
       return 'string';
     };
     const str = v => v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
+    // 시트에 적힌 타입. 단 bool인데 값이 1·0처럼 참/거짓이 아니면 값대로(Int) 둔다 — 바꾸면 JSON이 1 → true로 달라져서
+    const given = k => types[k] === 'bool' ? list.every(o => o[k] == null || typeof o[k] === 'boolean') && 'bool'
+      : types[k] !== 'id' && types[k];
     // ID를 접두사 + 번호로 나눈다. 접두사가 행마다 다르면 나누지 않고 그대로 둔다(오류로 표시됨)
     const parts = list.map(o => idKey && /^(.*?)(\d+)$/.exec(str(o[idKey])));
     const pre = parts[0] ? parts[0][1] : '';
     const split = parts.every(m => !m || m[1] === pre);
     return new Table({
       name, prefix: split ? pre : '', prefixOut: !!(split && pre),
-      cols: keys.map(k => k === idKey ? {name: k, type: 'string', id: true} : {name: k, type: types[k] && types[k] !== 'id' ? types[k] : typeOf(k)}),
+      cols: keys.map(k => k === idKey ? {name: k, type: 'string', id: true} : {name: k, type: given(k) || typeOf(k)}),
       rows: list.map((o, n) => keys.map(k => k === idKey && split && parts[n] ? parts[n][2] : str(o[k]))),
     });
   }
