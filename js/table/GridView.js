@@ -317,7 +317,8 @@ export class GridView {
     this.sel = null; // 다시 그리면 행 자리가 바뀔 수 있어 범위는 푼다 (clearRange는 다시 그린 뒤 되살린다)
     this.app.workbook.syncRef(t);
     // 모서리 칸: 행/열 바꿔 보기. 바꾼 상태면 파랗게 눌린 상태
-    // 모서리 칸: ⇄ 행/열 바꾸기와 타입 줄 접기. 이름 줄과 타입 줄에 걸친 한 칸이다(showTypes가 rowSpan·colSpan을 맞춘다)
+    // 모서리 칸: ⇄ 행/열 바꾸기와 타입 줄 접기를 나란히. 이름 줄 쪽 칸이라 타입 줄을 접고 펴도 버튼 자리가 그대로다
+    // (누른 자리를 다시 누르면 되돌아가게)
     const corner = `<th class="num corner"><div class="cornerbtns"><button class="ico cbtn flip${t.flip ? ' on' : ''}" id="flipView" title="${t.flip
       ? '행/열을 원래대로 (가로로 보기)' : '행/열 바꿔 보기 (열이 많은 테이블을 세로로)'}">⇄</button><button class="ico cbtn" id="typeToggle"></button></div></th>`;
     const ghostColHead = '<div class="col"><input class="cname" data-ghost placeholder="+ 새 열"></div>';
@@ -339,10 +340,7 @@ export class GridView {
   showTypes(on) {
     try { on ? localStorage.removeItem(TYPES_KEY) : localStorage.setItem(TYPES_KEY, '1'); } catch {}
     this.el.classList.toggle('notype', !on);
-    const b = this.el.querySelector('#typeToggle'), flip = this.t.flip, corner = this.el.querySelector('th.corner');
-    // 접힌 줄은 그려지지 않아 모서리 칸이 그 줄까지 걸치면 칸이 어긋난다
-    corner.rowSpan = !flip && on ? 2 : 1;
-    corner.colSpan = flip && on ? 2 : 1;
+    const b = this.el.querySelector('#typeToggle'), flip = this.t.flip;
     b.textContent = on ? (flip ? '«' : '︽') : (flip ? '»' : '︾');
     b.title = on ? '타입 줄 접기' : '타입 줄 펴기 (타입 바꾸기 · 열 삭제)';
     b.classList.toggle('on', !on);
@@ -360,7 +358,7 @@ export class GridView {
     // 머리줄 두 행: 이름, 타입. 맨 오른쪽 빈 열은 채우는 순간 진짜 열이 되고, 비어 있으면 JSON에 안 나온다
     let h = '<thead><tr class="hname">' + corner;
     t.cols.forEach((c, i) => h += `<th data-c="${i}"${this.moveTip(c)}>${this.nameHead(c, i)}</th>`);
-    h += `<th class="ghost">${ghostColHead}</th></tr><tr class="htype">`;
+    h += `<th class="ghost">${ghostColHead}</th></tr><tr class="htype"><th class="num"></th>`;
     t.cols.forEach((c, i) => h += `<th data-tc="${i}">${this.typeHead(c, i)}</th>`);
     h += '<th class="ghost"></th></tr></thead><tbody>';
     // 데이터 행은 두 빈 줄(padtop · padbot) 사이에 보이는 것만 들어간다 (fillRows)
@@ -482,7 +480,7 @@ export class GridView {
   flippedHtml(corner, ghostColHead) {
     const t = this.t;
     // 머리 열 두 개: 이름, 타입 (가로 보기의 두 머리 행을 돌린 것)
-    let h = '<thead><tr>' + corner;
+    let h = '<thead><tr>' + corner + '<th class="num tcol"></th>';
     t.rows.forEach((r, ri) => h += `<th class="num rowhead">${ri + 1}<button class="ico del" data-delrow="${ri}" title="행 삭제">✕</button></th>`);
     h += '<th class="num rowhead ghostcell"></th></tr></thead><tbody>';
     t.cols.forEach((c, ci) => {
