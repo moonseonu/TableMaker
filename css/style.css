@@ -145,7 +145,8 @@ tr:hover .num .del{visibility:visible}
 .dropmenu.outline summary{background:transparent;border-color:var(--accent);color:var(--accent-text)}
 .dropmenu.outline summary:hover{background:var(--accent-tint)}
 .dropmenu summary::-webkit-details-marker{display:none}
-.dropmenu .menu{position:absolute;right:0;top:calc(100% + 4px);z-index:3;min-width:230px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px;box-shadow:0 6px 16px var(--shadow)}
+/* 도구줄 메뉴(불러오기·파일 저장)는 표의 고정 머리 칸(z-index 1~5)보다 위에 */
+.dropmenu .menu{position:absolute;right:0;top:calc(100% + 4px);z-index:30;min-width:230px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px;box-shadow:0 6px 16px var(--shadow)}
 .dropmenu .menu.left{left:0;right:auto}
 .dropmenu .menu button{display:flex;justify-content:space-between;gap:12px;background:transparent;border:0;text-align:left;padding:7px 10px;white-space:nowrap}
 .dropmenu .menu button:hover,.dropmenu .menu a:hover{background:var(--hover)}
