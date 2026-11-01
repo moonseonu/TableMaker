@@ -1,4 +1,4 @@
-import {$, confirm2, saveFile} from '../common/util.js';
+import {$, ask, saveFile} from '../common/util.js';
 import {Zip} from '../common/Zip.js';
 import {MetaDoc} from '../meta/MetaDoc.js';
 
@@ -23,16 +23,17 @@ export class Exporter {
     this.menu.querySelector('[data-hint="md"]').textContent = base + '.md';
   }
 
-  save(b) {
+  async save(b) {
     const kind = b.dataset.save, t = this.app.table, wb = this.app.workbook;
+    this.menu.open = false;
     if (kind === 'project') saveFile(`TableMaker_${new Date().toISOString().slice(0, 10)}.zip`, this.projectZip(), 'application/zip');
     else {
-      if (kind === 'json' && this.app.errors && !confirm2(b, `오류 ${this.app.errors}개 · 그래도 저장`)) return;
+      if (kind === 'json' && this.app.errors && !await ask(`오류가 ${this.app.errors}개 있습니다`,
+        '빨간 칸은 JSON에 빈 값(null)이나 잘못된 값으로 나갑니다. 그래도 저장할까요?', '그래도 저장')) return;
       wb.syncRef(t); // 참조 열은 저장 직전 값으로
       if (kind === 'json') saveFile(safeName(t.name) + '.json', JSON.stringify(t.toData(), null, 2), 'application/json');
       else saveFile(safeName(t.name) + '.md', MetaDoc.toMd(t), 'text/markdown');
     }
-    this.menu.open = false;
   }
 
   // 압축을 풀면 JSON은 Unity 폴더에 바로 넣고, 같은 이름의 .md는 그 옆에 둔다. 불러오기(파일·폴더)로 다시 열 수 있다

@@ -3,13 +3,16 @@ import {Zip} from '../common/Zip.js';
 import {Table} from '../data/Table.js';
 import {MetaDoc} from '../meta/MetaDoc.js';
 import {SheetText} from './SheetText.js';
+import {Xlsx} from './Xlsx.js';
+import {SheetPicker} from './SheetPicker.js';
 
 const ext = name => (/\.([^.\/\\]+)$/.exec(name) || [])[1]?.toLowerCase();
 const baseName = name => name.split(/[\/\\]/).pop().replace(/\.[^.]+$/, '');
 
 // 불러오는 영역: 불러오기 ▾(파일 · 폴더)와, 아무 칸도 고르지 않고 붙여넣은 표.
-// 파일은 JSON · CSV · 설명서 .md · zip(프로젝트 전체 저장본 등), 폴더는 안의 JSON · CSV · .md 전부.
-// 무엇을 열든 지금 탭은 그대로 두고 새 탭으로 더한다 (작업 중인 데이터를 덮어쓰지 않게)
+// 파일은 JSON · CSV · 설명서 .md · zip(프로젝트 전체 저장본 등) · 엑셀 .xlsx(시트를 골라서), 폴더는 안의 JSON · CSV · .md 전부.
+// 무엇을 열든 지금 탭은 그대로 두고 새 탭으로 더한다 (작업 중인 데이터를 덮어쓰지 않게). 이름이 겹치면 _2, _3…(Workbook.add).
+// 단, 탭이 아무것도 안 적은 테이블 하나뿐이면(처음 쓰는 사람) 그 탭은 치우고 불러온 것만 남긴다
 export class Importer {
   constructor(app) {
     this.app = app;
@@ -24,35 +27,74 @@ export class Importer {
   }
 
   async onFiles(e) {
-    const files = [...e.target.files], entries = [], errors = [];
+    const files = [...e.target.files], entries = [], errors = [], wb = this.app.workbook, before = wb.tables.length;
     e.target.value = '';
+    // 빈 탭 하나뿐이면 불러오는 동안 이름을 비켜 둔다(불러온 items에 _2가 붙지 않게). 끝나면 load가 치우거나 되돌린다
+    const blank = before === 1 && wb.tables[0].isBlank ? {t: wb.tables[0], name: wb.tables[0].name} : null;
+    if (blank) blank.t.name = '\u0000';
     for (const f of files) {
       try {
         if (ext(f.name) === 'zip') entries.push(...await Zip.read(f));
+        else if (ext(f.name) === 'xlsx') { if (e.target.id === 'file') await this.openXlsx(f, errors); } // 폴더 안의 엑셀은 넘긴다(같은 표의 JSON과 겹쳐서)
         else entries.push({name: f.webkitRelativePath || f.name, bytes: new Uint8Array(await f.arrayBuffer())});
       } catch (err) { errors.push(`${f.name}: ${err.message}`); }
     }
-    this.load(entries, errors);
+    this.load(entries, errors, before, blank);
+  }
+
+  // 엑셀: 가져올 시트를 고르면(SheetPicker) 시트마다 새 탭으로 연다.
+  // <이름>_Meta 시트는 따로 고르지 않고, 같은 이름 시트를 가져올 때 그 테이블의 컬럼 설명·타입으로 들어간다
+  async openXlsx(f, errors) {
+    const sheets = await Xlsx.read(f), isMeta = s => /_meta$/i.test(s.name), wb = this.app.workbook;
+    const metas = new Map(sheets.filter(isMeta).map(s => [s.name.slice(0, -5).toLowerCase(), s]));
+    const list = sheets.filter(s => !isMeta(s)).map(s => {
+      const body = Importer.sheetBody(s.rows), meta = metas.get(s.name.toLowerCase());
+      const n = body.slice(1).filter(r => r.some(v => v !== '')).length;
+      return {name: s.name, suggest: wb.freeName(s.name), body, meta: meta && meta.name, metaRows: meta && meta.rows, empty: !body.length,
+        size: body.length ? `${n}행 × ${body[0].filter(v => v !== '').length}열` : '빈 시트'};
+    });
+    // 이미 있는 탭과 이름이 겹치는 시트는 고르는 창에서 이름을 고칠 수 있다(기본은 _2)
+    for (const s of await SheetPicker.pick(f.name, list, new Set(wb.tables.map(t => t.name))) || []) {
+      try {
+        const t = Table.fromData(SheetText.toList(s.body), s.name);
+        if (s.metaRows) MetaDoc.readSheet(t, s.metaRows);
+        wb.add(t);
+      } catch (err) { errors.push(`${s.name}: ${err.message}`); }
+    }
+  }
+
+  // 시트에서 표 부분: 맨 위에 제목 한 줄이 있는 시트도 있어서, 칸이 두 개 이상 찬 첫 줄부터를 표로 본다(그 줄이 컬럼 이름)
+  static sheetBody(rows) {
+    const i = rows.findIndex(r => r.filter(v => v !== '').length > 1);
+    return i < 0 ? rows : rows.slice(i);
   }
 
   // entries: [{name, bytes}]. 표 파일을 먼저 모두 열고, 설명서는 그 뒤에 이름이 같은 테이블에 붙인다
   // (설명서가 다른 테이블을 참조하면 그 테이블이 먼저 열려 있어야 해서)
-  load(entries, errors = []) {
-    const wb = this.app.workbook, before = wb.tables.length;
+  // before: 이번에 불러오기 전의 탭 수 (엑셀 시트는 load 전에 먼저 탭이 된다)
+  // blank: 이름을 비켜 둔 빈 탭 {t, name}. 하나라도 열었으면 치우고, 못 열었으면 이름을 되돌린다
+  load(entries, errors = [], before = this.app.workbook.tables.length, blank = null) {
+    const wb = this.app.workbook, added = new Map(); // 파일 이름 → 연 테이블 (이름에 _2가 붙어도 설명서를 제 테이블에 붙이게)
     // Unity 폴더의 .meta 같은 다른 파일은 조용히 넘긴다
     const data = entries.filter(f => ['json', 'csv'].includes(ext(f.name))), docs = entries.filter(f => ext(f.name) === 'md');
     for (const f of data) {
       try {
         const text = SheetText.decode(f.bytes);
-        wb.add(Table.fromData(ext(f.name) === 'csv' ? SheetText.csv(text) : JSON.parse(text), baseName(f.name)));
+        const t = Table.fromData(ext(f.name) === 'csv' ? SheetText.csv(text) : JSON.parse(text), baseName(f.name));
+        wb.add(t);
+        added.set(baseName(f.name), t);
       } catch (err) { errors.push(`${baseName(f.name)}: ${err instanceof SyntaxError ? 'JSON 문법 오류' : err.message}`); }
     }
     for (const f of docs) {
-      const t = wb.findByName(baseName(f.name));
+      const t = added.get(baseName(f.name)) || wb.findByName(baseName(f.name)) || (blank && blank.name === baseName(f.name) ? blank.t : null);
       if (t) MetaDoc.applyMd(t, SheetText.decode(f.bytes));
       else if (!data.length) errors.push(`${baseName(f.name)}.md: 이름이 같은 테이블이 없습니다`); // 설명서만 따로 고른 경우만 알린다
     }
-    if (!data.length && !docs.length && !errors.length) errors.push('열 수 있는 파일(JSON · CSV · MD)이 없습니다');
+    if (wb.tables.length === before && !docs.length && !errors.length) errors.push('열 수 있는 파일(JSON · CSV · MD · XLSX)이 없습니다');
+    if (blank) {
+      if (wb.tables.length > before) { wb.remove(wb.tables.indexOf(blank.t)); before--; }
+      else blank.t.name = blank.name;
+    }
     this.app.show(wb.tables.length > before ? wb.tables.length - 1 : wb.cur);
     if (errors.length) this.app.status('불러오기 실패 · ' + errors.join(' / '), 'bad');
   }

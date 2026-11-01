@@ -12,13 +12,14 @@ button{background:var(--btn);border:1px solid var(--line);border-radius:4px;padd
 button:hover{background:var(--hover)}
 button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 button.warn,button.warn:hover{background:var(--badline);border-color:var(--badline);color:#fff}
-header{padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);text-align:center}
+header{padding:14px 12px;background:var(--panel);border-bottom:1px solid var(--line);text-align:center}
 header{position:relative}
-header h1{margin:0;font-size:16px}
+header h1{margin:0;font-size:20px}
 /* 제목 줄 오른쪽 ☰: 화면 테마 같은 가끔 바꾸는 설정 (아래 .dropmenu 공통 모양보다 우선하도록 header를 붙였다) */
 header .appmenu{position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:10;text-align:left}
-header .appmenu summary{padding:2px 8px;font-size:15px;line-height:1.4}
+header .appmenu summary{padding:4px 12px;font-size:20px;line-height:1.3}
 header .appmenu .menu{min-width:190px}
+.updatebar{flex:none;border:0;border-radius:0;padding:8px 12px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
 header .appmenu .menu .h{color:var(--dim);font-size:12px;padding:6px 10px 2px}
 header .appmenu .menu button{justify-content:flex-start;align-items:center}
 header .appmenu .dot{width:11px;height:11px;border-radius:50%;border:1px solid var(--dim);flex:none}
@@ -53,12 +54,15 @@ th.bad{box-shadow:inset 0 -2px var(--badline)}
 .col .cname:focus{border-color:var(--accent);outline:0}
 .col select,.col .prefix{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:1px 4px;color:var(--dim)}
 .col .prefix{width:80px}
-.idopt{position:relative}
-.idopt summary{list-style:none;cursor:pointer}
-.idopt summary::-webkit-details-marker{display:none}
-.idopt summary.set{color:var(--accent)}
-.idopt .pop{position:absolute;left:0;top:calc(100% + 6px);z-index:5;display:grid;gap:8px;white-space:nowrap;font-weight:400;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;box-shadow:0 6px 16px var(--shadow)}
-.idopt .pop label{display:flex;gap:6px;align-items:center;color:var(--dim);cursor:pointer}
+.enumlist{margin:0;padding:0;list-style:none;display:grid;gap:2px;max-height:240px;overflow:auto}
+.enumlist li{padding:3px 8px;background:var(--bg);border-radius:3px}
+.opt .pop .dim{color:var(--dim)}
+.opt{position:relative}
+.opt summary{list-style:none;cursor:pointer}
+.opt summary::-webkit-details-marker{display:none}
+.opt summary.set{color:var(--accent)}
+.opt .pop{position:absolute;left:0;top:calc(100% + 6px);z-index:5;display:grid;gap:8px;white-space:nowrap;font-weight:400;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;box-shadow:0 6px 16px var(--shadow)}
+.opt .pop label{display:flex;gap:6px;align-items:center;color:var(--dim);cursor:pointer}
 .ico{padding:0 5px;background:transparent;border:0;color:var(--dim)}
 .ico:hover{color:var(--text);background:var(--hover)}
 .ico.sort{font-size:11px;color:var(--text)}
@@ -69,9 +73,13 @@ td input[data-mode="select"]{caret-color:transparent;cursor:cell}
 td input[data-mode="edit"]:focus{outline-color:var(--warntext)}
 /* 드래그·Shift로 고른 범위 */
 td.insel{background:var(--accent-tint)}
+#grid tr.pad td{border:0;background:transparent}
+#grid:focus{outline:0} /* 스크롤로 치워진 커서를 잠시 맡아 두는 동안 */
 td.insel input{cursor:cell}
 /* 열 순서 바꾸기: 든 열은 흐리게, 끼울 자리는 파란 선 */
 #grid .lift{opacity:.4}
+.hint{position:fixed;display:none;pointer-events:none;z-index:20;white-space:pre;color:var(--dim)}
+.hint i{font-style:normal;visibility:hidden}
 .moveline{position:fixed;display:none;background:var(--accent);pointer-events:none;z-index:20;border-radius:2px}
 body.colmove .moveline{display:block}
 body.colmove, body.colmove *{cursor:grabbing !important}
@@ -82,7 +90,7 @@ td.chk{text-align:center}
 td.linked input{color:var(--dim);cursor:default}
 .link{display:flex;align-items:center;padding:2px 4px;border-radius:3px}
 .link.on,.link.on:hover{color:var(--accent);background:var(--accent-tint)}
-.idopt .pop select{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:2px 4px}
+.opt .pop select{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:2px 4px}
 td.bad{background:var(--bad)}
 td.warn{background:var(--warnbg)}
 #status.warn{color:var(--warntext)}
@@ -134,3 +142,19 @@ tr:hover .num .del{visibility:visible}
 #cdesc td.t{color:var(--dim)}
 #cdesc td:last-child{width:100%;padding-right:0}
 #cdesc input{width:100%;min-width:160px;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:4px 6px}
+/* 팝업 창 (util.js ask, js/import/SheetPicker.js) */
+dialog.popup{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:16px 18px;min-width:340px;max-width:90vw;box-shadow:0 10px 30px var(--shadow)}
+dialog.popup::backdrop{background:rgba(0,0,0,.4)}
+.popup h3{margin:0 0 4px;font-size:15px}
+.popup .dim{color:var(--dim)}
+.popup p{margin:0 0 10px;white-space:pre-line}
+.sheetpick .list{display:grid;gap:2px;max-height:60vh;overflow:auto;margin-bottom:14px}
+.sheetpick label{display:flex;gap:8px;align-items:baseline;padding:5px 6px;border-radius:4px;cursor:pointer}
+.sheetpick label:hover{background:var(--hover)}
+.sheetpick small{color:var(--dim)}
+.sheetpick .rename{display:flex;gap:8px;align-items:center;padding:0 6px 6px 30px;color:var(--dim)}
+.sheetpick .rename input{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:2px 6px;color:var(--text);width:200px}
+.sheetpick .rename .warn{color:var(--warntext)}
+.popup .btns{display:flex;justify-content:flex-end;gap:8px}
+.donate img{display:block;margin:10px auto;border-radius:6px} /* QR은 흰 바탕째로 그려 다크 테마에서도 찍힌다 */
+.donate p{text-align:center}

@@ -21,6 +21,8 @@
       <hr>
       <!-- 같은 탭으로 연다: 새 탭에서 '← TableMaker로'를 누르면 툴이 두 탭에서 열려 같은 저장 공간을 서로 덮어쓸 수 있다 -->
       <a href="guide.html">사용 안내</a>
+      <button id="donate">☕ 커피 한 잔 후원</button>
+      <div class="h" id="appVersion"></div>
     </div>
   </details>
 </header>
@@ -30,13 +32,13 @@
 <div class="work">
 <div class="toolbar">
   <details id="openMenu" class="dropmenu outline">
-    <summary title="JSON · CSV는 새 탭으로 열리고, 같은 이름의 설명서(.md)가 있으면 설명과 설정도 함께 되살아납니다.&#10;엑셀에서 복사한 표는 빈 곳을 누르고 Ctrl+V 하면 새 탭으로 열립니다">불러오기 ▾</summary>
+    <summary title="JSON · CSV는 새 탭으로 열리고, 같은 이름의 설명서(.md)가 있으면 설명과 설정도 함께 되살아납니다.&#10;엑셀(.xlsx)은 가져올 시트를 골라 시트마다 새 탭으로 열립니다.&#10;엑셀에서 복사한 표는 빈 곳을 누르고 Ctrl+V 하면 새 탭으로 열립니다">불러오기 ▾</summary>
     <div class="menu left">
-      <button data-open="file">파일 <small>JSON · CSV · MD · ZIP</small></button>
+      <button data-open="file">파일 <small>JSON · CSV · MD · ZIP · XLSX</small></button>
       <button data-open="folder">폴더 <small>안의 JSON · CSV · MD 전부</small></button>
     </div>
   </details>
-  <input type="file" id="file" accept=".json,.csv,.md,.zip" multiple hidden>
+  <input type="file" id="file" accept=".json,.csv,.md,.zip,.xlsx" multiple hidden>
   <input type="file" id="folder" webkitdirectory multiple hidden>
   <span class="spacer"></span>
   <span id="status"></span>

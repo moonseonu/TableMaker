@@ -39,8 +39,8 @@
       <thead><tr>
         <th class="num corner"><span class="ico">⇄</span></th>
         <th><div class="col"><input class="cname idname" value="id"><select><option>ID</option></select><span class="ico">⚙</span><span class="ico sort">▼</span><span class="ico">✕</span></div></th>
-        <th><div class="col"><input class="cname" value="name"><select><option>문자</option></select><span class="ico">✕</span><i class="mk">3</i></div></th>
-        <th><div class="col"><input class="cname" value="price"><select><option>정수</option></select><span class="ico">✕</span></div></th>
+        <th><div class="col"><input class="cname" value="name"><select><option>String</option></select><span class="ico">✕</span><i class="mk">3</i></div></th>
+        <th><div class="col"><input class="cname" value="price"><select><option>Int</option></select><span class="ico">✕</span></div></th>
         <th class="ghost"><div class="col"><input class="cname" placeholder="+ 새 열"><i class="mk">1</i></div></th>
       </tr></thead>
       <tbody>
@@ -53,7 +53,7 @@
   <ol class="notes">
     <li><i class="mk">1</i><span><b>새 열</b> — 맨 오른쪽 점선 칸에 컬럼 이름을 적으면 열이 생깁니다. 이름 대신 값부터 적어도 되고, 그러면 <code>col1</code> 같은 임시 이름이 붙습니다(위로 올라가 이름을 고치면 됩니다). 비워 두면 JSON에 나오지 않습니다.</span></li>
     <li><i class="mk">2</i><span><b>새 행</b> — 맨 아래 점선 줄에 적으면 행이 생깁니다. Name처럼 ID가 아닌 칸부터 적으면 ID는 가장 큰 번호의 다음 번호가 자동으로 붙습니다. 마지막 행에서 <kbd>Enter</kbd>를 치면 그 줄로 내려가고, 긴 표에서는 <kbd>Ctrl</kbd>+<kbd>↓</kbd>로 한 번에 갑니다.</span></li>
-    <li><i class="mk">3</i><span><b>열 타입</b> — ID · 문자 · 정수 · 실수 · 참/거짓. JSON에 그 타입 그대로 나갑니다(<code>"900"</code>이 아니라 <code>900</code>). 새로 만든 열은 처음 적은 값을 보고 타입이 자동으로 정해지고, 드롭다운에서 언제든 바꿀 수 있습니다. 타입을 바꿔도 칸의 값은 그대로이고, 맞지 않는 값만 빨간 칸으로 알려줍니다(참/거짓 열은 값이 true · false · 빈칸일 때만 체크박스).</span></li>
+    <li><i class="mk">3</i><span><b>열 타입</b> — ID · String(문자열) · Int(정수) · Float(실수) · Bool(참/거짓) · Enum(정해진 값 중 하나). 드롭다운에 마우스를 올리면 타입 설명이 보입니다. JSON에 그 타입 그대로 나갑니다(<code>"900"</code>이 아니라 <code>900</code>). 새로 만든 열은 처음 적은 값을 보고 타입이 자동으로 정해지고, 드롭다운에서 언제든 바꿀 수 있습니다. 타입을 바꿔도 칸의 값은 그대로이고, 맞지 않는 값만 빨간 칸으로 알려줍니다(Bool 열은 값이 true · false · 빈칸일 때만 체크박스).<br><b>Enum</b>은 엑셀처럼 칸에 바로 적습니다. 그 열에 적힌 값들이 곧 값 목록이고, 앞 글자만 쳐도 나머지가 흐리게 보여 Enter·Tab으로 채워집니다(그대로 두려면 Backspace나 Delete). 옆의 ⚙를 누르면 지금 목록이 보입니다. 잘못 적은 값은 칸을 고치면 목록에서도 사라집니다. JSON에는 글자로 나갑니다.</span></li>
     <li><i class="mk">4</i><span><b>빨간 칸</b> — 타입에 맞지 않는 값입니다(위 표의 <code>천원</code>). 위쪽에 오류 개수가 뜨고, 고치면 사라집니다.</span></li>
   </ol>
   <div class="tip"><b>칸 고르기와 고치기 (엑셀과 같음)</b> — 칸을 클릭하면 고른 상태가 되고, 화살표로 옆 칸으로 움직입니다. 그대로 타이핑하면 기존 값을 지우고 새로 쓰고, 기존 값을 일부만 고치려면 더블클릭이나 <kbd>F2</kbd>. 고치던 것은 <kbd>Esc</kbd>로 취소, 고른 칸은 <kbd>Delete</kbd>로 비웁니다. 여러 칸은 드래그해서 고르고(컬럼 이름 칸이나 행 번호를 끌면 열·행 통째로) <kbd>Ctrl</kbd>+<kbd>C</kbd>로 복사하거나 <kbd>Delete</kbd>로 한꺼번에 비우며, 잘못 고친 것은 <kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌립니다. 열 순서는 컬럼 이름 칸을 꾹 눌러 끌어서 바꿉니다. 키 전체는 <a href="#keys" style="color:var(--accent-text)">보기 · 단축키</a>에 있습니다.</div>
@@ -70,7 +70,7 @@
         <thead><tr>
           <th class="num corner"><span class="ico">⇄</span></th>
           <th><div class="col"><input class="cname idname" value="id"><select><option>ID</option></select><span class="ico set" style="color:var(--accent)">⚙</span><i class="mk">2</i><span class="ico sort">▼</span><i class="mk">3</i></div></th>
-          <th><div class="col"><input class="cname" value="name"><select><option>문자</option></select></div></th>
+          <th><div class="col"><input class="cname" value="name"><select><option>String</option></select></div></th>
         </tr></thead>
         <tbody>
           <tr><td class="num">1</td><td><div class="idbox"><span class="pre">item_</span><input value="1001"></div></td><td><input value="Iron Sword"></td></tr>
@@ -104,8 +104,8 @@
       <thead><tr>
         <th class="num corner"><span class="ico">⇄</span></th>
         <th><div class="col"><input class="cname idname" value="ID"><select><option>ID</option></select><span class="ico" style="color:var(--accent)">⚙</span><i class="mk">1</i><span class="ico sort">▼</span></div></th>
-        <th><div class="col"><input class="cname" value="Name"><select disabled><option>문자</option></select><span class="ico link on"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span><i class="mk">3</i></div></th>
-        <th><div class="col"><input class="cname" value="Korean"><select><option>문자</option></select></div></th>
+        <th><div class="col"><input class="cname" value="Name"><select disabled><option>String</option></select><span class="ico link on"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span><i class="mk">3</i></div></th>
+        <th><div class="col"><input class="cname" value="Korean"><select><option>String</option></select></div></th>
       </tr></thead>
       <tbody>
         <tr><td class="num">1</td><td><div class="idbox"><span class="pre"></span><input value="1011"></div></td><td class="linked"><div class="idbox"><input value="CornSeed"><i class="mk">2</i></div></td><td><input value="옥수수 씨앗"></td></tr>
@@ -132,9 +132,10 @@
       <div class="metabody">
         <textarea id="tdesc" rows="2">무기 아이템 목록. 상점·드롭에서 사용</textarea>
         <table><tbody id="cdesc">
-          <tr><th>id</th><td class="t">ID · 정수</td><td><input value="고유 번호. 1000번대 무기"></td></tr>
-          <tr><th>name</th><td class="t">문자</td><td><input value="표시 이름"></td></tr>
-          <tr><th>price</th><td class="t">정수</td><td><input value="상점 판매가"></td></tr>
+          <tr><th>id</th><td class="t">ID · Int</td><td><input value="고유 번호. 1000번대 무기"></td></tr>
+          <tr><th>name</th><td class="t">String</td><td><input value="표시 이름"></td></tr>
+          <tr><th>price</th><td class="t">Int</td><td><input value="상점 판매가"></td></tr>
+          <tr><th>kind</th><td class="t">Enum: 검, 활, 지팡이</td><td><input value="무기 종류"></td></tr>
         </tbody></table>
       </div>
     </div>
@@ -144,9 +145,10 @@
 
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
-| id | ID · 정수 (작성 시 접두사 `item_`) | 고유 번호. 1000번대 무기 |
-| name | 문자 | 표시 이름 |
-| price | 정수 | 상점 판매가 |</pre></div>
+| id | ID · Int (작성 시 접두사 `item_`) | 고유 번호. 1000번대 무기 |
+| name | String | 표시 이름 |
+| price | Int | 상점 판매가 |
+| kind | Enum: 검, 활, 지팡이 | 무기 종류 |</pre></div>
   </div>
   <ol class="notes">
     <li><i class="mk">1</i><span><b>적기</b> — 위쪽 <b>테이블 설명</b> 버튼을 누르면 아래에 창이 열립니다. 테이블 설명과 컬럼별 설명을 적습니다.</span></li>
@@ -162,7 +164,7 @@
   <p class="lead">무엇을 불러와도 지금 탭은 그대로 두고 새 탭으로 더합니다.</p>
   <div class="row" inert>
     <div class="dropmenu outline"><div class="menu static">
-      <button>파일 <small>JSON · CSV · MD · ZIP<i class="mk">1</i></small></button>
+      <button>파일 <small>JSON · CSV · MD · ZIP · XLSX<i class="mk">1</i></small></button>
       <button>폴더 <small>안의 JSON · CSV · MD 전부<i class="mk">2</i></small></button>
     </div></div>
     <div class="dropmenu"><div class="menu static">
@@ -173,9 +175,9 @@
     </div></div>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>불러오기 ▾ → 파일</b> — JSON · CSV · 설명서(.md) · zip을 여러 개 함께 고를 수 있습니다. 한국어 엑셀이 저장한 CSV도 글자가 깨지지 않습니다.</span></li>
+    <li><i class="mk">1</i><span><b>불러오기 ▾ → 파일</b> — JSON · CSV · 설명서(.md) · zip을 여러 개 함께 고를 수 있습니다. 한국어 엑셀이 저장한 CSV도 글자가 깨지지 않습니다.<br><b>엑셀(.xlsx)</b>을 고르면 시트 목록 창이 떠서, 체크한 시트만 시트마다 새 탭으로 열립니다. 수식 칸은 계산된 값으로 들어오고, 맨 위에 제목 줄이 있으면 건너뜁니다. <code>ItemDataTable_Meta</code>처럼 <b>이름_Meta</b> 시트가 있으면 그 테이블의 컬럼 설명·타입으로 함께 들어갑니다.<br>불러온 표는 늘 새 탭으로 열리고, 이미 있는 이름이면 <code>ItemDataTable_2</code>처럼 번호가 붙습니다. 엑셀은 시트 목록 창에서 이름이 겹치는 시트 아래에 이름 칸이 나와, 가져오기 전에 바로 고칠 수 있습니다. 아무것도 적지 않은 처음 탭 하나만 있을 때 불러오면 그 탭은 치우고 불러온 것만 남깁니다.</span></li>
     <li><i class="mk">2</i><span><b>불러오기 ▾ → 폴더</b> — Unity 프로젝트의 Json 폴더를 통째로 고르면 안의 테이블이 한 번에 열립니다. <code>.meta</code> 같은 다른 파일은 건너뜁니다.</span></li>
-    <li><i class="mk">3</i><span><b>파일 저장 ▾</b> — JSON과 설명서는 지금 보고 있는 탭 하나만 저장합니다. 오류가 있으면 한 번 더 눌러야 저장됩니다.</span></li>
+    <li><i class="mk">3</i><span><b>파일 저장 ▾</b> — JSON과 설명서는 지금 보고 있는 탭 하나만 저장합니다. 오류가 있으면 "그래도 저장할까요?" 확인 창이 뜹니다.</span></li>
     <li><i class="mk">4</i><span><b>프로젝트 전체 (.zip)</b> — 모든 탭의 JSON과 설명서를 묶습니다. 압축을 풀면 JSON은 게임 폴더에 바로 넣고, 그대로 다시 불러와 이어서 작업할 수 있습니다.</span></li>
   </ol>
 </section>
@@ -191,14 +193,14 @@
         <th class="num rowhead">1</th>
       </tr></thead>
       <tbody>
-        <tr><th class="colhead"><div class="col"><input class="cname" value="RealTimePerDay"><select><option>정수</option></select></div></th><td><input value="600"></td></tr>
-        <tr><th class="colhead"><div class="col"><input class="cname" value="DaysPerYear"><select><option>정수</option></select></div></th><td><input value="336"></td></tr>
-        <tr><th class="colhead"><div class="col"><input class="cname" value="GraceInterest"><select><option>실수</option></select></div></th><td><input value="0.1"></td></tr>
+        <tr><th class="colhead"><div class="col"><input class="cname" value="RealTimePerDay"><select><option>Int</option></select></div></th><td><input value="600"></td></tr>
+        <tr><th class="colhead"><div class="col"><input class="cname" value="DaysPerYear"><select><option>Int</option></select></div></th><td><input value="336"></td></tr>
+        <tr><th class="colhead"><div class="col"><input class="cname" value="GraceInterest"><select><option>Float</option></select></div></th><td><input value="0.1"></td></tr>
       </tbody>
     </table>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>⇄ 행/열 바꿔 보기</b> — 표 왼쪽 위 모서리. Config처럼 한 줄에 열이 수십 개인 테이블을 위아래로 훑어볼 수 있습니다. 보는 방향만 바뀌고 JSON은 그대로이며, 테이블마다 따로 기억합니다.</span></li>
+    <li><i class="mk">1</i><span><b>⇄ 행/열 바꿔 보기</b> — 표 왼쪽 위 모서리. Config처럼 한 줄에 열이 수십 개인 테이블을 위아래로 훑어볼 수 있습니다. 보는 방향만 바뀌고 JSON은 그대로이며, 테이블마다 따로 기억합니다. 행이 수천 개인 테이블은 가로 보기가 훨씬 빠릅니다(가로 보기는 화면에 보이는 행만 그립니다).</span></li>
   </ol>
   <h3>단축키</h3>
   <table class="keys">
@@ -209,6 +211,7 @@
     <tr><th>드래그 · <kbd>Shift</kbd>+클릭 · <kbd>Shift</kbd>+<kbd>←↑↓→</kbd></th><td>여러 칸 범위 고르기. 드래그하다 표 가장자리로 끌면 그쪽으로 표가 저절로 넘어가며 계속 고를 수 있습니다. <kbd>Esc</kbd>나 다른 칸 클릭으로 풀기</td></tr>
     <tr><th>컬럼 이름 칸에서 끌기 · 행 번호 클릭·끌기</th><td>열 · 행을 통째로 고르기 (컬럼 이름 칸을 짧게 클릭하면 이름 고치기)</td></tr>
     <tr><th>컬럼 이름 칸을 꾹 눌러 끌기</th><td>열 순서 바꾸기. 0.4초 누르면 열이 흐려지고, 끌면 파란 선이 끼울 자리를 보여줍니다. 놓으면 그 자리로 옮겨지고 JSON 키 순서도 바뀝니다(<kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌리기). ID 열은 맨 앞 고정, 세로 보기(⇄)에서는 위아래로 끕니다</td></tr>
+    <tr><th>탭 더블클릭 · 탭·열의 ✕</th><td>테이블 이름 바꾸기 · 테이블·열 삭제 (확인 창에서 <b>삭제</b>를 누르면 지워지고, <kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌릴 수 있습니다)</td></tr>
     <tr><th><kbd>Ctrl</kbd>+<kbd>C</kbd></th><td>고른 칸(범위)을 복사. 엑셀에 붙여넣으면 표 모양 그대로 들어갑니다</td></tr>
     <tr><th><kbd>Ctrl</kbd>+<kbd>Z</kbd> · <kbd>Ctrl</kbd>+<kbd>Y</kbd></th><td>되돌리기 · 다시 하기 (최근 100번까지. 한 칸에 이어서 친 것은 한 번으로)</td></tr>
     <tr><th><kbd>Enter</kbd> · <kbd>↓</kbd></th><td>아래 칸. 마지막 행에서는 맨 아래 빈 줄로. ID 칸이면 다음 번호(1001 → 1002)가 미리 채워집니다</td></tr>
@@ -227,7 +230,8 @@
   <div class="cards">
     <div class="card"><h3>데이터는 내 브라우저에만</h3><p>입력한 표는 서버로 보내지 않고 지금 쓰는 브라우저에만 저장됩니다. 가입도 필요 없습니다.</p></div>
     <div class="card"><h3>백업은 직접</h3><p>브라우저 데이터를 지우거나 다른 PC로 옮기면 표가 보이지 않습니다. 중요한 작업은 <b>파일 저장 ▾ → 프로젝트 전체 (.zip)</b>로 받아 두세요.</p></div>
-    <div class="card"><h3>무료</h3><p>모든 기능을 무료로 쓸 수 있습니다. 만든 데이터는 상업용 게임을 포함해 자유롭게 쓰면 됩니다.</p></div>
+    <div class="card"><h3>무료</h3><p>모든 기능을 무료로 쓸 수 있습니다. 만든 데이터는 상업용 게임을 포함해 자유롭게 쓰면 됩니다. 도움이 됐다면 ☰ 메뉴의 <b>☕ 커피 한 잔 후원</b>으로 응원해 주세요.</p></div>
+    <div class="card"><h3>새 버전</h3><p>업데이트가 올라오면 화면 맨 위에 <b>새 버전</b> 띠가 뜹니다. 누르면 새로고침되고, 작업한 표는 그대로 남습니다. 지금 버전은 ☰ 메뉴 맨 아래에 있습니다.</p></div>
     <div class="card"><h3>권장 브라우저</h3><p>크롬, 엣지 최신 버전에서 가장 잘 동작합니다. 표 편집은 PC 화면을 기준으로 만들었습니다.</p></div>
   </div>
 </section>

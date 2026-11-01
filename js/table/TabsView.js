@@ -1,4 +1,4 @@
-import {esc, confirm2} from '../common/util.js';
+import {esc, ask} from '../common/util.js';
 import {Table} from '../data/Table.js';
 
 // 표 위의 테이블 탭 줄: 고르기, + 새 테이블, 삭제, 더블클릭으로 이름 바꾸기
@@ -22,9 +22,12 @@ export class TabsView {
     const wb = this.app.workbook;
     const del = e.target.closest('[data-deltab]');
     if (del) {
-      if (!confirm2(del, '삭제?')) return;
-      wb.remove(+del.dataset.deltab);
-      this.app.show(wb.cur);
+      const t = wb.tables[+del.dataset.deltab];
+      ask(`'${t.name}' 탭을 삭제할까요?`, `${t.rows.length}행 × ${t.cols.length}열 · 지운 뒤에도 Ctrl+Z로 되돌릴 수 있습니다`, '삭제').then(ok => {
+        if (!ok) return;
+        wb.remove(wb.tables.indexOf(t));
+        this.app.show(wb.cur);
+      });
       return;
     }
     if (e.target.id === 'addTab') { this.app.show(wb.add(Table.empty(wb.newName()))); return; }

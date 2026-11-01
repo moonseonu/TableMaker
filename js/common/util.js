@@ -14,14 +14,19 @@ export function dups(list) {
 // 엑셀은 보이는 그대로 복사해서 1,000처럼 쉼표가 들어온다
 export const unComma = v => /^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(v.trim()) ? v.trim().replace(/,/g, '') : v;
 
-// confirm() 창이 막힌 브라우저가 있어서, 버튼을 3초 안에 한 번 더 눌러야 실행되게 한다
-export function confirm2(b, label) {
-  if (b._undo) { b._undo(); return true; }
-  const old = b.innerHTML;
-  b.innerHTML = label; b.classList.add('warn');
-  const t = setTimeout(() => b._undo(), 3000);
-  b._undo = () => { clearTimeout(t); b.innerHTML = old; b.classList.remove('warn'); b._undo = null; };
-  return false;
+// 확인 창 (브라우저 기본 <dialog>. confirm()은 막힌 브라우저가 있다). ok를 누르면 true.
+// 확인은 버튼 글자를 바꾸는 대신 늘 이 창으로 묻는다 (눈에 잘 띄어 실수가 준다)
+// 처음엔 취소 버튼에 포커스가 있어 Enter를 잘못 눌러도 지워지지 않는다. Esc도 취소.
+// kind: ok 버튼 색 (warn 빨강 = 삭제처럼 되돌리기 어려운 것, primary 파랑), cancel: 취소 버튼 글자
+export function ask(title, text, ok, kind = 'warn', cancel = '취소') {
+  const d = document.createElement('dialog');
+  d.className = 'popup';
+  d.innerHTML = `<form method="dialog"><h3>${esc(title)}</h3><p class="dim">${esc(text)}</p>` +
+    `<div class="btns"><button type="button" class="cancel">${esc(cancel)}</button><button value="ok" class="${kind}">${esc(ok)}</button></div></form>`;
+  d.querySelector('.cancel').onclick = () => d.close('');
+  document.body.append(d);
+  d.showModal();
+  return new Promise(done => d.addEventListener('close', () => { d.remove(); done(d.returnValue === 'ok'); }));
 }
 
 export function saveFile(name, text, type) {

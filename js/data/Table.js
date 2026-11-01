@@ -4,7 +4,16 @@ import {dups, unComma} from '../common/util.js';
 // ID 열은 있으면 항상 첫 열(cols[0].id)이고, 그 칸에는 번호만 들어간다. 그래서 rows[r][0]을 ID로 쓰는 곳은
 // hasId를 먼저 본다. Config처럼 ID가 없는 테이블도 있다. 칸 값은 모두 문자열로 들고 있다가 toData에서 타입대로 바꾼다
 export class Table {
-  static TYPES = {string: '문자', int: '정수', float: '실수', bool: '참/거짓'};
+  static TYPES = {string: 'String', int: 'Int', float: 'Float', bool: 'Bool', enum: 'Enum'};
+  // 타입 드롭다운에 마우스를 올리면 보이는 설명
+  static TIPS = {
+    id: 'ID — 행마다 겹치지 않는 번호(정수). 테이블당 하나, 맨 앞 열',
+    string: 'String — 문자열. 글자 그대로 (예: 검, Sword)',
+    int: 'Int — 정수. 소수점 없는 숫자 (예: 100, -5)',
+    float: 'Float — 실수. 소수점 있는 숫자 (예: 0.5, 1.25)',
+    bool: 'Bool — 참/거짓. true 또는 false (체크박스)',
+    enum: 'Enum — 정해진 값 중 하나 (예: 검, 활, 지팡이). 칸에 적은 값이 목록이 되고, 앞 글자만 쳐도 자동 완성됩니다. JSON에는 글자로 나갑니다',
+  };
 
   // ref: 이 테이블의 ID가 가리키는 다른 테이블 이름 (Localization → items). 이름이 같은 열은 그 테이블 값으로 채운다 (Workbook.syncRef)
   // flip: 행/열 바꿔 보기 (화면만, 데이터는 그대로)
@@ -30,6 +39,11 @@ export class Table {
 
   get hasId() { return !!(this.cols[0] && this.cols[0].id); }
 
+  // 아무것도 안 적은 테이블: 설명이 없고 ID 말고는 빈 칸(Bool은 false)뿐. 처음 열면 나오는 예시 테이블, +로 만든 새 탭
+  get isBlank() {
+    return !this.desc && this.rows.every(r => r.every((v, i) => v === '' || this.cols[i].id || (this.cols[i].type === 'bool' && v === 'false')));
+  }
+
   // ID는 기본이 정수이고 접두사(item_ 등)는 작성할 때 보라고 화면에만 붙인다.
   // 'JSON에 포함'(prefixOut)을 켠 테이블만 "item_1001" 문자로 나간다
   get prefixInJson() { return !!(this.prefixOut && this.prefix); }
@@ -52,7 +66,8 @@ export class Table {
 
   typeName(c) {
     if (c.linked) return `${Table.TYPES[c.type]} · ${this.ref}에서 가져옴`;
-    return !c.id ? Table.TYPES[c.type] : this.prefixInJson ? 'ID · 문자' : 'ID · 정수';
+    if (c.type === 'enum') return `Enum: ${this.enumValues(this.cols.indexOf(c)).join(', ')}`;
+    return !c.id ? Table.TYPES[c.type] : this.prefixInJson ? 'ID · String' : 'ID · Int';
   }
 
   // ---------- 값 검사 · JSON 변환 ----------
@@ -67,7 +82,7 @@ export class Table {
 
   static conv(v, type) {
     if (type === 'bool') return v === 'true';
-    if (v === '') return type === 'string' ? '' : null;
+    if (v === '') return type === 'string' || type === 'enum' ? '' : null;
     if (type === 'int') return parseInt(v, 10);
     if (type === 'float') return Number(v);
     return v;
@@ -191,6 +206,11 @@ export class Table {
   setType(c, to) {
     if (this.cols[c].id) this.unId(c);
     this.cols[c].type = to;
+  }
+
+  // Enum 값 목록 = 그 열에 적힌 값들(처음 나온 순서, 겹치는 것 빼고). 따로 저장하지 않아서 칸을 고치면 목록도 따라 바뀐다
+  enumValues(c) {
+    return [...new Set(this.rows.map(r => r[c]).filter(v => v.trim()))];
   }
 
   // ID 해제: JSON에 나가던 값 그대로 일반 열이 된다 (번호 → 정수, 접두사 포함이었으면 "item_1001" → 문자)

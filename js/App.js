@@ -8,12 +8,14 @@ import {Exporter} from './json/Exporter.js';
 import {MetaPanel} from './meta/MetaPanel.js';
 import {Importer} from './import/Importer.js';
 import {SettingsMenu} from './settings/SettingsMenu.js';
+import {UpdateCheck} from './settings/UpdateCheck.js';
+import {Donate} from './settings/Donate.js';
 import {SheetText} from './import/SheetText.js';
 
 // 각 영역을 만들고 서로 잇는다. 영역끼리는 직접 부르지 않고 App을 거친다
 //   table/  테이블 작성 영역 (표, 탭)      json/   JSON 보기·다운로드
 //   meta/   테이블 설명 · 설명서          import/ 불러오기 · 붙여넣기 해석
-//   data/   데이터와 규칙 (화면과 무관)        settings/ ☰ 메뉴 (화면 테마)
+//   data/   데이터와 규칙 (화면과 무관)        settings/ ☰ 메뉴 (화면 테마, 후원), 새 버전 알림
 export class App {
   constructor() {
     this.workbook = Workbook.load();
@@ -28,6 +30,8 @@ export class App {
     this.exporter = new Exporter(this);
     this.importer = new Importer(this);
     this.settings = new SettingsMenu();
+    this.updateCheck = new UpdateCheck();
+    this.donate = new Donate();
     document.addEventListener('paste', e => this.onPaste(e));
     document.addEventListener('keydown', e => this.onUndoKey(e));
     // ▾, ⚙ 같은 작은 설정 창은 바깥을 누르면 닫는다
@@ -97,7 +101,7 @@ export class App {
   onPaste(e) {
     const text = e.clipboardData.getData('text/plain');
     if (!text) return;
-    const rows = SheetText.rows(text, '\t'), el = document.activeElement;
+    const rows = SheetText.rows(text, '\t'), el = this.grid.active(); // 스크롤로 치워진 커서 칸도 돌려놓고 붙인다
     try {
       if (this.meta.paste(rows)) { e.preventDefault(); return; }
       if (this.grid.isCell(el)) { if (this.grid.paste(rows, el)) e.preventDefault(); return; }

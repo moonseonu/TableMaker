@@ -1,8 +1,11 @@
-import {esc, dups, confirm2} from '../common/util.js';
+import {esc, dups, ask} from '../common/util.js';
 import {Table} from '../data/Table.js';
 import {SheetText} from '../import/SheetText.js';
 
 // 사슬 모양 아이콘. 글자색(currentColor)을 따라서 켜짐·꺼짐을 색으로 보여줄 수 있다 (이모지는 색이 안 바뀐다)
+// 보이는 행만 그리기(아래 '보이는 행만 그리기'): 화면 위아래로 더 그려 두는 행 수, 다시 그리는 단위(행)
+const BUF = 15, STEP = 10;
+
 const LINK_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
   '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
 
@@ -12,8 +15,12 @@ export class GridView {
     this.el = el;
     this.app = app;
     this.rendering = false;
+    this.rowH = 31; // 데이터 행 높이. 처음 그린 뒤 실제 높이로 맞춘다
+    el.parentElement.addEventListener('scroll', () => this.onScroll(), {passive: true});
+    window.addEventListener('resize', () => this.onScroll());
     for (const ev of ['input', 'change', 'compositionend']) el.addEventListener(ev, e => this.onEdit(e));
     el.addEventListener('focusout', e => this.onFocusOut(e));
+    el.addEventListener('toggle', e => this.onToggle(e), true); // toggle은 버블링이 안 돼서 capture로
     el.addEventListener('focusin', e => this.onFocusIn(e));
     el.addEventListener('dblclick', e => this.setMode(e.target, 'edit'));
     el.addEventListener('click', e => this.onClick(e));
@@ -24,13 +31,27 @@ export class GridView {
     document.addEventListener('mousemove', e => this.onMouseMove(e));
     this.line = document.body.appendChild(document.createElement('div')); // 열을 옮길 때 끼워 넣을 자리를 보여주는 파란 선
     this.line.className = 'moveline';
+    this.hint = document.body.appendChild(document.createElement('div')); // Enum 자동 완성으로 칸 뒤에 흐리게 보이는 나머지 글자
+    this.hint.className = 'hint';
     document.addEventListener('copy', e => this.onCopy(e));
+  }
+
+  // Enum ⚙를 열면 지금 칸 값으로 목록을 채운다. 열어 둔 채 칸을 고치면 update가 다시 채운다
+  onToggle(e) {
+    if (e.target.open && e.target.classList.contains('enumopt')) this.fillEnum(e.target);
+  }
+
+  fillEnum(d) {
+    const vals = this.t.enumValues(+d.dataset.c);
+    d.querySelector('.pop').innerHTML = `<b>값 목록 · ${vals.length}개</b>` +
+      (vals.length ? `<ul class="enumlist">${vals.map(v => `<li>${esc(v)}</li>`).join('')}</ul>` : '<span class="dim">칸에 적으면 여기 모입니다</span>');
   }
 
   onFocusIn(e) {
     if (this.rendering) return;
     this.setMode(e.target, 'select');
     // 칸을 옮기면 범위 선택은 풀리고, 새 칸이 다음 범위의 시작점이 된다
+    if (e.target !== this.el) this.cursor = null;
     if (e.target.dataset.r != null) { this.anchor = {r: +e.target.dataset.r, c: +e.target.dataset.c}; this.clearSel(); }
   }
 
@@ -163,7 +184,7 @@ export class GridView {
   dragScroll() {
     if (!this.drag) return;
     const box = this.el.parentElement, r = box.getBoundingClientRect(), {x, y} = this.pointer, EDGE = 40, d = this.drag;
-    const top = this.el.tHead ? this.el.tHead.getBoundingClientRect().bottom : r.top; // 위에 붙어 있는 머리줄 아래부터
+    const top = this.headBottom(); // 위에 붙어 있는 머리줄 아래부터
     const speed = d => Math.min(40, Math.ceil(d / 3) + 4);
     const across = d === 'col' || (d === 'move' && !this.t.flip), down = d === 'row' || (d === 'move' && this.t.flip);
     const dx = down ? 0 : x < r.left + EDGE ? -speed(r.left + EDGE - x) : x > r.right - EDGE ? speed(x - r.right + EDGE) : 0;
@@ -202,14 +223,15 @@ export class GridView {
     return {top: Math.min(s.r1, s.r2), bottom: Math.max(s.r1, s.r2), left: Math.min(s.c1, s.c2), right: Math.max(s.c1, s.c2)};
   }
 
+  // 그려진 칸만 칠한다 (안 그려진 행은 스크롤해서 그릴 때 fillRows가 다시 부른다)
   paintSel() {
     this.el.querySelectorAll('td.insel').forEach(td => td.classList.remove('insel'));
     if (!this.hasRange()) return;
     const g = this.range();
-    for (let r = g.top; r <= g.bottom; r++) for (let c = g.left; c <= g.right; c++) {
-      const el = this.at(r, c);
-      if (el) el.closest('td').classList.add('insel');
-    }
+    this.el.querySelectorAll('td input[data-r]').forEach(el => {
+      const r = +el.dataset.r, c = +el.dataset.c;
+      if (r >= g.top && r <= g.bottom && c >= g.left && c <= g.right) el.closest('td').classList.add('insel');
+    });
   }
 
   // 범위의 값을 탭으로 나눈 글자로 (엑셀이 복사하는 모양과 같다). 접두사를 JSON에 넣는 테이블은 ID에도 붙인다
@@ -228,9 +250,9 @@ export class GridView {
 
   // 고른 상태에서 Ctrl+C: 범위(없으면 그 칸)를 복사. 입력·수정 중이면 브라우저 기본 복사(고른 글자만)
   onCopy(e) {
-    const a = document.activeElement;
-    if (!this.el.contains(a) || a.dataset.r == null || (this.isCellText(a) && a.dataset.mode !== 'select')) return;
-    const r = +a.dataset.r, c = +a.dataset.c;
+    const a = document.activeElement, p = a === this.el ? this.cursor : null; // 커서를 표에 맡겨 둔 상태
+    if (!p && (!this.el.contains(a) || a.dataset.r == null || (this.isCellText(a) && a.dataset.mode !== 'select'))) return;
+    const r = p ? p.r : +a.dataset.r, c = p ? p.c : +a.dataset.c;
     e.preventDefault();
     e.clipboardData.setData('text/plain', this.rangeText(this.hasRange() ? this.range() : {top: r, bottom: r, left: c, right: c}));
   }
@@ -264,6 +286,7 @@ export class GridView {
     if (!this.isCellText(el)) return;
     if (mode !== 'select' && el.dataset.mode === 'select') el.dataset.orig = el.value; // Esc로 되돌릴 값
     el.dataset.mode = mode;
+    if (mode === 'select') this.hideHint();
     el.readOnly = this.locked(el);
     if (clear) el.value = '';
     if (mode === 'edit') el.setSelectionRange(el.value.length, el.value.length);
@@ -281,10 +304,12 @@ export class GridView {
 
   render(keepOrder) {
     const t = this.t;
+    this.hideHint();
     // 포커스된 칸이 지워질 때 크롬이 change를 늦게 보내는데, 그땐 정렬로 행 번호가 바뀐 뒤다. 먼저 내보낸다
     this.rendering = true;
-    if (this.el.contains(document.activeElement)) document.activeElement.blur();
+    if (this.el.contains(document.activeElement) || document.activeElement === this.el) document.activeElement.blur();
     this.rendering = false;
+    this.cursor = null;
     if (!keepOrder) t.autoSort();
     this.sel = null; // 다시 그리면 행 자리가 바뀔 수 있어 범위는 푼다 (clearRange는 다시 그린 뒤 되살린다)
     this.app.workbook.syncRef(t);
@@ -293,7 +318,10 @@ export class GridView {
       ? '행/열을 원래대로 (가로로 보기)' : '행/열 바꿔 보기 (열이 많은 테이블을 세로로)'}">⇄</button></th>`;
     const ghostColHead = '<div class="col"><input class="cname" data-ghost placeholder="+ 새 열"></div>';
     this.el.classList.toggle('flip', !!t.flip);
+    this.win = t.flip ? null : {first: 0, last: -1}; // 아직 그린 행 없음. 아래 fillRows가 보이는 행을 그린다
     this.el.innerHTML = t.flip ? this.flippedHtml(corner, ghostColHead) : this.normalHtml(corner, ghostColHead);
+    this.setPads();
+    this.fillRows();
     this.update();
   }
 
@@ -304,14 +332,118 @@ export class GridView {
     t.cols.forEach((c, i) => h += `<th data-c="${i}"${this.moveTip(c)}>${this.colHead(c, i)}</th>`);
     // 맨 오른쪽 빈 열: 채우는 순간 진짜 열이 되고, 비어 있으면 JSON에 안 나온다
     h += `<th class="ghost">${ghostColHead}</th></tr></thead><tbody>`;
-    t.rows.forEach((r, ri) => {
-      h += `<tr><td class="num"><button class="ico del" data-delrow="${ri}" title="행 삭제">✕</button>${ri + 1}</td>`;
-      t.cols.forEach((c, ci) => h += this.cellHtml(c, ci, r[ci], `data-r="${ri}"`));
-      h += `<td class="ghost"><input data-ghost data-gr="${ri}"></td></tr>`;
-    });
+    // 데이터 행은 두 빈 줄(padtop · padbot) 사이에 보이는 것만 들어간다 (fillRows)
+    const pad = cls => `<tr class="pad ${cls}"><td colspan="${t.cols.length + 2}"></td></tr>`;
+    h += pad('padtop') + pad('padbot');
     // 맨 아래 빈 행: 열과 같은 규칙. 채우는 순간 진짜 행이 된다
     h += '<tr class="ghostrow"><td class="num"></td>' + t.cols.map((c, ci) => this.cellHtml(c, ci, '', 'data-ghostrow')).join('') + '<td></td></tr>';
     return h + '</tbody>';
+  }
+
+  rowsHtml(first, last) {
+    const t = this.t;
+    let h = '';
+    for (let ri = first; ri <= last; ri++) {
+      const r = t.rows[ri];
+      h += `<tr><td class="num"><button class="ico del" data-delrow="${ri}" title="행 삭제">✕</button>${ri + 1}</td>`;
+      t.cols.forEach((c, ci) => h += this.cellHtml(c, ci, r[ci], `data-r="${ri}"`));
+      h += `<td class="ghost"><input data-ghost data-gr="${ri}"></td></tr>`;
+    }
+    return h;
+  }
+
+  // ---------- 보이는 행만 그리기 ----------
+  // 수천 행을 칸마다 입력칸으로 다 만들면 글자 하나 칠 때도 느려진다(5000행 × 10열에 한 글자 0.4초).
+  // 그래서 가로 보기는 화면에 보이는 행과 위아래 BUF행만 그리고, 그 위·아래는 빈 줄(padtop · padbot) 높이로 자리만 채운다.
+  // 스크롤하면 화면 밖으로 나간 행은 치우고 들어온 행을 그린다(win = 지금 그려진 행 범위). 스크롤 막대와 모양은 다 그린 것과 같다.
+  // 안 그려진 행의 칸을 찾으면(at) 먼저 그 행이 보이게 스크롤한다. 세로 보기는 행이 적은 테이블용이라 다 그린다
+  // 커서가 있던 행이 치워지면 커서는 표 자체에 맡겨 두고(cursor에 자리·상태 기억) 범위도 그대로 둔다.
+  // 그 행이 다시 그려지거나 키·붙여넣기가 오면(active) 그 칸으로 돌려놓는다. 엑셀처럼 스크롤해도 고른 칸이 유지된다
+
+  onScroll() {
+    if (this.fillQueued) return;
+    this.fillQueued = true;
+    requestAnimationFrame(() => { this.fillQueued = false; this.fillRows(); });
+  }
+
+  // 지금 스크롤 위치에서 그려야 할 행 범위
+  windowFor() {
+    const n = this.t.rows.length, h = this.rowH, box = this.el.parentElement;
+    const y = box.getBoundingClientRect().top - this.el.querySelector('tr.padtop').getBoundingClientRect().top; // 0행부터 화면 위까지
+    const first = Math.max(0, Math.floor((y / h - BUF) / STEP) * STEP);
+    return {first, last: Math.min(n - 1, first + Math.ceil(box.clientHeight / h) + 2 * BUF + STEP)};
+  }
+
+  setPads() {
+    const w = this.win;
+    if (!w) return;
+    this.el.querySelector('tr.padtop td').style.height = w.first * this.rowH + 'px';
+    this.el.querySelector('tr.padbot td').style.height = Math.max(0, this.t.rows.length - 1 - w.last) * this.rowH + 'px';
+  }
+
+  // 그려진 행을 보이는 범위로 맞춘다. 계속 보이는 행은 그대로 둬서(커서·입력 중인 칸 유지) 들어오고 나간 행만 바꾼다
+  fillRows() {
+    const old = this.win;
+    if (!old) return;
+    const w = this.windowFor();
+    if (w.first === old.first && w.last === old.last) return;
+    const top = this.el.querySelector('tr.padtop'), bot = this.el.querySelector('tr.padbot');
+    const a = document.activeElement, r = a.dataset && a.dataset.r != null && this.el.contains(a) ? +a.dataset.r : -1;
+    const park = r >= 0 && (r < w.first || r > w.last);
+    if (park) this.cursor = {r, c: +a.dataset.c, mode: a.dataset.mode};
+    this.rendering = true; // 치우는 칸에서 오는 focusout · 맡기고 돌려놓을 때의 focusin은 무시
+    if (park) { this.el.tabIndex = -1; this.el.focus({preventScroll: true}); }
+    if (old.last < old.first || w.first > old.last || w.last < old.first) {
+      while (top.nextElementSibling !== bot) top.nextElementSibling.remove();
+      top.insertAdjacentHTML('afterend', this.rowsHtml(w.first, w.last));
+    } else {
+      for (let r = old.first; r < w.first; r++) top.nextElementSibling.remove();
+      for (let r = old.last; r > w.last; r--) bot.previousElementSibling.remove();
+      if (w.first < old.first) top.insertAdjacentHTML('afterend', this.rowsHtml(w.first, old.first - 1));
+      if (w.last > old.last) bot.insertAdjacentHTML('beforebegin', this.rowsHtml(old.last + 1, w.last));
+    }
+    const p = this.cursor, back = p && document.activeElement === this.el && p.r >= w.first && p.r <= w.last
+      && this.el.querySelector(`input[data-r="${p.r}"][data-c="${p.c}"]`);
+    if (back) { back.focus({preventScroll: true}); this.cursor = null; }
+    this.rendering = false;
+    if (back) this.setMode(back, p.mode || 'select');
+    this.win = w;
+    if (this.hintFor && !this.hintFor.el.isConnected) this.hideHint();
+    // 처음 그렸을 때 실제 행 높이로 맞추고 다시 계산. 소수점까지 재야 수천 행에서 빈 줄 높이가 어긋나지 않는다
+    const tr = top.nextElementSibling, h = tr !== bot && tr.getBoundingClientRect().height;
+    if (h && Math.abs(h - this.rowH) > 0.01) {
+      this.rowH = h;
+      this.setPads();
+      return this.fillRows();
+    }
+    this.setPads();
+    this.paint();
+    this.paintSel();
+    if (this.move) this.el.querySelectorAll(`[data-c="${this.move.from}"]`).forEach(x => x.closest('td, th').classList.add('lift'));
+  }
+
+  // 화면 위에 붙어 있는 머리줄의 아래 끝. thead 자체는 스크롤과 함께 올라가고 칸(th)만 붙어 있어서 th로 잰다
+  headBottom() {
+    const th = this.el.querySelector('thead th');
+    return th ? th.getBoundingClientRect().bottom : this.el.parentElement.getBoundingClientRect().top;
+  }
+
+  // 지금 커서 칸. 커서를 표에 맡겨 둔 상태면 그 행을 다시 그려 칸으로 돌려놓는다
+  active() {
+    const a = document.activeElement;
+    if (a !== this.el || !this.cursor) return a;
+    this.reveal(this.cursor.r);
+    return document.activeElement;
+  }
+
+  // 안 그려진 행이면 그 행이 화면에 들어오게 스크롤하고 그린다
+  reveal(r) {
+    const w = this.win;
+    if (!w || (r >= w.first && r <= w.last)) return;
+    const box = this.el.parentElement, h = this.rowH, bottom = box.getBoundingClientRect().bottom;
+    const y = this.el.querySelector('tr.padtop').getBoundingClientRect().top + r * h, head = this.headBottom();
+    box.scrollTop += y < head ? y - head : y + h > bottom ? y + h - bottom : 0;
+    this.fillRows();
   }
 
   // 세로 보기(Config처럼 열이 많은 테이블): 줄 = 컬럼, 칸 = 데이터 한 줄. 데이터와 JSON은 그대로이고 보는 방향만 다르다.
@@ -337,20 +469,22 @@ export class GridView {
   colHead(c, i) {
     const t = this.t, sort = t.sortOf(), cands = this.app.workbook.refCandidates(t);
     let h = `<div class="col"><input class="cname${c.id ? ' idname' : ''}" data-c="${i}" value="${esc(c.name)}">`;
-    h += `<select data-c="${i}"${c.linked ? ' disabled' : ''}>${Object.entries({id: 'ID', ...Table.TYPES}).map(([k, v]) =>
-      `<option value="${k}"${k === (c.id ? 'id' : c.type) ? ' selected' : ''}>${v}</option>`).join('')}</select>`;
+    h += `<select data-c="${i}" title="${Table.TIPS[c.id ? 'id' : c.type]}"${c.linked ? ' disabled' : ''}>${Object.entries({id: 'ID', ...Table.TYPES}).map(([k, v]) =>
+      `<option value="${k}" title="${Table.TIPS[k]}"${k === (c.id ? 'id' : c.type) ? ' selected' : ''}>${v}</option>`).join('')}</select>`;
     // 참조 대상에 같은 이름 열이 있으면 🔗 켜기/끄기. 기본은 켜짐(파랗게 눌린 상태)
     if (c.linkable) h += `<button class="ico link${c.linked ? ' on' : ''}" data-link="${i}" title="${c.linked
       ? `${esc(t.ref)}의 ${esc(c.name)}에서 가져오는 중. 누르면 연결을 끊고 직접 입력합니다`
       : `연결 끊김. 누르면 ${esc(t.ref)}의 ${esc(c.name)} 값으로 다시 채웁니다`}">${LINK_ICON}</button>`;
     // 접두사·참조는 처음 한 번 정하는 설정이라 ⚙ 안에 둔다. 설정돼 있으면 ⚙가 파랗다
-    if (c.id) h += `<details class="idopt"><summary class="ico${t.prefix || t.ref ? ' set' : ''}" title="ID 설정 (접두사 · 참조)">⚙</summary><div class="pop">` +
+    if (c.id) h += `<details class="opt idopt"><summary class="ico${t.prefix || t.ref ? ' set' : ''}" title="ID 설정 (접두사 · 참조)">⚙</summary><div class="pop">` +
       `<label title="기본은 화면에만 표시되고 JSON에는 번호만 정수로 나갑니다">접두사 <input class="prefix" value="${esc(t.prefix)}" placeholder="예: item_"></label>` +
       `<label title="켜면 JSON에 접두사까지 붙여 &quot;item_1001&quot; 같은 문자로 내보냅니다"><input type="checkbox" class="pout"${t.prefixOut ? ' checked' : ''}> JSON에 포함</label>` +
       `<label title="${cands.length ? 'ID가 다른 테이블의 ID를 가리킬 때 (예: Localization → items). 이름이 같은 열은 그 테이블 값으로 채워집니다' : '참조할 수 있는 다른 테이블(ID 열이 있는 탭)이 없습니다'}">` +
       `<input type="checkbox" class="refon"${t.ref ? ' checked' : ''}${cands.length ? '' : ' disabled'}> 다른 테이블 참조</label>` +
       (t.ref ? `<select class="reftable">${cands.map(o => `<option${o.name === t.ref ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select>` : '') +
       '</div></details>';
+    // Enum 값 목록 보기(보기만). 칸을 고칠 때마다 바뀌어서 열 때 채운다(onToggle)
+    if (c.type === 'enum' && !c.linked) h += `<details class="opt enumopt" data-c="${i}"><summary class="ico" title="Enum 값 목록 보기">⚙</summary><div class="pop"></div></details>`;
     // 정렬은 ID 열만: ▼ 오름차순(작은 값이 위), ▲ 내림차순.
     // 다른 열로 정렬하면 JSON 순서까지 바뀌고 ID 자동 정렬이 꺼져서 뺐다
     if (c.id) h += `<button class="ico sort on" data-sort="${i}" title="${sort.dir > 0
@@ -375,23 +509,37 @@ export class GridView {
       this.el.querySelector(`th[data-c="${i}"]`).classList.toggle('bad', badCols.has(i));
       errors += badCols.has(i);
     });
-    const wb = this.app.workbook;
-    const ctx = {dupIds: dups(t.rows.map(r => r[0])), otherLens: wb.otherIdLengths(t), refIds: wb.refIds(t)};
+    const ctx = this.checkCtx();
+    // 오류 수는 그려지지 않은 행까지 모두 센다
+    t.rows.forEach((row, r) => row.forEach((v, c) => {
+      const {bad, warn} = t.checkCell(r, c, ctx);
+      errors += !!bad;
+      warns += !!warn;
+    }));
+    this.el.querySelectorAll('details.enumopt[open]').forEach(d => this.fillEnum(d));
+    this.paint(ctx);
+    this.app.changed({errors, warns});
+  }
+
+  checkCtx() {
+    const t = this.t, wb = this.app.workbook;
+    return {dupIds: dups(t.rows.map(r => r[0])), otherLens: wb.otherIdLengths(t), refIds: wb.refIds(t)};
+  }
+
+  // 그려진 칸에 검사 결과를 칠한다
+  paint(ctx = this.checkCtx()) {
     this.el.querySelectorAll('td input[data-r]').forEach(el => {
-      const {bad, warn} = t.checkCell(+el.dataset.r, +el.dataset.c, ctx);
+      const {bad, warn} = this.t.checkCell(+el.dataset.r, +el.dataset.c, ctx);
       el.closest('td').classList.toggle('bad', !!bad);
       el.closest('td').classList.toggle('warn', !!warn);
       el.title = bad || warn || '';
-      errors += !!bad;
-      warns += !!warn;
     });
-    this.app.changed({errors, warns});
   }
 
   // ---------- 커서 ----------
 
   focusCell(r, c) {
-    const el = this.el.querySelector(`input[data-r="${r}"][data-c="${c}"]`);
+    const el = this.at(r, c);
     if (el) this.focusEl(el);
   }
 
@@ -455,7 +603,7 @@ export class GridView {
       t.cols[nc].autoType = true;
       if (!header) t.rows[+el.dataset.gr][nc] = el.value;
       this.render();
-      this.focusEnd(this.el.querySelector(header ? `.cname[data-c="${nc}"]` : `input[data-r="${el.dataset.gr}"][data-c="${nc}"]`));
+      this.focusEnd(header ? this.at(-1, nc) : this.at(+el.dataset.gr, nc));
       return;
     }
     if (el.hasAttribute('data-ghostrow')) {
@@ -468,8 +616,8 @@ export class GridView {
       if (t.hasId && !t.cols[c].id) r[0] = t.nextId(t.maxId() || '') || '';
       t.rows.push(r);
       this.render(true); // 다 적기 전엔 자리를 옮기지 않는다. 칸을 떠날 때 resortKeepFocus가 정렬한다
-      const nel = this.el.querySelector(`input[data-r="${t.rows.length - 1}"][data-c="${c}"]`);
-      box ? nel.focus() : this.focusEnd(nel);
+      const nel = this.at(t.rows.length - 1, c);
+      if (box) nel.focus(); else { this.focusEnd(nel); this.suggest(nel, e); }
       return;
     }
     if (el.classList.contains('pout')) { t.prefixOut = el.checked; this.update(); return; }
@@ -505,7 +653,25 @@ export class GridView {
     // 한 칸에 이어서 친 글자는 되돌리기 한 번에 묶는다
     if (el.type !== 'checkbox') this.app.group = `cell:${this.app.workbook.cur}:${el.dataset.r}:${c}`;
     this.update();
+    if (e.type !== 'change') this.suggest(el, e);
   }
+
+  // Enum 칸 자동 완성(엑셀처럼): 앞 글자가 맞는 목록 값의 나머지를 칸 뒤에 흐리게 보여 주고,
+  // 칸을 마치면(Enter·Tab·화살표·클릭) 그 값으로 채운다. 입력값은 건드리지 않고 겹쳐 보이기만 해서 한글 조합이 깨지지 않는다.
+  // 지우는 키(Backspace·Delete)를 누르면 숨겨서 친 글자 그대로 둘 수 있다
+  suggest(el, e) {
+    const col = el.dataset.r != null && this.t.cols[el.dataset.c], v = el.value;
+    const m = col && col.type === 'enum' && !col.linked && el.dataset.mode !== 'select' && v && !/^delete/.test(e.inputType || '')
+      && el.selectionStart === v.length && this.t.enumValues(+el.dataset.c).find(x => x.length > v.length && x.toLowerCase().startsWith(v.toLowerCase()));
+    if (!m) return this.hideHint();
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+    this.hint.innerHTML = `<i>${esc(v)}</i>${esc(m.slice(v.length))}`;
+    Object.assign(this.hint.style, {display: 'block', font: cs.font, left: r.left + parseFloat(cs.paddingLeft) + 'px',
+      top: r.top + 'px', height: r.height + 'px', lineHeight: r.height + 'px'});
+    this.hintFor = {el, value: m};
+  }
+
+  hideHint() { this.hint.style.display = 'none'; this.hintFor = null; }
 
   // ID 칸을 떠날 때 정렬하고, 참조 중이면 가져온 열도 새 ID로 채운다
   // (값을 바꿨는지와 상관없이: 빈 행에서 한 번에 붙여넣으면 change가 안 온다)
@@ -513,6 +679,10 @@ export class GridView {
     const el = e.target, t = this.t;
     if (this.rendering) return;
     const col = el.dataset.r != null && t.cols[el.dataset.c];
+    if (this.hintFor && this.hintFor.el === el) { // 자동 완성 받기
+      this.setValue(el, this.hintFor.value);
+      this.hideHint();
+    }
     if (col && col.autoType && el.value !== '') { // 새로 만든 열: 처음 값을 적고 칸을 떠날 때 적힌 값으로 타입을 정한다
       const ty = Table.guessType(t.rows.map(r => r[el.dataset.c]));
       t.setType(+el.dataset.c, ty);
@@ -537,9 +707,12 @@ export class GridView {
     else if (b.dataset.link) { const c = t.cols[+b.dataset.link]; c.unlink = !c.unlink; this.render(); }
     else if (b.dataset.sort) { t.sortBy(+b.dataset.sort); this.render(); }
     else if (b.dataset.delcol) {
-      if (!confirm2(b, '삭제?')) return;
-      t.deleteCol(+b.dataset.delcol);
-      this.render();
+      const c = t.cols[+b.dataset.delcol], i = +b.dataset.delcol, filled = t.rows.filter(r => r[i] !== '').length;
+      ask(`'${c.name || '(이름 없음)'}' 열을 삭제할까요?`, `값이 있는 칸 ${filled}개 · 지운 뒤에도 Ctrl+Z로 되돌릴 수 있습니다`, '삭제').then(ok => {
+        if (!ok || t !== this.t) return;
+        t.deleteCol(t.cols.indexOf(c));
+        this.render();
+      });
     } else if (b.dataset.delrow) { t.deleteRow(+b.dataset.delrow); this.render(); }
   }
 
@@ -549,7 +722,8 @@ export class GridView {
   // 이름 먼저 적든 값 먼저 적든 자유롭게: 빈 열 칸에 값부터 적으면 col1 같은 임시 이름이 붙는다
   // Ctrl+↓: 맨 아래 빈 줄로 한 번에 (긴 표에서 새 행·새 열 넣을 때)
   onKey(e) {
-    const el = e.target, t = this.t, k = e.key;
+    const el = e.target === this.el ? this.active() : e.target, t = this.t, k = e.key;
+    if (el === this.el) return;
     const picked = el.dataset.r != null && !t.flip && (el.type === 'checkbox' || el.dataset.mode === 'select'); // 고른 데이터 칸
     if (picked && k === 'Delete' && this.hasRange()) { e.preventDefault(); return this.clearRange(); }
     if (picked && e.shiftKey && k.startsWith('Arrow')) { // Shift+화살표: 커서는 두고 범위 끝만 움직인다
@@ -559,7 +733,7 @@ export class GridView {
       this.setSel({r: Math.min(Math.max(s.r2 + dr, 0), t.rows.length - 1), c: Math.min(Math.max(s.c2 + dc, 0), t.cols.length - 1)});
       return;
     }
-    if (this.isCellText(el) && this.modeKey(e)) return;
+    if (this.isCellText(el) && this.modeKey(e, el)) return;
     if (e.ctrlKey && k === 'ArrowDown' && this.el.contains(el)) {
       e.preventDefault();
       if (t.flip) this.el.querySelector('.cname[data-ghost]').focus();
@@ -603,6 +777,7 @@ export class GridView {
     if (c < 0 || c > m || r < -1 || r > n) return null;
     if (r === -1) return c < m ? q(`.cname[data-c="${c}"]`) : q('.cname[data-ghost]');
     if (r === n) return c < m ? q(`[data-ghostrow][data-c="${c}"]`) : null;
+    if (r >= 0) this.reveal(r);
     return c < m ? q(`input[data-r="${r}"][data-c="${c}"]`) : q(`[data-ghost][data-gr="${r}"]`);
   }
 
@@ -618,8 +793,8 @@ export class GridView {
   }
 
   // 칸 상태를 바꾸는 키. 처리했으면 true
-  modeKey(e) {
-    const el = e.target, k = e.key, mode = el.dataset.mode || 'select';
+  modeKey(e, el) {
+    const k = e.key, mode = el.dataset.mode || 'select';
     if (mode === 'select') {
       if (k === 'Escape' && this.sel) { this.clearSel(); return true; }
       if (k === 'F2') { e.preventDefault(); this.setMode(el, 'edit'); return true; }
@@ -634,6 +809,7 @@ export class GridView {
       if (!e.ctrlKey && !e.metaKey && !e.altKey && (k.length === 1 || k === 'Process') && !this.locked(el)) this.setMode(el, 'enter', true);
       return false;
     }
+    if (k === 'Delete' || k === 'Backspace') this.hideHint(); // 자동 완성 없이 친 글자 그대로
     if (k === 'Escape') { // 고치던 것 취소
       e.preventDefault();
       if (el.dataset.orig != null && el.value !== el.dataset.orig) this.setValue(el, el.dataset.orig);
@@ -655,7 +831,7 @@ export class GridView {
 
   // 커서가 표의 데이터 칸(빈 행·빈 열 포함)에 있는지
   isCell(el) {
-    return this.el.contains(el) && el.tagName === 'INPUT' && !el.classList.contains('cname') && !el.closest('.idopt');
+    return this.el.contains(el) && el.tagName === 'INPUT' && !el.classList.contains('cname') && !el.closest('.opt');
   }
 
   // 칸에 커서가 있을 때. 처리했으면 true (한 칸짜리는 브라우저 기본 붙여넣기에 맡긴다)

@@ -20,8 +20,13 @@ export class Workbook {
 
   get current() { return this.tables[this.cur]; }
 
-  // 추가한 테이블의 탭 번호를 돌려준다
-  add(t) { this.tables.push(t); return this.tables.length - 1; }
+  // 추가한 테이블의 탭 번호를 돌려준다. 이름이 이미 있으면 뒤에 _2, _3…을 붙여 구분한다
+  // (같은 엑셀·JSON을 다시 불러와도 덮어쓰지 않고 따로 열린다. 괄호·띄어쓰기는 파일·클래스 이름에 못 써서 _번호)
+  add(t) {
+    t.name = this.freeName(t.name);
+    this.tables.push(t);
+    return this.tables.length - 1;
+  }
 
   remove(i) {
     const [gone] = this.tables.splice(i, 1);
@@ -100,6 +105,13 @@ export class Workbook {
   }
 
   // 같은 이름이 여럿이면 나중에 연 것
+  // 아직 안 쓴 이름: 겹치면 name_2, name_3…
+  freeName(name) {
+    let out = name;
+    for (let n = 2; this.findByName(out); n++) out = `${name}_${n}`;
+    return out;
+  }
+
   findByName(name) { return [...this.tables].reverse().find(t => t.name === name); }
 
   // 접두사는 JSON에 안 나가므로 Item_1000과 Object_1000은 둘 다 1000이 된다. 테이블마다 ID 자릿수(100단위, 1000단위…)를

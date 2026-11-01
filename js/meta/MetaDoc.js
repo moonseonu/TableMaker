@@ -11,8 +11,8 @@ const HEAD = {
     '설명', '비고', '메모', '주석', '내용', '의미', '용도'],
   type: ['type', 'datatype', 'valuetype', 'kind', '타입', '자료형', '데이터타입', '형식', '형'],
 };
-// Meta 시트의 타입 이름 → 툴의 열 타입. enum처럼 툴에 없는 타입은 문자로 둔다
-const TYPES = {int: 'int', integer: 'int', long: 'int', float: 'float', double: 'float', string: 'string', enum: 'string', bool: 'bool', boolean: 'bool'};
+// Meta 시트의 타입 이름 → 툴의 열 타입. 모르는 타입은 그대로 둔다. Enum 값 목록은 열에 적힌 값이다
+const TYPES = {int: 'int', integer: 'int', long: 'int', float: 'float', double: 'float', string: 'string', enum: 'enum', bool: 'bool', boolean: 'bool'};
 
 // 설명서 표 칸 안의 | 와 줄바꿈은 이스케이프
 const mdEsc = s => (s || '').replace(/\|/g, '\\|').replace(/\n/g, '<br>');
@@ -22,7 +22,7 @@ export class MetaDoc {
   // 설명서(.md): 프로그래머에게 넘기거나 커밋에 함께 넣는 용도
   static toMd(t) {
     const type = c => !c.id || !t.prefix ? t.typeName(c)
-      : t.prefixOut ? `ID · 문자 (\`${t.prefix}\` + 번호)` : `ID · 정수 (작성 시 접두사 \`${t.prefix}\`)`;
+      : t.prefixOut ? `ID · String (\`${t.prefix}\` + 번호)` : `ID · Int (작성 시 접두사 \`${t.prefix}\`)`;
     return `# ${t.name}\n\n${t.desc ? t.desc + '\n\n' : ''}| 컬럼 | 타입 | 설명 |\n|---|---|---|\n` +
       t.cols.map(c => `| ${mdEsc(c.name)} | ${type(c)} | ${mdEsc(c.desc)} |`).join('\n') + '\n';
   }
@@ -34,7 +34,9 @@ export class MetaDoc {
     const first = lines.findIndex(l => l.startsWith('|'));
     t.desc = (first < 0 ? lines : lines.slice(0, first)).filter(l => !l.startsWith('# ')).join('\n').trim();
     if (first < 0) return;
-    const typeKey = Object.fromEntries(Object.entries(Table.TYPES).map(([k, v]) => [v, k]));
+    // 예전 설명서의 한글 타입 이름도 읽는다
+    const typeKey = {문자: 'string', 정수: 'int', 실수: 'float', '참/거짓': 'bool',
+      ...Object.fromEntries(Object.entries(Table.TYPES).map(([k, v]) => [v, k]))};
     for (const l of lines.slice(first + 2)) {
       const cells = l.split(/(?<!\\)\|/).slice(1, -1).map(mdUnesc);
       const i = t.cols.findIndex(c => c.name === cells[0]);
@@ -45,9 +47,11 @@ export class MetaDoc {
       if (col.id) {
         const pre = /`([^`]*)`/.exec(type);
         if (pre && !t.prefix) t.prefix = pre[1];
-        t.prefixOut = /^ID · 문자/.test(type) && !!t.prefix;
+        t.prefixOut = /^ID · (String|문자)/.test(type) && !!t.prefix;
       } else if ((m = /^(.+?) · (.+)에서 가져옴$/.exec(type))) {
         if (t.hasId) t.ref = m[2]; // 이 열은 참조를 켜면 다시 연결된다
+      } else if (/^Enum(:|$)/.test(type)) { // 'Enum: 검, 활'의 목록은 칸 값에서 다시 나온다
+        if (col.type !== 'enum') t.setType(i, 'enum');
       } else if (typeKey[type] && typeKey[type] !== col.type) t.setType(i, typeKey[type]);
     }
   }
