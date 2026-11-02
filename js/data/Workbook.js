@@ -1,4 +1,5 @@
 import {Table} from './Table.js';
+import {dups} from '../common/util.js';
 
 // 탭으로 열린 테이블 전체(= 프로젝트 하나). 저장은 이 브라우저(localStorage)에만 한다
 export class Workbook {
@@ -115,6 +116,20 @@ export class Workbook {
     let out = name;
     for (let n = 2; this.findByName(out); n++) out = `${name}_${n}`;
     return out;
+  }
+
+  // 칸 검사에 쓰는 표 전체 정보 (겹치는 ID, 다른 테이블 ID 자릿수, 참조 대상 ID)
+  checkCtx(t) {
+    return {dupIds: dups(t.rows.map(r => r[0])), otherLens: this.otherIdLengths(t), refIds: this.refIds(t)};
+  }
+
+  // 테이블의 오류(빨간 칸·이름이 비었거나 겹치는 열) 수. 화면에 열려 있지 않은 탭도 센다 (저장 전 확인용)
+  errorCount(t) {
+    this.syncRef(t);
+    const ctx = this.checkCtx(t);
+    let n = t.badColumns().size;
+    t.rows.forEach((row, r) => row.forEach((v, c) => { if (t.checkCell(r, c, ctx).bad) n++; }));
+    return n;
   }
 
   // 참조로 이어진 테이블 묶음 (A→B, C→B면 A·B·C 모두). 같은 묶음끼리는 같은 ID 번호를 쓰는 게 맞다

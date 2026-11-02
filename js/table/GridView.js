@@ -1,4 +1,4 @@
-import {esc, dups, ask} from '../common/util.js';
+import {esc, ask} from '../common/util.js';
 import {Table} from '../data/Table.js';
 import {SheetText} from '../import/SheetText.js';
 
@@ -590,10 +590,7 @@ export class GridView {
     this.app.changed({errors, warns});
   }
 
-  checkCtx() {
-    const t = this.t, wb = this.app.workbook;
-    return {dupIds: dups(t.rows.map(r => r[0])), otherLens: wb.otherIdLengths(t), refIds: wb.refIds(t)};
-  }
+  checkCtx() { return this.app.workbook.checkCtx(this.t); }
 
   // 그려진 칸에 검사 결과를 칠한다
   paint(ctx = this.checkCtx()) {
