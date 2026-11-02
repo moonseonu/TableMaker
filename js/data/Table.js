@@ -19,8 +19,10 @@ export class Table {
   //   ID는 그중 어느 테이블에든 있으면 되고, 이름이 같은 열은 그 ID가 있는 테이블 값으로 채운다 (Workbook.syncRef).
   //   예전 저장본은 대상이 하나인 ref라 refs로 옮긴다
   // flip: 행/열 바꿔 보기 (화면만, 데이터는 그대로)
-  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = '', refs = ref ? [ref] : [], flip = false} = {}) {
-    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, refs, flip});
+  // quiet: 사용자가 우클릭으로 경고를 숨긴 ID들 (일부러 그렇게 둔 행). JSON에는 영향 없다
+  // ponytail: 설명서(.md)에는 안 적혀서 zip으로 옮기면 다시 경고가 보인다. 필요하면 .md의 ID 줄에 적기
+  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = '', refs = ref ? [ref] : [], flip = false, quiet = []} = {}) {
+    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, refs, flip, quiet});
   }
 
   static sample() {
@@ -151,9 +153,12 @@ export class Table {
     if (col.linked) return {}; // 참조 대상에서 가져온 값
     if (col.id) {
       if (!/^\d+$/.test(v) || ctx.dupIds.has(v)) return {bad: 'ID 번호가 비었거나, 숫자가 아니거나, 다른 행과 겹칩니다'};
-      if (ctx.refIds && !ctx.refIds.has(String(+v))) return {bad: `${this.refs.join(' · ')}에 ${+v}이(가) 없습니다`};
-      const w = ctx.otherLens.get(String(+v).length);
-      return w ? {warn: `${w.name} 테이블도 ${String(+v).length}자리 ID를 씁니다 (예: ${w.ex})`} : {};
+      // 참조 대상에 없는 ID는 경고만: 오타일 수도 있지만, 이 테이블에만 일부러 둔 행(Object의 Player 등)도 흔하다
+      const lens = ctx.otherLens.get(String(+v).length);
+      const warn = ctx.refIds && !ctx.refIds.has(String(+v)) ? `${this.refs.join(' · ')}에 ${+v}이(가) 없습니다 (이 테이블에만 있는 행이면 괜찮습니다)`
+        : lens ? `${lens.name} 테이블도 ${String(+v).length}자리 ID를 씁니다 (예: ${lens.ex})` : '';
+      // 우클릭으로 숨긴 경고는 칠하지 않는다(hushed: 다시 보기 메뉴와 툴팁용)
+      return !warn ? {} : this.quiet.includes(String(+v)) ? {hushed: warn} : {warn};
     }
     return Table.valid(v, col.type) ? {} : {bad: Table.TYPES[col.type] + ' 값이 아닙니다'};
   }

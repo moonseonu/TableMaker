@@ -125,7 +125,7 @@
       <tbody>
         <tr><td class="num">1</td><td><div class="idbox"><span class="pre"></span><input value="1011"></div></td><td class="linked"><div class="idbox"><input value="CornSeed"><i class="mk">2</i></div></td><td><input value="옥수수 씨앗"></td></tr>
         <tr><td class="num">2</td><td><div class="idbox"><span class="pre"></span><input value="1012"></div></td><td class="linked"><input value="Corn"></td><td><input value="옥수수"></td></tr>
-        <tr><td class="num">3</td><td class="bad"><div class="idbox"><span class="pre"></span><input value="1099"><i class="mk">4</i></div></td><td class="linked"><input value=""></td><td><input value="없는 아이템"></td></tr>
+        <tr><td class="num">3</td><td class="warn"><div class="idbox"><span class="pre"></span><input value="1099"><i class="mk">4</i></div></td><td class="linked"><input value=""></td><td><input value="없는 아이템"></td></tr>
       </tbody>
     </table>
   </div>
@@ -133,7 +133,7 @@
     <li><i class="mk">1</i><span><b>켜기</b> — ID 열의 ⚙ → <b>다른 테이블 참조</b>를 체크하면, 이 테이블의 ID가 들어 있는 테이블이 자동으로 골라집니다. 아래 목록에서 체크로 바꿀 수 있고, 여러 개도 됩니다(예: CostDataTable → StructureDataTable + UnitDataTable). 대상도 탭으로 열려 있어야 합니다.</span></li>
     <li><i class="mk">2</i><span><b>🔗 자동으로 가져온 열</b> — 대상에도 있는 이름의 열(<code>Name</code>)은 같은 ID 행의 값으로 채워지고 회색으로 잠깁니다. 대상에서 고치면 여기도 바뀌고, JSON에도 그 값으로 나갑니다.</span></li>
     <li><i class="mk">3</i><span><b>🔗 끄기</b> — 파란 🔗를 누르면 연결이 끊겨 직접 고칠 수 있습니다. 연결 전에 적어 둔 값이 있었다면 그 값으로 돌아갑니다. 다시 누르면 대상 값으로 채워집니다.</span></li>
-    <li><i class="mk">4</i><span><b>없는 ID</b> — 고른 대상 어디에도 없는 번호는 빨간 칸입니다(<code>1099</code>). 오타나 지워진 아이템을 찾을 때 씁니다.</span></li>
+    <li><i class="mk">4</i><span><b>없는 ID</b> — 고른 대상 어디에도 없는 번호는 노란 경고 칸입니다(<code>1099</code>). 오타나 지워진 아이템을 찾을 때 씁니다. 이 테이블에만 일부러 둔 행이면 칸을 <b>우클릭 → 이 경고 숨기기</b>로 숨길 수 있고(다시 우클릭하면 되살리기), 오류로 치지 않아 저장도 그대로 됩니다.</span></li>
   </ol>
 </section>
 
@@ -246,7 +246,7 @@
   <h2>이용 안내</h2>
   <p class="lead">TableMaker를 쓰기 전에 알아두면 좋은 점입니다.</p>
   <div class="cards">
-    <div class="card"><h3>프로젝트</h3><p>제목줄 왼쪽의 프로젝트 이름을 누르면 프로젝트를 바꾸거나, 새로 만들거나, 이름을 바꾸고 지울 수 있습니다. 탭 묶음은 프로젝트마다 따로 저장됩니다.</p></div>
+    <div class="card"><h3>프로젝트</h3><p>제목줄 왼쪽의 프로젝트 이름을 누르면 프로젝트를 바꾸거나, 새로 만들거나, 이름을 바꾸고 지울 수 있습니다. 새로 만들 때 엑셀·JSON 파일을 같이 고르면 바로 불러오고, 처음 열면 이 창으로 시작합니다. 탭 묶음은 프로젝트마다 따로 저장됩니다.</p></div>
     <div class="card"><h3>데이터는 내 브라우저에만</h3><p>입력한 표는 서버로 보내지 않고 지금 쓰는 브라우저에만 저장됩니다. 가입도 필요 없습니다.</p></div>
     <div class="card"><h3>백업은 직접</h3><p>브라우저 데이터를 지우거나 다른 PC로 옮기면 표가 보이지 않습니다. 중요한 작업은 <b>파일 저장 ▾ → 프로젝트 전체 (.zip)</b>로 받아 두세요.</p></div>
     <div class="card"><h3>무료</h3><p>모든 기능을 무료로 쓸 수 있습니다. 만든 데이터는 상업용 게임을 포함해 자유롭게 쓰면 됩니다. 도움이 됐다면 ☰ 메뉴의 <b>☕ 커피 한 잔 후원</b>으로 응원해 주세요.</p></div>

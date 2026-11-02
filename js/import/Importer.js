@@ -26,16 +26,22 @@ export class Importer {
     for (const id of ['file', 'folder']) $(id).onchange = e => this.onFiles(e);
   }
 
-  async onFiles(e) {
-    const files = [...e.target.files], entries = [], errors = [], wb = this.app.workbook, before = wb.tables.length;
+  onFiles(e) {
+    const files = [...e.target.files];
     e.target.value = '';
+    this.openFiles(files, e.target.id === 'folder');
+  }
+
+  // 고른 파일들을 연다 (불러오기 ▾, 새 프로젝트 창). fromFolder: 폴더로 고른 것
+  async openFiles(files, fromFolder = false) {
+    const entries = [], errors = [], wb = this.app.workbook, before = wb.tables.length;
     // 빈 탭 하나뿐이면 불러오는 동안 이름을 비켜 둔다(불러온 items에 _2가 붙지 않게). 끝나면 load가 치우거나 되돌린다
     const blank = before === 1 && wb.tables[0].isBlank ? {t: wb.tables[0], name: wb.tables[0].name} : null;
     if (blank) blank.t.name = '\u0000';
     for (const f of files) {
       try {
         if (ext(f.name) === 'zip') entries.push(...await Zip.read(f));
-        else if (ext(f.name) === 'xlsx') { if (e.target.id === 'file') await this.openXlsx(f, errors); } // 폴더 안의 엑셀은 넘긴다(같은 표의 JSON과 겹쳐서)
+        else if (ext(f.name) === 'xlsx') { if (!fromFolder) await this.openXlsx(f, errors); } // 폴더 안의 엑셀은 넘긴다(같은 표의 JSON과 겹쳐서)
         else entries.push({name: f.webkitRelativePath || f.name, bytes: new Uint8Array(await f.arrayBuffer())});
       } catch (err) { errors.push(`${f.name}: ${err.message}`); }
     }

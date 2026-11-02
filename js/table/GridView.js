@@ -27,6 +27,7 @@ export class GridView {
     el.addEventListener('focusin', e => this.onFocusIn(e));
     el.addEventListener('dblclick', e => e.target.classList.contains('cname') ? this.focusEl(e.target) : this.setMode(e.target, 'edit')); // 이름 칸은 더블클릭으로 고친다
     el.addEventListener('click', e => this.onClick(e));
+    el.addEventListener('contextmenu', e => this.onContextMenu(e));
     el.addEventListener('keydown', e => this.onKey(e));
     el.addEventListener('mousedown', e => this.onMouseDown(e));
     el.addEventListener('mouseover', e => this.onMouseOver(e));
@@ -594,11 +595,39 @@ export class GridView {
   // 그려진 칸에 검사 결과를 칠한다
   paint(ctx = this.checkCtx()) {
     this.el.querySelectorAll('td input[data-r]').forEach(el => {
-      const {bad, warn} = this.t.checkCell(+el.dataset.r, +el.dataset.c, ctx);
+      const {bad, warn, hushed} = this.t.checkCell(+el.dataset.r, +el.dataset.c, ctx);
       el.closest('td').classList.toggle('bad', !!bad);
       el.closest('td').classList.toggle('warn', !!warn);
-      el.title = bad || warn || '';
+      el.closest('td').classList.toggle('hushed', !!hushed);
+      el.title = bad || warn || (hushed ? `경고 숨김 · ${hushed}` : '');
     });
+  }
+
+  // 노란 경고 칸에서 우클릭: '이 경고 숨기기' (엑셀의 '오류 무시'처럼). 숨긴 칸에서는 '경고 다시 보기'.
+  // 다른 칸에서는 브라우저 기본 메뉴 그대로
+  onContextMenu(e) {
+    const td = e.target.closest('td.warn, td.hushed'), el = td && td.querySelector('input[data-r]');
+    if (!el || !this.el.contains(td)) return;
+    e.preventDefault();
+    const t = this.t, id = String(+t.rows[+el.dataset.r][0]), hushed = td.classList.contains('hushed');
+    this.ctxMenu(e.clientX, e.clientY, hushed ? '경고 다시 보기' : '이 경고 숨기기', () => {
+      t.quiet = hushed ? t.quiet.filter(x => x !== id) : [...t.quiet, id];
+      this.update();
+    });
+  }
+
+  // 마우스 자리에 뜨는 작은 메뉴 (항목 하나). 바깥을 누르거나 Esc면 닫힌다
+  ctxMenu(x, y, label, run) {
+    const m = document.body.appendChild(document.createElement('div'));
+    m.className = 'ctxmenu';
+    m.innerHTML = `<button>${esc(label)}</button>`;
+    Object.assign(m.style, {left: x + 'px', top: y + 'px'});
+    const close = () => { m.remove(); document.removeEventListener('mousedown', away, true); document.removeEventListener('keydown', esc_, true); };
+    const away = e => { if (!m.contains(e.target)) close(); };
+    const esc_ = e => { if (e.key === 'Escape') close(); };
+    m.querySelector('button').onclick = () => { close(); run(); };
+    document.addEventListener('mousedown', away, true);
+    document.addEventListener('keydown', esc_, true);
   }
 
   // ---------- 커서 ----------

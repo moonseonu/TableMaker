@@ -7,11 +7,16 @@ export class Projects {
   static load() {
     let d = null;
     try { d = JSON.parse(localStorage.getItem(INDEX)); } catch {}
+    let fresh = false; // 처음 쓰는 사람 (프로젝트도, 예전 저장본도 없음)
     if (!d || !d.list || !d.list.length) {
       d = {list: [{id: 'p1', name: '내 프로젝트'}], cur: 'p1'};
-      try { const old = localStorage.getItem(OLD); if (old && !localStorage.getItem(Projects.key('p1'))) localStorage.setItem(Projects.key('p1'), old); } catch {}
+      try {
+        const old = localStorage.getItem(OLD);
+        if (old && !localStorage.getItem(Projects.key('p1'))) localStorage.setItem(Projects.key('p1'), old);
+        fresh = !old;
+      } catch {}
     }
-    return new Projects(d);
+    return Object.assign(new Projects(d), {fresh});
   }
 
   static key(id) { return 'tablemaker.p.' + id; }

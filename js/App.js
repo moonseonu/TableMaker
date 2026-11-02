@@ -38,6 +38,7 @@ export class App {
     this.updateCheck = new UpdateCheck();
     this.donate = new Donate();
     this.projectMenu = new ProjectMenu(this);
+    if (this.projects.fresh) this.projectMenu.newProject(true); // 처음 쓰는 사람은 프로젝트 만들기 창으로 시작
     document.addEventListener('paste', e => this.onPaste(e));
     document.addEventListener('keydown', e => this.onUndoKey(e));
     // ▾, ⚙ 같은 작은 설정 창은 바깥을 누르면 닫는다
@@ -46,6 +47,18 @@ export class App {
   }
 
   get table() { return this.workbook.current; }
+
+  // 다른 프로젝트로: 지금 것을 저장하고(keep) 그 프로젝트의 탭 묶음을 불러온다 (되돌리기 기록도 그 프로젝트 것으로 새로)
+  openProject(id, keep = true) {
+    if (keep) this.commit();
+    this.projects.cur = id;
+    this.projects.save();
+    Workbook.key = Projects.key(id);
+    this.workbook = Workbook.load();
+    this.history = new History(JSON.stringify(this.workbook));
+    this.projectMenu.render();
+    this.show(this.workbook.cur);
+  }
 
   show(i) {
     this.workbook.cur = i;
@@ -58,7 +71,7 @@ export class App {
   changed({errors, warns}) {
     this.errors = errors;
     if (errors) this.status(`오류 ${errors}개`, 'bad');
-    else if (warns) this.status(`다른 테이블과 자릿수 겹침 ${warns}개`, 'warn');
+    else if (warns) this.status(`경고 ${warns}개`, 'warn'); // 다른 테이블과 ID 자릿수 겹침, 참조 대상에 없는 ID (칸에 마우스를 올리면 이유)
     else this.status('');
     this.json.refresh();
     this.meta.refresh();
