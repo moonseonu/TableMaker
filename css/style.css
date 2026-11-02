@@ -147,6 +147,8 @@ th.corner{padding:0 4px}
 #grid.flip th.tcol{left:var(--w1,52px)} /* 타입 열은 이름 열 바로 오른쪽에 붙는다 */
 #grid.flip thead th.tcol{position:sticky;z-index:3}
 #grid.notype tr.htype,#grid.notype .tcol{display:none} /* ⇄ 옆 버튼으로 타입 줄 접기 */
+.namedel{display:none}
+#grid.notype .namedel{display:inline-block} /* 타입 줄을 접으면 열 삭제 ✕는 이름 칸 오른쪽 끝에 */
 /* 머리 칸들은 위·왼쪽에 붙어 있어(sticky) 서로 겹쳐 그려진다. ⚙ 창을 연 칸은 맨 위로 올려 다음 칸에 가리지 않게 (위 z-index들보다 뒤에 둔다) */
 #grid th:has(.opt[open]){z-index:5}
 #grid.flip th.rowhead{color:var(--dim);font-weight:400;min-width:130px}

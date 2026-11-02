@@ -529,7 +529,10 @@ export class GridView {
 
   // 컬럼 머리는 두 칸: 이름 칸(nameHead, th[data-c])과 타입·버튼 칸(typeHead, th[data-tc]).
   // 가로 보기는 위아래 두 행, 세로 보기는 왼쪽 두 열이 된다. 열 고르기·옮기기·오류 표시는 이름 칸(th[data-c])으로 한다
-  nameHead(c, i) { return `<div class="col"><input class="cname" data-c="${i}" value="${esc(c.name)}"></div>`; }
+  // 이름 칸의 ✕는 타입 줄을 접었을 때만 보인다(펼쳐 있으면 타입 줄의 ✕를 쓴다)
+  nameHead(c, i) {
+    return `<div class="col"><input class="cname" data-c="${i}" value="${esc(c.name)}"><button class="ico namedel" data-delcol="${i}" title="열 삭제">✕</button></div>`;
+  }
 
   typeHead(c, i) {
     const t = this.t, sort = t.sortOf(), cands = this.app.workbook.refCandidates(t);
@@ -918,11 +921,12 @@ export class GridView {
     return false;
   }
 
-  // 컬럼 이름 칸: ←는 글자 맨 앞, →는 맨 끝에 커서가 있거나 칸 전체가 골라졌을 때만 옆 칸으로 (체크박스는 항상)
+  // 컬럼 이름 칸: ←는 커서가 글자 맨 앞, →는 맨 끝에 있을 때만 옆 칸으로 (체크박스는 항상).
+  // 글자가 골라져 있으면 보통 글 칸처럼 ←는 맨 앞, →는 맨 뒤로 커서만 옮긴다(더블클릭해 고치던 중 옆 칸으로 튀지 않게)
   atEdge(el, left) {
     if (el.type === 'checkbox') return true;
     const {selectionStart: s, selectionEnd: e, value: v} = el;
-    return (s === 0 && e === v.length) || (left ? e === 0 : s === v.length);
+    return s === e && (left ? s === 0 : s === v.length);
   }
 
   // ---------- 붙여넣기 ----------
