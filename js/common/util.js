@@ -4,6 +4,13 @@ export const $ = id => document.getElementById(id);
 
 export const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 
+// 역할 묶음 클래스(sources)의 메서드를 target 클래스에 섞어 넣는다. 한 클래스가 너무 커질 때 역할별 파일로 나누는 데 쓴다
+export function mixin(target, ...sources) {
+  for (const src of sources) for (const k of Object.getOwnPropertyNames(src.prototype)) {
+    if (k !== 'constructor') Object.defineProperty(target.prototype, k, Object.getOwnPropertyDescriptor(src.prototype, k));
+  }
+}
+
 // 두 번 이상 나온 값들
 export function dups(list) {
   const seen = new Set(), d = new Set();
