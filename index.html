@@ -30,14 +30,18 @@
 </header>
 <div class="layout">
 <!-- 광고 자리 (160×600 세로 광고). 좁은 화면에서는 숨긴다 -->
-<aside class="ad" id="adLeft"></aside>
+<aside class="side"></aside>
 <div class="work">
 <div class="toolbar">
   <details id="openMenu" class="dropmenu outline">
-    <summary title="JSON · CSV는 새 탭으로 열리고, 같은 이름의 설명서(.md)가 있으면 설명과 설정도 함께 되살아납니다.&#10;엑셀(.xlsx)은 가져올 시트를 골라 시트마다 새 탭으로 열립니다.&#10;엑셀에서 복사한 표는 빈 곳을 누르고 Ctrl+V 하면 새 탭으로 열립니다">불러오기 ▾</summary>
+    <summary title="JSON · CSV는 새 탭으로 열리고, 같은 이름의 설명서(.md)가 있으면 설명과 설정도 함께 되살아납니다.&#10;엑셀(.xlsx)은 가져올 시트를 골라 시트마다 새 탭으로 열립니다.&#10;설명서(.md)만 지금 탭에 붙이려면 아래쪽 '설명 (Meta)'을 쓰세요.&#10;엑셀에서 복사한 표는 빈 곳을 누르고 Ctrl+V 하면 새 탭으로 열립니다">불러오기 ▾</summary>
     <div class="menu left">
+      <div class="h">테이블 (새 탭으로)</div>
       <button data-open="file">파일 <small>JSON · CSV · MD · ZIP · XLSX</small></button>
       <button data-open="folder">폴더 <small>안의 JSON · CSV · MD 전부</small></button>
+      <hr>
+      <div class="h">설명 (Meta)</div>
+      <button id="openMeta" title="이름과 상관없이 지금 보고 있는 탭에 설명서(.md)의 테이블 설명과 컬럼 설명·타입을 붙입니다">설명서 (.md) <small data-hint="meta"></small></button>
     </div>
   </details>
   <input type="file" id="file" accept=".json,.csv,.md,.zip,.xlsx" multiple hidden>
@@ -72,7 +76,7 @@
   </section>
 </div>
 </div>
-<aside class="ad" id="adRight"></aside>
+<aside class="side"></aside>
 </div>
 <script type="module">
 import {App} from './js/App.js';

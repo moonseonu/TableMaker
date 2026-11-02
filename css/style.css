@@ -43,9 +43,9 @@ header .appmenu button.on .dot{border:3px solid var(--accent)}
 .layout{flex:1;min-height:0;display:flex}
 .work{flex:1;min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line)}
 /* 양옆 여백(광고 자리): 20 / 60 / 20. 1100 이상이면 양옆이 220px 넘게 남아 160×600 광고가, 1500 이상이면 300×600 광고가 들어간다 */
-.ad{flex:none;width:20vw}
+.side{flex:none;width:20vw}
 /* 좁은 화면: 광고는 못 넣지만 여백은 조금 남겨 표 영역을 가운데에 둔다 */
-@media (max-width:1100px){.ad{width:clamp(16px,5vw,60px)}}
+@media (max-width:1100px){.side{width:clamp(16px,5vw,60px)}}
 .toolbar{display:flex;gap:8px;align-items:center;padding:8px 12px;flex-wrap:wrap}
 .spacer{flex:1}
 #status{color:var(--dim)}
@@ -184,6 +184,7 @@ tr:hover .num .del{visibility:visible}
 .dropmenu .menu a{display:flex;justify-content:space-between;gap:12px;padding:7px 10px;border-radius:4px;color:var(--text);text-decoration:none;white-space:nowrap}
 .dropmenu .menu small{color:var(--dim)}
 .dropmenu .menu hr{width:100%;border:0;border-top:1px solid var(--line);margin:4px 0}
+.dropmenu .menu .h{color:var(--dim);font-size:12px;padding:6px 10px 2px}
 /* 하단 패널: JSON 왼쪽, 테이블 설명 오른쪽. 하나만 열면 전체 폭 */
 #panels{height:40vh;display:flex;border-top:1px solid var(--line);background:var(--panel)}
 #panels[hidden],#panels section[hidden]{display:none}

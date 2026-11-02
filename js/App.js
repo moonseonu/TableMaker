@@ -7,6 +7,7 @@ import {TabsView} from './table/TabsView.js';
 import {JsonPanel} from './json/JsonPanel.js';
 import {Exporter} from './json/Exporter.js';
 import {MetaPanel} from './meta/MetaPanel.js';
+import {MetaImport} from './meta/MetaImport.js';
 import {Importer} from './import/Importer.js';
 import {SettingsMenu} from './settings/SettingsMenu.js';
 import {UpdateCheck} from './settings/UpdateCheck.js';
@@ -34,6 +35,7 @@ export class App {
     this.meta = new MetaPanel(this);
     this.exporter = new Exporter(this);
     this.importer = new Importer(this);
+    this.metaImport = new MetaImport(this);
     this.settings = new SettingsMenu();
     this.updateCheck = new UpdateCheck();
     this.donate = new Donate();

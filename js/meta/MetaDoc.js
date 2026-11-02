@@ -56,6 +56,19 @@ export class MetaDoc {
     }
   }
 
+  // 설명서의 첫 표를 칸 배열로 (구분 줄 |---| 은 뺀다). 줄 끝 | 가 없는 표도 읽는다. before: 표 위의 글(테이블 설명)
+  static mdTable(text) {
+    const lines = text.split(/\r?\n/), isRow = l => l.trim().startsWith('|');
+    const first = lines.findIndex(isRow);
+    let end = first;
+    while (end >= 0 && end < lines.length && isRow(lines[end])) end++;
+    const before = (first < 0 ? lines : lines.slice(0, first)).filter(l => !l.startsWith('# ')).join('\n').trim();
+    const rows = first < 0 ? [] : lines.slice(first, end)
+      .map(l => l.trim().slice(1).replace(/(?<!\\)\|$/, '').split(/(?<!\\)\|/).map(mdUnesc))
+      .filter(r => !r.every(v => /^:?-+:?$/.test(v)));
+    return {before, rows};
+  }
+
   // 엑셀 Meta 시트(칸 배열)를 읽어 컬럼 설명과 타입을 채운다. ID 열 타입은 건드리지 않는다.
   // 머리줄을 못 찾으면 순서를 짐작하지 않고 null (설명 칸에 int가 들어가는 식으로 꼬이니까).
   // 찾으면 {missing: 테이블에 없는 컬럼 이름들}
