@@ -41,7 +41,8 @@
       <button data-open="folder">폴더 <small>안의 JSON · CSV · MD 전부</small></button>
       <hr>
       <div class="h">설명 (Meta)</div>
-      <button id="openMeta" title="이름과 상관없이 지금 보고 있는 탭에 설명서(.md)의 테이블 설명과 컬럼 설명·타입을 붙입니다">설명서 (.md) <small data-hint="meta"></small></button>
+      <button data-meta="file" title="설명서(.md)의 테이블 설명과 컬럼 설명·타입을 붙입니다.&#10;하나만 고르면 이름과 상관없이 지금 보고 있는 탭에, 여러 개면 이름이 같은 탭에 붙습니다">파일 <small data-hint="meta"></small></button>
+      <button data-meta="folder" title="폴더 안의 설명서(.md)를 모두, 이름이 같은 탭에 붙입니다">폴더 <small>안의 MD 전부 → 이름이 같은 탭에</small></button>
     </div>
   </details>
   <input type="file" id="file" accept=".json,.csv,.md,.zip,.xlsx" multiple hidden>
