@@ -20,7 +20,7 @@ export class Table {
   //   예전 저장본은 대상이 하나인 ref라 refs로 옮긴다
   // flip: 행/열 바꿔 보기 (화면만, 데이터는 그대로)
   // quiet: 사용자가 우클릭으로 경고를 숨긴 ID들 (일부러 그렇게 둔 행). JSON에는 영향 없다
-  // ponytail: 설명서(.md)에는 안 적혀서 zip으로 옮기면 다시 경고가 보인다. 필요하면 .md의 ID 줄에 적기
+  // flip · quiet는 테이블 설명서(.md)엔 안 적고, 프로젝트 전체 zip의 설정 메모(_TableMaker.md, ProjectNote)로 왕복한다
   constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = '', refs = ref ? [ref] : [], flip = false, quiet = []} = {}) {
     Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, refs, flip, quiet});
   }

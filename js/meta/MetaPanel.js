@@ -15,6 +15,11 @@ export class MetaPanel {
       app.table.cols[+e.target.dataset.desc].desc = e.target.value;
       app.commit('desc' + e.target.dataset.desc);
     };
+    this.openEnums = new Set(); // 목록을 펴 둔 Enum 열 이름
+    $('cdesc').addEventListener('toggle', e => { // toggle은 버블링이 안 돼서 capture로
+      const d = e.target;
+      if (d.classList?.contains('enumdrop')) d.open ? this.openEnums.add(d.dataset.col) : this.openEnums.delete(d.dataset.col);
+    }, true);
   }
 
   get open() { return !this.el.hidden; }
@@ -33,7 +38,16 @@ export class MetaPanel {
     $('metaTitle').textContent = `${t.name} 테이블 설명`;
     $('tdesc').value = t.desc || '';
     $('cdesc').innerHTML = t.cols.map((c, i) =>
-      `<tr><th>${esc(c.name)}</th><td class="t">${t.typeName(c)}</td><td><input data-desc="${i}" value="${esc(c.desc || '')}" placeholder="설명"></td></tr>`).join('');
+      `<tr><th>${esc(c.name)}</th><td class="t">${this.typeHtml(t, c, i)}</td><td><input data-desc="${i}" value="${esc(c.desc || '')}" placeholder="설명"></td></tr>`).join('');
+  }
+
+  // Enum은 값을 한 줄로 늘어놓으면 창이 옆으로 길어져서, 'Enum · N개 ▾'를 누르면 아래로 목록을 편다.
+  // 편 목록은 다시 그려도(칸을 고칠 때마다) 열린 채로 둔다
+  typeHtml(t, c, i) {
+    if (c.type !== 'enum' || c.linked) return esc(t.typeName(c));
+    const vals = t.enumValues(i);
+    return `<details class="enumdrop" data-col="${esc(c.name)}"${this.openEnums.has(c.name) ? ' open' : ''}><summary>Enum · ${vals.length}개</summary>` +
+      `<ul class="enumlist">${vals.map(v => `<li>${esc(v)}</li>`).join('')}</ul></details>`;
   }
 
   // 창 안에 표(탭으로 나뉜 칸)를 붙여넣으면 Meta 시트로 읽는다. 여러 줄 일반 글은 평소대로 둔다. 처리했으면 true
@@ -41,11 +55,11 @@ export class MetaPanel {
     if (!this.el.contains(document.activeElement) || !rows.some(r => r.length > 1)) return false;
     const res = MetaDoc.readSheet(this.app.table, rows);
     if (!res) {
-      this.app.status('Meta 머리줄을 찾지 못했습니다 (예: Column · Description · Type, 컬럼명 · 설명 · 타입)', 'bad');
+      this.app.toast('Meta 머리줄을 찾지 못했습니다 (예: Column · Description · Type, 컬럼명 · 설명 · 타입)', 'bad');
       return true;
     }
     this.app.grid.render();
-    if (res.missing.length) this.app.status('Meta에만 있는 컬럼: ' + res.missing.join(', '), 'warn');
+    if (res.missing.length) this.app.toast('Meta에만 있는 컬럼: ' + res.missing.join(', '), 'warn');
     return true;
   }
 }

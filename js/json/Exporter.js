@@ -2,10 +2,11 @@ import {$, ask, saveFile} from '../common/util.js';
 import {Zip} from '../common/Zip.js';
 import {MetaDoc} from '../meta/MetaDoc.js';
 import {SavePicker} from './SavePicker.js';
+import {ProjectNote} from './ProjectNote.js';
 
 const safeName = s => (s || 'table').replace(/[\\/:*?"<>|]/g, '_');
 
-// 파일 저장 버튼과 목록: JSON… · 설명서(.md)… (저장할 탭을 골라서) · 프로젝트 전체(모든 탭의 JSON + 설명서를 zip 하나로)
+// 파일 저장 버튼과 목록: JSON… · 설명서(.md)… (저장할 탭을 골라서) · 프로젝트 전체(모든 탭의 JSON + 설명서 + 설정 메모 _TableMaker.md를 zip 하나로)
 export class Exporter {
   constructor(app) {
     this.app = app;
@@ -19,7 +20,11 @@ export class Exporter {
   async save(kind) {
     const wb = this.app.workbook, date = new Date().toISOString().slice(0, 10), project = safeName(this.app.projects.current.name);
     this.menu.open = false;
-    if (kind === 'project') return saveFile(`${project}_${date}.zip`, Zip.create(this.files(wb.tables, ['json', 'md'])), 'application/zip');
+    if (kind === 'project') {
+      const files = this.files(wb.tables, ['json', 'md']), names = files.filter(f => f.name.endsWith('.json')).map(f => f.name.slice(0, -5));
+      const note = {name: ProjectNote.NAME, text: ProjectNote.toMd(this.app.projects.current.name, wb.tables, names)};
+      return saveFile(`${project}_${date}.zip`, Zip.create([note, ...files]), 'application/zip');
+    }
     // JSON · 설명서: 탭을 골라서. 하나면 그 파일 하나, 여러 개면 zip 하나 (여러 파일을 따로 받으면 브라우저가 매번 허락을 묻는다)
     const json = kind === 'json', tabs = wb.tables;
     const items = tabs.map(t => ({name: t.name, size: `${t.rows.length}행 × ${t.cols.length}열`, errors: json ? wb.errorCount(t) : 0}));

@@ -1,10 +1,12 @@
-import {$} from '../common/util.js';
+import {$, esc} from '../common/util.js';
 import {Zip} from '../common/Zip.js';
 import {Table} from '../data/Table.js';
 import {MetaDoc} from '../meta/MetaDoc.js';
 import {SheetText} from './SheetText.js';
 import {Xlsx} from './Xlsx.js';
 import {SheetPicker} from './SheetPicker.js';
+import {FolderPicker} from './FolderPicker.js';
+import {ProjectNote} from '../json/ProjectNote.js';
 
 const ext = name => (/\.([^.\/\\]+)$/.exec(name) || [])[1]?.toLowerCase();
 const baseName = name => name.split(/[\/\\]/).pop().replace(/\.[^.]+$/, '');
@@ -26,10 +28,26 @@ export class Importer {
     for (const id of ['file', 'folder']) $(id).onchange = e => this.onFiles(e);
   }
 
-  onFiles(e) {
-    const files = [...e.target.files];
+  async onFiles(e) {
+    let files = [...e.target.files];
     e.target.value = '';
-    this.openFiles(files, e.target.id === 'folder');
+    const fromFolder = e.target.id === 'folder';
+    if (fromFolder && !(files = await this.pickFolder(files))) return;
+    this.openFiles(files, fromFolder);
+  }
+
+  // 폴더 안 파일 목록 창(FolderPicker): JSON · CSV는 새 탭, 설명서는 이름이 같은 테이블(이번 것이나 이미 있는 탭)에.
+  // 짝이 없는 설명서는 처음엔 체크를 뺀다. 엑셀·.meta 같은 다른 파일은 목록에 안 보인다
+  async pickFolder(files) {
+    const wb = this.app.workbook, list = files.filter(f => ['json', 'csv', 'md'].includes(ext(f.name)));
+    const tables = new Set(list.filter(f => ext(f.name) !== 'md').map(f => baseName(f.name)));
+    const picked = await FolderPicker.pick(list.map(f => {
+      if (ProjectNote.isNote(f.name)) return {file: f, kind: '설정', on: true, dest: '탭 순서 · 보기 · 숨긴 경고 되살리기'};
+      const n = baseName(f.name), md = ext(f.name) === 'md', pair = !md || tables.has(n) || !!wb.findByName(n);
+      return {file: f, kind: md ? '설명서' : ext(f.name).toUpperCase(), on: pair,
+        dest: !md ? `새 탭 '${esc(n)}'` : pair ? `설명 → '${esc(n)}'` : '<span class="dim">짝 없음</span>'};
+    }));
+    return picked && picked.map(e => e.file);
   }
 
   // 고른 파일들을 연다 (불러오기 ▾, 새 프로젝트 창). fromFolder: 폴더로 고른 것
@@ -97,7 +115,9 @@ export class Importer {
   load(entries, errors = [], before = this.app.workbook.tables.length, blank = null) {
     const wb = this.app.workbook, added = new Map(); // 파일 이름 → 연 테이블 (이름에 _2가 붙어도 설명서를 제 테이블에 붙이게)
     // Unity 폴더의 .meta 같은 다른 파일은 조용히 넘긴다
-    const data = entries.filter(f => ['json', 'csv'].includes(ext(f.name))), docs = entries.filter(f => ext(f.name) === 'md');
+    // 프로젝트 zip의 설정 메모(_TableMaker.md)는 설명서가 아니라 탭 순서·보기·숨긴 경고를 되살리는 데 쓴다 (ProjectNote)
+    const noteFile = entries.find(f => ProjectNote.isNote(f.name));
+    const data = entries.filter(f => ['json', 'csv'].includes(ext(f.name))), docs = entries.filter(f => ext(f.name) === 'md' && f !== noteFile);
     for (const f of data) {
       try {
         const text = SheetText.decode(f.bytes);
@@ -111,13 +131,14 @@ export class Importer {
       if (t) MetaDoc.applyMd(t, SheetText.decode(f.bytes));
       else if (!data.length) errors.push(`${baseName(f.name)}.md: 이름이 같은 테이블이 없습니다`); // 설명서만 따로 고른 경우만 알린다
     }
+    if (noteFile && added.size) ProjectNote.apply(wb, added, ProjectNote.read(SheetText.decode(noteFile.bytes)));
     if (wb.tables.length === before && !docs.length && !errors.length) errors.push('열 수 있는 파일(JSON · CSV · MD · XLSX)이 없습니다');
     if (blank) {
       if (wb.tables.length > before) { wb.remove(wb.tables.indexOf(blank.t)); before--; }
       else blank.t.name = blank.name;
     }
     this.app.show(wb.tables.length > before ? wb.tables.length - 1 : wb.cur);
-    if (errors.length) this.app.status('불러오기 실패 · ' + errors.join(' / '), 'bad');
+    if (errors.length) this.app.toast('불러오기 실패\n' + errors.join('\n'), 'bad');
   }
 
   // 첫 줄을 컬럼 이름으로 보고 새 테이블(탭)로 연다

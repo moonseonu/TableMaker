@@ -36,6 +36,13 @@ export class Workbook {
     this.cur = Math.min(this.cur, this.tables.length - 1);
   }
 
+  // 탭 순서 바꾸기: from 번째 탭을 to 자리로. 보고 있던 탭은 그대로 본다 (참조는 이름으로 이어져 있어 순서와 상관없다)
+  move(from, to) {
+    const cur = this.current, [t] = this.tables.splice(from, 1);
+    this.tables.splice(to, 0, t);
+    this.cur = this.tables.indexOf(cur);
+  }
+
   // 참조는 테이블 이름으로 이어져 있어서 이름을 바꾸면 따라 바꾼다
   rename(t, name) {
     for (const o of this.tables) if (o !== t) o.refs = o.refs.map(n => n === t.name ? name : n);

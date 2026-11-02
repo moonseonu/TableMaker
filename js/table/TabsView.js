@@ -1,19 +1,21 @@
 import {esc, ask} from '../common/util.js';
 import {Table} from '../data/Table.js';
+import {TabDrag} from './TabDrag.js';
 
-// 표 위의 테이블 탭 줄: 고르기, + 새 테이블, 삭제, 더블클릭으로 이름 바꾸기
+// 표 위의 테이블 탭 줄: 고르기, + 새 테이블, 삭제, 더블클릭으로 이름 바꾸기, 끌어서 순서 바꾸기(TabDrag)
 export class TabsView {
   constructor(el, app) {
     this.el = el;
     this.app = app;
     el.addEventListener('click', e => this.onClick(e));
     el.addEventListener('dblclick', e => this.rename(e));
+    new TabDrag(this);
   }
 
   render() {
     const wb = this.app.workbook;
     this.el.innerHTML = wb.tables.map((t, i) =>
-      `<div class="tab${i === wb.cur ? ' on' : ''}" data-t="${i}" title="더블클릭해서 이름 바꾸기"><span>${esc(t.name || '(이름 없음)')}</span>` +
+      `<div class="tab${i === wb.cur ? ' on' : ''}" data-t="${i}" draggable="true" title="더블클릭해서 이름 바꾸기 · 끌어서 순서 바꾸기"><span>${esc(t.name || '(이름 없음)')}</span>` +
       (wb.tables.length > 1 ? `<button class="ico" data-deltab="${i}" title="테이블 삭제">✕</button>` : '') + '</div>'
     ).join('') + '<button id="addTab" title="새 테이블">+</button>';
   }
@@ -40,6 +42,7 @@ export class TabsView {
     if (!tab || tab.querySelector('input')) return;
     const t = this.app.workbook.tables[+tab.dataset.t];
     const span = tab.querySelector('span');
+    tab.draggable = false; // 이름 칸에서 글자를 고를 수 있게 (다 고치면 render로 돌아온다)
     span.innerHTML = `<input value="${esc(t.name)}">`;
     const inp = span.firstChild;
     inp.focus(); inp.select();

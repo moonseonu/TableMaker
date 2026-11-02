@@ -1,4 +1,5 @@
 import {$} from './common/util.js';
+import {Toast} from './common/Toast.js';
 import {Workbook} from './data/Workbook.js';
 import {Projects} from './data/Projects.js';
 import {History} from './data/History.js';
@@ -100,7 +101,7 @@ export class App {
 
   undo(redo) {
     const json = redo ? this.history.redo() : this.history.undo();
-    if (json == null) return this.status(redo ? '다시 할 것이 없습니다' : '되돌릴 것이 없습니다');
+    if (json == null) return this.toast(redo ? '다시 할 것이 없습니다' : '되돌릴 것이 없습니다');
     const a = document.activeElement, p = this.grid.el.contains(a) && this.grid.pos(a);
     this.restoring = true;
     this.workbook = new Workbook(JSON.parse(json));
@@ -110,10 +111,14 @@ export class App {
     if (el) this.grid.focusEl(el);
   }
 
+  // 상태줄: 지금 탭의 오류·경고 수처럼 늘 보여야 하는 것
   status(text, cls = '') {
     $('status').textContent = text;
     $('status').className = cls;
   }
+
+  // 한 번 알리면 되는 것은 잠깐 떴다 사라지는 알림으로
+  toast(text, kind) { Toast.show(text, kind); }
 
   // 하단 패널 둘은 따로 켜고 끈다. 둘 다 켜면 JSON 왼쪽, 설명 오른쪽
   layoutPanels() { $('panels').hidden = !this.json.open && !this.meta.open; }
@@ -131,7 +136,7 @@ export class App {
       this.importer.pasteAsTable(rows);
     } catch (err) {
       e.preventDefault();
-      this.status('붙여넣기 실패: ' + err.message, 'bad');
+      this.toast('붙여넣기 실패: ' + err.message, 'bad');
     }
   }
 }

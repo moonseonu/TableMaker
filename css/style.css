@@ -55,6 +55,9 @@ header .appmenu button.on .dot{border:3px solid var(--accent)}
 .tab{display:flex;align-items:center;gap:2px;padding:5px 6px 5px 12px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;background:var(--bg);color:var(--dim);cursor:pointer;white-space:nowrap}
 .tab:hover{color:var(--text)}
 .tab.on{background:var(--panel);color:var(--text);font-weight:600}
+/* 탭을 끌 때 놓을 자리 (TabDrag.js) */
+.tab.dropL{box-shadow:inset 3px 0 var(--accent)}
+.tab.dropR{box-shadow:inset -3px 0 var(--accent)}
 .tab input{width:120px;background:var(--bg);border:1px solid var(--accent);border-radius:3px;padding:0 4px}
 #addTab{margin:0 0 3px 4px}
 main{flex:1;overflow:auto}
@@ -130,6 +133,14 @@ td.warn{background:var(--warnbg)}
 .ctxmenu button{display:block;width:100%;text-align:left;background:transparent;border:0;padding:7px 12px;white-space:nowrap}
 .ctxmenu button:hover{background:var(--hover)}
 #status.warn{color:var(--warntext)}
+/* 잠깐 떴다 흐려지는 알림 (Toast.js). 줄바꿈(\n)은 그대로 줄을 나눈다 */
+.toast{position:fixed;left:50%;bottom:40px;z-index:60;max-width:min(720px,calc(100vw - 32px));padding:10px 16px;border-radius:8px;
+  background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);box-shadow:0 6px 16px var(--shadow);
+  white-space:pre-line;cursor:pointer;animation:toast var(--dur) ease forwards}
+.toast.warn{border-left-color:var(--warntext)}
+.toast.bad{border-left-color:var(--badline)}
+.toast:hover{animation-play-state:paused}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,8px)}5%,75%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}
 .ghost{background:transparent;border-style:dashed}
 thead th.ghost{background:var(--panel)}
 .ghost input::placeholder{color:var(--dim)}
@@ -197,6 +208,15 @@ tr:hover .num .del{visibility:visible}
 .metabody table{width:100%}
 #cdesc th,#cdesc td{border:0;background:transparent;padding:2px 10px 2px 0;text-align:left}
 #cdesc td.t{color:var(--dim)}
+/* Enum 목록을 펴면 줄이 길어지니 이름·타입은 위쪽(입력칸 글자 높이)에 맞춘다 */
+#cdesc th,#cdesc td{vertical-align:top}
+#cdesc th,#cdesc td.t{padding-top:7px}
+#cdesc .enumdrop summary{list-style:none;cursor:pointer;white-space:nowrap}
+#cdesc .enumdrop summary::-webkit-details-marker{display:none}
+#cdesc .enumdrop summary::after{content:' ▾'}
+#cdesc .enumdrop[open] summary::after{content:' ▴'}
+#cdesc .enumdrop summary:hover{color:var(--text)}
+#cdesc .enumdrop .enumlist{margin:4px 0 4px;color:var(--text);max-height:none;overflow:visible}
 #cdesc td:last-child{width:100%;padding-right:0}
 #cdesc input{width:100%;min-width:160px;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:4px 6px}
 /* 팝업 창 (util.js ask, js/import/SheetPicker.js) */
