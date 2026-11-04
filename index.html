@@ -27,6 +27,10 @@
   <details id="appMenu" class="dropmenu appmenu">
     <summary aria-label="메뉴" title="설정">☰</summary>
     <div class="menu">
+      <div class="h">GitHub 계정</div>
+      <!-- 로그인 · 로그아웃 (js/settings/GitHubAccount.js). 저장소 고르기는 불러오기 ▾ → GitHub, 올리기는 파일 저장 ▾ → GitHub에 커밋 -->
+      <div id="ghAccount"></div>
+      <hr>
       <div class="h">화면 테마</div>
       <button data-theme-pick="system"><span class="dot"></span>시스템 설정 따름</button>
       <button data-theme-pick="light"><span class="dot"></span>라이트</button>
@@ -45,15 +49,11 @@
 <div class="work">
 <div class="toolbar">
   <details id="openMenu" class="dropmenu outline">
-    <summary title="JSON · CSV는 새 탭으로 열리고, 같은 이름의 설명서(.md)가 있으면 설명과 설정도 함께 되살아납니다.&#10;엑셀(.xlsx)은 가져올 시트를 골라 시트마다 새 탭으로 열립니다.&#10;설명서(.md)만 지금 탭에 붙이려면 아래쪽 '설명 (Meta)'을 쓰세요.&#10;엑셀에서 복사한 표는 빈 곳을 누르고 Ctrl+V 하면 새 탭으로 열립니다">불러오기 ▾</summary>
+    <summary title="가져온 파일은 목록 창에서 테이블(새 탭) · 설명(→ 테이블) · 설정으로 먼저 나눠 보여 주고, 들어갈 곳은 바꿀 수 있습니다.&#10;JSON · CSV 하나만 고르면 바로 새 탭으로 열립니다.&#10;엑셀에서 복사한 표는 빈 곳을 누르고 Ctrl+V 하면 새 탭으로 열립니다">불러오기 ▾</summary>
     <div class="menu left">
-      <div class="h">테이블 (새 탭으로)</div>
+      <button data-gh title="GitHub 저장소의 폴더에서 바로 불러옵니다. 공개 저장소는 로그인 없이, 비공개 저장소는 ☰ → GitHub 로그인 후">GitHub <small>저장소 폴더에서</small></button>
       <button data-open="file">파일 <small>JSON · CSV · MD · ZIP · XLSX</small></button>
       <button data-open="folder">폴더 <small>안의 JSON · CSV · MD 전부</small></button>
-      <hr>
-      <div class="h">설명 (Meta)</div>
-      <button data-meta="file" title="설명서(.md)의 테이블 설명과 컬럼 설명·타입을 붙입니다.&#10;하나만 고르면 이름과 상관없이 지금 보고 있는 탭에, 여러 개면 이름이 같은 탭에 붙습니다">파일 <small data-hint="meta"></small></button>
-      <button data-meta="folder" title="폴더 안의 설명서(.md)를 모두, 이름이 같은 탭에 붙입니다">폴더 <small>안의 MD 전부 → 이름이 같은 탭에</small></button>
     </div>
   </details>
   <input type="file" id="file" accept=".json,.csv,.md,.zip,.xlsx" multiple hidden>
@@ -69,6 +69,8 @@
       <button data-save="md">설명서 (.md)… <small>탭을 골라서</small></button>
       <hr>
       <button data-save="project" title="모든 탭의 JSON과 설명서, 설정 메모(_TableMaker.md: 탭 순서·보기·숨긴 경고)를 zip 하나로 저장합니다. 압축을 풀어 그대로 쓰거나, 불러오기(파일·폴더)로 다시 열면 설정 그대로 열립니다">프로젝트 전체 (.zip) <small>JSON + 설명서 + 설정</small></button>
+      <hr>
+      <button data-gh-commit title="불러오기에서 쓰던 GitHub 저장소 폴더에, 바뀐 파일(JSON · 설명서 · 설정)만 커밋 하나로 올립니다. 로그인 토큰에 쓰기 권한(Contents: Read and write)이 필요합니다">GitHub에 커밋… <small>바뀐 파일만</small></button>
     </div>
   </details>
 </div>

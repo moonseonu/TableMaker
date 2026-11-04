@@ -8,8 +8,11 @@ import {TabsView} from './table/TabsView.js';
 import {JsonPanel} from './json/JsonPanel.js';
 import {Exporter} from './json/Exporter.js';
 import {MetaPanel} from './meta/MetaPanel.js';
-import {MetaImport} from './meta/MetaImport.js';
 import {Importer} from './import/Importer.js';
+import {GitHubImport} from './import/GitHubImport.js';
+import {GitHubAccount} from './settings/GitHubAccount.js';
+import {GitHubCommit} from './json/GitHubCommit.js';
+import {GitHubSync} from './json/GitHubSync.js';
 import {SettingsMenu} from './settings/SettingsMenu.js';
 import {UpdateCheck} from './settings/UpdateCheck.js';
 import {Donate} from './settings/Donate.js';
@@ -36,7 +39,10 @@ export class App {
     this.meta = new MetaPanel(this);
     this.exporter = new Exporter(this);
     this.importer = new Importer(this);
-    this.metaImport = new MetaImport(this);
+    this.githubAccount = new GitHubAccount(this);
+    this.github = new GitHubImport(this);
+    this.githubCommit = new GitHubCommit(this);
+    this.githubSync = new GitHubSync(this);
     this.settings = new SettingsMenu();
     this.updateCheck = new UpdateCheck();
     this.donate = new Donate();
@@ -61,6 +67,7 @@ export class App {
     this.history = new History(JSON.stringify(this.workbook));
     this.projectMenu.render();
     this.show(this.workbook.cur);
+    this.githubSync.setLink(this.projects.current.link); // 프로젝트마다 연결이 다르다 (↻ · 띠를 그 프로젝트 것으로)
   }
 
   show(i) {

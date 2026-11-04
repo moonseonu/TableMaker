@@ -20,11 +20,7 @@ export class Exporter {
   async save(kind) {
     const wb = this.app.workbook, date = new Date().toISOString().slice(0, 10), project = safeName(this.app.projects.current.name);
     this.menu.open = false;
-    if (kind === 'project') {
-      const files = this.files(wb.tables, ['json', 'md']), names = files.filter(f => f.name.endsWith('.json')).map(f => f.name.slice(0, -5));
-      const note = {name: ProjectNote.NAME, text: ProjectNote.toMd(this.app.projects.current.name, wb.tables, names)};
-      return saveFile(`${project}_${date}.zip`, Zip.create([note, ...files]), 'application/zip');
-    }
+    if (kind === 'project') return saveFile(`${project}_${date}.zip`, Zip.create(this.projectFiles()), 'application/zip');
     // JSON · 설명서: 탭을 골라서. 하나면 그 파일 하나, 여러 개면 zip 하나 (여러 파일을 따로 받으면 브라우저가 매번 허락을 묻는다)
     const json = kind === 'json', tabs = wb.tables;
     const items = tabs.map(t => ({name: t.name, size: `${t.rows.length}행 × ${t.cols.length}열`, errors: json ? wb.errorCount(t) : 0}));
@@ -40,6 +36,13 @@ export class Exporter {
 
   // 테이블들 → 저장할 파일들 [{name, text}]. kinds: 'json', 'md'. 이름이 같은 탭은 파일이 겹치지 않게 뒤에 _를 붙인다.
   // 압축을 풀면 JSON은 Unity 폴더에 바로 넣고, 같은 이름의 .md는 그 옆에 둔다. 불러오기(파일·폴더)로 다시 열 수 있다
+  // 프로젝트 전체: 설정 메모(_TableMaker.md) + 모든 탭의 JSON · 설명서 (프로젝트 zip, GitHub에 커밋)
+  projectFiles() {
+    const wb = this.app.workbook, files = this.files(wb.tables, ['json', 'md']);
+    const names = files.filter(f => f.name.endsWith('.json')).map(f => f.name.slice(0, -5));
+    return [{name: ProjectNote.NAME, text: ProjectNote.toMd(this.app.projects.current.name, wb.tables, names)}, ...files];
+  }
+
   files(tables, kinds) {
     const wb = this.app.workbook, used = new Set(), out = [];
     for (const t of tables) {

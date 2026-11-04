@@ -31,6 +31,38 @@ header .projmenu button:disabled{color:var(--dim);cursor:default}
 .asktext{display:flex;gap:8px;align-items:center;margin:8px 0 14px;color:var(--dim)}
 .asktext input{flex:1;min-width:220px;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 8px;color:var(--text)}
 .newproj .pick{display:flex;gap:10px;align-items:center}
+/* GitHub에서 불러오기 창 (js/import/GitHubImport.js): 이름표 폭을 맞춰 칸을 세로로 가지런히 */
+.ghimport{width:min(560px,90vw)}
+.ghimport .asktext{margin:6px 0}
+.ghimport .asktext input{min-width:0}
+.ghimport label.asktext{display:grid;grid-template-columns:56px 1fr}
+.ghimport .small{font-size:12px;margin:8px 0}
+.ghimport a{color:var(--accent-text)}
+.ghimport .err{color:var(--badline)}
+.sheetpick .commitmsg{display:flex;margin:10px 0 0}
+.sheetpick .commitmsg input{flex:1}
+/* 입력칸 + 아래로 펼치는 목록 (js/common/Combo.js) */
+.combo{position:relative;display:flex}
+.combo input{flex:1;min-width:0;padding-right:28px}
+.combo input{cursor:pointer}
+.combo-btn{position:absolute;right:2px;top:50%;transform:translateY(-50%);color:var(--dim);padding:2px 8px;pointer-events:none}
+.combo:hover .combo-btn{color:var(--text)}
+.combo-list{position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:5;margin:0;padding:4px;list-style:none;max-height:220px;overflow:auto;
+  background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 6px 16px var(--shadow);color:var(--text)}
+.combo-list li{padding:5px 8px;border-radius:4px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.combo-list li:hover,.combo-list li.on{background:var(--hover)}
+.combo-list li.none{color:var(--dim);cursor:default;white-space:normal}
+.combo-list li.none:hover{background:none}
+.combo-list li.act{color:var(--accent-text);border-top:1px solid var(--line);margin-top:2px}
+dialog.ghimport{overflow:visible}
+.ghimport .keep{display:flex;gap:6px;align-items:center;margin:10px 0 4px}
+.ghimport .who p{margin:2px 0 8px}
+button.link{background:none;border:0;padding:0;color:var(--accent-text);text-decoration:underline;cursor:pointer;font:inherit}
+/* ☰ → GitHub 계정: 로그인했으면 프로필 사진 · 이름 · 로그아웃 */
+#ghAccount .ghuser{display:flex;align-items:center;gap:8px;padding:5px 10px}
+#ghAccount .ghuser img{width:20px;height:20px;border-radius:50%}
+#ghAccount .ghuser button{margin-left:auto;padding:2px 8px;font-size:12px;border:1px solid var(--line);border-radius:4px}
+#ghAccount > button{width:100%}
 .newproj .chosen{margin:6px 0 14px;font-size:12px;min-height:1em}
 header .appmenu .menu{min-width:190px}
 .updatebar{flex:none;border:0;border-radius:0;padding:8px 12px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
@@ -56,6 +88,17 @@ header .appmenu button.on .dot{border:3px solid var(--accent)}
 .tab:hover{color:var(--text)}
 .tab.on{background:var(--panel);color:var(--text);font-weight:600}
 /* 탭을 끌 때 놓을 자리 (TabDrag.js) */
+/* 탭 줄 맨 앞 ↻: GitHub 저장소에 연결된 프로젝트만 (GitHubSync.js). 새 커밋이 있으면 점, 받는 동안 돈다 */
+#ghSync{position:relative;align-self:center;margin-right:6px;padding:2px 9px;font-size:15px;line-height:1.4}
+#ghSync.new::after{content:'';position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--warntext)}
+/* 받는 동안 버튼은 그대로 두고 안의 화살표만 돈다 */
+#ghSync span{display:inline-block}
+#ghSync.busy{pointer-events:none}
+#ghSync.busy span{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* 새 커밋 알림 띠 */
+.ghbar{display:flex;gap:10px;align-items:center;padding:6px 12px;background:var(--accent-tint);border-top:1px solid var(--line)}
+.ghbar > span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tab.dropL{box-shadow:inset 3px 0 var(--accent)}
 .tab.dropR{box-shadow:inset -3px 0 var(--accent)}
 .tab input{width:120px;background:var(--bg);border:1px solid var(--accent);border-radius:3px;padding:0 4px}
@@ -219,7 +262,7 @@ tr:hover .num .del{visibility:visible}
 #cdesc .enumdrop .enumlist{margin:4px 0 4px;color:var(--text);max-height:none;overflow:visible}
 #cdesc td:last-child{width:100%;padding-right:0}
 #cdesc input{width:100%;min-width:160px;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:4px 6px}
-/* 팝업 창 (util.js ask, js/import/SheetPicker.js) */
+/* 팝업 창 (util.js ask, js/common/CheckPicker.js, js/import/ImportPicker.js) */
 dialog.popup{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:16px 18px;min-width:340px;max-width:90vw;box-shadow:0 10px 30px var(--shadow)}
 dialog.popup::backdrop{background:rgba(0,0,0,.4)}
 .popup h3{margin:0 0 4px;font-size:15px}
@@ -232,8 +275,11 @@ dialog.popup::backdrop{background:rgba(0,0,0,.4)}
 .sheetpick tbody tr{cursor:pointer}
 .sheetpick tbody tr:hover td{background:var(--hover)}
 .sheetpick tr.dim{color:var(--dim);cursor:default}
-.sheetpick td:nth-child(3){color:var(--dim);white-space:nowrap}
-.sheetpick .rename{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:2px 6px;color:var(--text);width:180px}
+.sheetpick td:nth-child(3),.sheetpick td:nth-child(4){color:var(--dim);white-space:nowrap}
+/* 불러오기 목록 창의 '들어갈 곳' 드롭다운과, 이름이 겹칠 때의 이름 칸 (ImportPicker.js) */
+.sheetpick select{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:2px 4px;color:var(--text);max-width:300px}
+.sheetpick .rename{margin-top:4px}
+.sheetpick .rename input{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:2px 6px;color:var(--text);width:180px}
 .sheetpick .warn{display:block;color:var(--warntext);margin-top:2px}
 .popup .btns{display:flex;justify-content:flex-end;gap:8px}
 .donate img{display:block;margin:10px auto;border-radius:6px} /* QR은 흰 바탕째로 그려 다크 테마에서도 찍힌다 */

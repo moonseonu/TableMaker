@@ -13,8 +13,10 @@ export class TabsView {
   }
 
   render() {
-    const wb = this.app.workbook;
-    this.el.innerHTML = wb.tables.map((t, i) =>
+    const wb = this.app.workbook, sync = this.app.githubSync;
+    // GitHub 저장소에 연결된 프로젝트는 맨 앞에 ↻ (GitHubSync: 누르면 갱신, 새 커밋이 있으면 점)
+    this.el.innerHTML = (this.app.projects.current.link
+      ? `<button id="ghSync" class="sync${sync?.fresh ? ' new' : ''}" title="${esc(sync?.tip() || '')}"><span>↻</span></button>` : '') + wb.tables.map((t, i) =>
       `<div class="tab${i === wb.cur ? ' on' : ''}" data-t="${i}" draggable="true" title="더블클릭해서 이름 바꾸기 · 끌어서 순서 바꾸기"><span>${esc(t.name || '(이름 없음)')}</span>` +
       (wb.tables.length > 1 ? `<button class="ico" data-deltab="${i}" title="테이블 삭제">✕</button>` : '') + '</div>'
     ).join('') + '<button id="addTab" title="새 테이블">+</button>';

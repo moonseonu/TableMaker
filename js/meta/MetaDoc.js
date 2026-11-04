@@ -69,17 +69,24 @@ export class MetaDoc {
     return {before, rows};
   }
 
+  // Meta 표의 머리줄: 컬럼 이름 열과 설명·타입 열 중 하나가 있는 줄 (위에 제목 줄이 있을 수 있어 처음 몇 줄 안에서).
+  // 찾으면 {hr: 머리줄 번호, ci · di · ti: 컬럼 · 설명 · 타입 열 번호(없으면 -1), names: 적힌 컬럼 이름들}, 못 찾으면 null
+  static head(rows) {
+    const norm = s => String(s).trim().toLowerCase().replace(/[\s_-]/g, '');
+    const find = (head, k) => head.findIndex(h => HEAD[k].includes(norm(h)));
+    const hr = rows.slice(0, 5).findIndex(r => find(r, 'column') >= 0 && (find(r, 'desc') >= 0 || find(r, 'type') >= 0));
+    if (hr < 0) return null;
+    const [ci, di, ti] = ['column', 'desc', 'type'].map(k => find(rows[hr], k));
+    return {hr, ci, di, ti, names: rows.slice(hr + 1).map(r => String(r[ci] ?? '').trim()).filter(Boolean)};
+  }
+
   // 엑셀 Meta 시트(칸 배열)를 읽어 컬럼 설명과 타입을 채운다. ID 열 타입은 건드리지 않는다.
   // 머리줄을 못 찾으면 순서를 짐작하지 않고 null (설명 칸에 int가 들어가는 식으로 꼬이니까).
   // 찾으면 {missing: 테이블에 없는 컬럼 이름들}
   static readSheet(t, rows) {
-    const norm = s => s.trim().toLowerCase().replace(/[\s_-]/g, '');
-    const find = (head, k) => head.findIndex(h => HEAD[k].includes(norm(h)));
-    // 위에 제목 줄이 있을 수 있어 처음 몇 줄 안에서 머리줄을 찾는다
-    const hr = rows.slice(0, 5).findIndex(r => find(r, 'column') >= 0 && (find(r, 'desc') >= 0 || find(r, 'type') >= 0));
-    if (hr < 0) return null;
-    const [ci, di, ti] = ['column', 'desc', 'type'].map(k => find(rows[hr], k));
-    const missing = [];
+    const h = MetaDoc.head(rows);
+    if (!h) return null;
+    const {hr, ci, di, ti} = h, missing = [];
     for (const r of rows.slice(hr + 1)) {
       const name = (r[ci] || '').trim();
       if (!name) continue;
