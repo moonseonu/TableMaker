@@ -100,6 +100,21 @@ export class GitHubSync {
     this.setLink({...l, sha: head.sha, at: Date.now(), files: this.remoteFiles(tree, path), local: await this.localShas()});
   }
 
+  // 불러오기 창의 '현재 표로 연동': 탭은 그대로 두고 연결만 한다(파일을 고르지 않아 중복 탭이 생기지 않는다).
+  // 이름이 같은 파일은 GitHub 것을 '맞춘 것'으로 기억해서, 내용이 다르면 '내가 고친 것'이 돼 다음 커밋 목록에 나온다.
+  // GitHub에만 있는 파일은 기억하지 않아서 바로 이어지는 갱신(↻와 같다)으로 받는다
+  async linkHere(owner, repo, branch, path, tree, empty) {
+    const head = empty ? null : await this.head({owner, repo, branch}, true);
+    const remote = this.remoteFiles(tree, path), mine = await this.localShas();
+    const both = Object.fromEntries(Object.entries(remote).filter(([n]) => n in mine));
+    const ups = Object.keys(mine).filter(n => mine[n] !== remote[n]).length, news = Object.keys(remote).filter(n => !(n in mine)).length;
+    this.setLink({owner, repo, branch, path, sha: head?.sha || null, at: Date.now(), files: both, local: {...both}});
+    const got = news && await this.sync();
+    this.app.toast(`${owner}/${repo}${path ? ` · ${path}` : ''}에 연동했습니다 · 지금 표는 그대로입니다` +
+      (news ? got ? `\nGitHub에만 있던 파일 ${news}개를 받았습니다` : '\nGitHub에만 있던 파일은 못 받았습니다 · ↻로 다시 받으세요' : '') +
+      (ups ? `\n올릴 변경 ${ups}개 · 파일 저장 ▾ → GitHub에 커밋으로 올리세요` : ''), news && !got ? 'warn' : '');
+  }
+
   // 지금 탭들로 만든 파일들(프로젝트 전체 저장과 같은 것) → {파일 이름: git 번호}. names를 주면 그 파일만
   async localShas(names) {
     const out = {};
@@ -162,6 +177,7 @@ export class GitHubSync {
       this.setLink({...l, sha: head.sha, at: Date.now(), files: {...remote, ...kept}, local: {...was, ...await this.localShas(fresh)}});
       const problems = errors.length ? '\n' + errors.join('\n') : '';
       this.app.toast(`GitHub에서 갱신했습니다 · ${done}${skip.size ? `\n그대로 둔 것: ${[...new Set([...skip].map(base))].join(', ')}` : ''}${problems}`, errors.length ? 'warn' : '');
+      return true;
     } catch (err) {
       this.app.toast('GitHub에서 갱신 실패\n' + err.message, 'bad');
     } finally {

@@ -39,6 +39,7 @@ export class GitHubImport {
           this.app.githubSync.sync();
         return;
       }
+      if (got.linkOnly) return await this.app.githubSync.linkHere(owner, repo, branch, path, tree, empty);
       const pre = path ? path + '/' : '';
       // 불러오기가 여는 파일(JSON · CSV · 설명서)만. 들어갈 곳을 짐작하려면 내용을 봐야 해서 목록 창 전에 모두 내려받는다
       const files = tree.filter(n => n.type === 'blob' && n.path.startsWith(pre) && OPENS.test(n.path)).map(n => {
@@ -96,7 +97,8 @@ export class GitHubImport {
     d.querySelector('.hint').textContent = `'${path.value}' 폴더는 커밋하면 파일과 함께 만들어집니다.`;
   }
 
-  // 저장소 고르는 창 (불러오기, 그리고 GitHub에 커밋할 곳 고르기). 확인하면 {owner, repo, branch, path}, 취소하면 null
+  // 저장소 고르는 창 (불러오기, 그리고 GitHub에 커밋할 곳 고르기). 확인하면 {owner, repo, branch, path, linkOnly}, 취소하면 null.
+  // linkOnly: 불러오기 창의 '현재 표로 연동'을 눌렀다
   // newFolder: 커밋할 곳 고르기 — 폴더 목록에 저장소의 모든 폴더와 '/'(맨 위), 맨 아래 '+ 새 폴더…'(지금 칸의 폴더 아래에 이름을 정해 만든다).
   //   Git에는 빈 폴더가 없어서 새 폴더는 커밋할 때 파일이 들어가며 생긴다. 없는 경로를 직접 적어도 같다
   ask({title = 'GitHub에서 불러오기', ok = '폴더 열기', newFolder = false} = {}) {
@@ -109,7 +111,10 @@ export class GitHubImport {
       `<label class="asktext">브랜치 <input class="branch" value="${esc(saved.branch || '')}" placeholder="비우면 기본 브랜치"></label>` +
       `<label class="asktext">폴더 <input class="path" value="${esc(saved.path || '')}" placeholder="${newFolder ? '예: Assets/Resources/Json (/ 나 비우면 맨 위)' : '예: Assets/Resources/Json (비우면 전체)'}"></label>` +
       `<p class="dim small hint">칸을 누르면 고를 수 있는 목록이 나옵니다.${newFolder ? ' 폴더 목록 맨 아래 「+ 새 폴더…」로 지금 고른 폴더 아래에 새 폴더를 만들 수 있습니다.' : ''}</p><p class="bad small err"></p>` +
-      `<div class="btns"><button type="button" class="cancel">취소</button><button value="ok" class="primary">${esc(ok)}</button></div></form>`;
+      `<div class="btns"><button type="button" class="cancel">취소</button>` +
+      // 불러오기만: 파일을 고르지 않고 지금 탭 그대로 연결 (GitHubSync.linkHere)
+      (newFolder ? '' : '<button value="link" title="지금 탭은 그대로 두고 이 저장소 폴더에 연결만 합니다. GitHub에만 있는 표는 받아 오고, 내용이 다른 표는 다음 커밋 때 올릴 목록에 나옵니다">현재 표로 연동</button>') +
+      `<button value="ok" class="primary">${esc(ok)}</button></div></form>`;
     const $d = c => d.querySelector(c), val = c => $d(c).value.trim(), err = $d('.err');
     const combo = {
       ghRepos: new Combo($d('.repo'), gh.loggedIn ? '내 저장소 목록을 받는 중이거나 없습니다. owner/repo를 직접 적어도 됩니다' : '로그인하면 내 저장소 목록이 나옵니다. owner/repo를 직접 적어도 됩니다'),
@@ -171,8 +176,8 @@ export class GitHubImport {
     d.showModal();
     return new Promise(done => d.addEventListener('close', () => {
       clearTimeout(timer);
-      const p = d.returnValue === 'ok' && GitHubImport.parse(val('.repo'));
-      const got = p && {...p, branch: val('.branch') || p.branch, path: (val('.path') || p.path).replace(/^\/+|\/+$/g, '')};
+      const p = ['ok', 'link'].includes(d.returnValue) && GitHubImport.parse(val('.repo'));
+      const got = p && {...p, branch: val('.branch') || p.branch, path: (val('.path') || p.path).replace(/^\/+|\/+$/g, ''), linkOnly: d.returnValue === 'link'};
       d.remove();
       if (got) try { localStorage.setItem(SAVED, JSON.stringify({repo: `${got.owner}/${got.repo}`, branch: got.branch, path: got.path})); } catch {}
       done(got || null);
