@@ -102,8 +102,11 @@ export class GitHubImport {
   // newFolder: 커밋할 곳 고르기 — 폴더 목록에 저장소의 모든 폴더와 '/'(맨 위), 맨 아래 '+ 새 폴더…'(지금 칸의 폴더 아래에 이름을 정해 만든다).
   //   Git에는 빈 폴더가 없어서 새 폴더는 커밋할 때 파일이 들어가며 생긴다. 없는 경로를 직접 적어도 같다
   ask({title = 'GitHub에서 불러오기', ok = '폴더 열기', newFolder = false} = {}) {
+    // 처음 칸: 지금 프로젝트가 저장소에 연결돼 있으면 그 저장소 · 브랜치 · 폴더(엉뚱한 곳에 커밋하지 않게), 아니면 마지막에 연 곳
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem(SAVED)) || {}; } catch {}
+    const link = this.app.projects.current.link;
+    if (link) saved = {repo: `${link.owner}/${link.repo}`, branch: link.branch, path: link.path};
     const gh = this.account, d = document.createElement('dialog');
     d.className = 'popup ghimport';
     d.innerHTML = `<form method="dialog"><h3>${esc(title)}</h3><div class="who"></div>` +
@@ -157,7 +160,15 @@ export class GitHubImport {
         } catch (e) { err.textContent = e.message; }
       }, 400);
     };
-    $d('.repo').addEventListener('input', lists);
+    // 저장소를 다른 것으로 바꾸면 브랜치 · 폴더는 비운다(기본 브랜치 · 맨 위). 앞 저장소의 브랜치가 남아 있으면 못 찾아서
+    const repoKey = () => { const p = GitHubImport.parse(val('.repo')); return p ? `${p.owner}/${p.repo}`.toLowerCase() : ''; };
+    let lastRepo = repoKey();
+    $d('.repo').addEventListener('input', () => {
+      const k = repoKey();
+      if (k && k !== lastRepo) { $d('.branch').value = ''; $d('.path').value = ''; fill('ghBranches', []); fill('ghFolders', []); }
+      if (k) lastRepo = k;
+      lists();
+    });
     $d('.branch').addEventListener('input', lists);
     d.addEventListener('click', async e => {
       if (e.target.closest('.invite')) return GitHubAppSetup.show(this.app, gh);
