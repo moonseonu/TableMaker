@@ -91,6 +91,7 @@ export class GitHubCommit {
         const head = await sync.head(link, true), up = Object.fromEntries(res.picked.map(i => [files[i].name, files[i].sha]));
         sync.setLink({...link, sha: head.sha, at: Date.now(), files: {...link.files, ...up}, local: {...link.local, ...up}});
       }
+      this.app.safari.backedUp();
       this.app.toast(`GitHub에 커밋했습니다 · 파일 ${res.picked.length}개\n${owner}/${repo} (${branch})` +
         (same ? '' : '\n이 프로젝트를 이 저장소에 연결했습니다 · 탭 줄 맨 앞 ↻로 갱신합니다') +
         (behind ? '\nGitHub에 아직 받지 않은 변경이 있습니다. ↻로 갱신하세요' : ''));

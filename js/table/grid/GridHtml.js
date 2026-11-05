@@ -38,7 +38,9 @@ export class GridHtml {
     const t = this.t;
     // 머리줄 두 행: 이름, 타입. 맨 오른쪽 빈 열은 채우는 순간 진짜 열이 되고, 비어 있으면 JSON에 안 나온다
     let h = '<thead><tr class="hname">' + corner;
-    t.cols.forEach((c, i) => h += `<th data-c="${i}"${this.moveTip(c)}>${this.nameHead(c, i)}</th>`);
+    // 이름 칸 오른쪽 경계의 손잡이: 끌어서 열 너비, 두 번 누르면 글자에 맞춤 (ColumnWidth)
+    t.cols.forEach((c, i) => h += `<th data-c="${i}"${this.moveTip(c)}>${this.nameHead(c, i)}` +
+      `<span class="colgrip${c.width ? ' set' : ''}" data-grip="${i}" title="끌어서 열 너비 조절 · 두 번 누르면 글자에 맞춤"></span></th>`);
     h += `<th class="ghost">${ghostColHead}</th></tr><tr class="htype"><th class="num"></th>`;
     t.cols.forEach((c, i) => h += `<th data-tc="${i}">${this.typeHead(c, i)}</th>`);
     h += '<th class="ghost"></th></tr></thead><tbody>';

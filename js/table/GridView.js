@@ -8,9 +8,11 @@ import {VirtualRows} from './grid/VirtualRows.js';
 import {EnumHint} from './grid/EnumHint.js';
 import {WarnMenu} from './grid/WarnMenu.js';
 import {GridPaste} from './grid/GridPaste.js';
+import {ColumnWidth} from './grid/ColumnWidth.js';
+import {CrossHair} from './grid/CrossHair.js';
 
 // 테이블 작성 영역: 표 그리기, 칸 입력·검사 표시, 정렬, 맨 오른쪽 빈 열과 맨 아래 빈 행, 칸에 붙여넣기
-// 역할이 많아 js/table/grid/ 의 역할 묶음(범위 선택, 열 옮기기, 칸 상태·키, HTML, 보이는 행, Enum, 경고 메뉴, 붙여넣기)으로 나누고 여기서 합친다
+// 역할이 많아 js/table/grid/ 의 역할 묶음(범위 선택, 열 옮기기, 칸 상태·키, HTML, 보이는 행, Enum, 경고 메뉴, 붙여넣기, 열 너비, 고른 칸의 행·열 표시)으로 나누고 여기서 합친다
 export class GridView {
   constructor(el, app) {
     this.el = el;
@@ -27,8 +29,12 @@ export class GridView {
     el.addEventListener('click', e => this.onClick(e));
     el.addEventListener('contextmenu', e => this.onContextMenu(e));
     el.addEventListener('keydown', e => this.onKey(e));
+    // 열 너비 손잡이는 열 고르기 · 순서 바꾸기 · 이름 고치기보다 먼저 받는다 (capture)
+    el.addEventListener('mousedown', e => this.onGripDown(e), true);
+    el.addEventListener('dblclick', e => this.onGripDbl(e), true);
     el.addEventListener('mousedown', e => this.onMouseDown(e));
-    el.addEventListener('mouseover', e => this.onMouseOver(e));
+    el.addEventListener('mouseover', e => { this.onMouseOver(e); this.onCellHover(e); });
+    el.addEventListener('focusout', () => setTimeout(() => this.markCross())); // 표 밖으로 나가면 행 · 열 표시를 지운다
     document.addEventListener('mouseup', () => this.onMouseUp());
     document.addEventListener('mousemove', e => this.onMouseMove(e));
     // 표 바깥을 누르면 범위 선택(파란 영역)도 푼다. 칸 하나를 고른 것은 포커스를 잃으며 저절로 풀리니 같게
@@ -64,6 +70,7 @@ export class GridView {
     this.el.classList.toggle('flip', !!t.flip);
     this.win = t.flip ? null : {first: 0, last: -1}; // 아직 그린 행 없음. 아래 fillRows가 보이는 행을 그린다
     this.el.innerHTML = t.flip ? this.flippedHtml(corner, ghostColHead) : this.normalHtml(corner, ghostColHead);
+    if (!t.flip) this.fitColumns(); // 아래쪽 긴 값 때문에 스크롤할 때 열이 넓어지지 않게 미리
     this.showTypes(!this.typesHidden);
     this.setPads();
     this.fillRows();
@@ -216,4 +223,4 @@ export class GridView {
   }
 }
 
-mixin(GridView, RangeSelect, ColumnMove, CellKeys, GridHtml, VirtualRows, EnumHint, WarnMenu, GridPaste);
+mixin(GridView, RangeSelect, ColumnMove, CellKeys, GridHtml, VirtualRows, EnumHint, WarnMenu, GridPaste, ColumnWidth, CrossHair);

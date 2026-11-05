@@ -7,6 +7,7 @@ export class RangeSelect {
     // 칸을 옮기면 범위 선택은 풀리고, 새 칸이 다음 범위의 시작점이 된다
     if (e.target !== this.el) this.cursor = null;
     if (e.target.dataset.r != null) { this.anchor = {r: +e.target.dataset.r, c: +e.target.dataset.c}; this.clearSel(); }
+    else this.markCross(); // 이름 칸 · 빈 칸으로 옮기면 행 · 열 표시를 지운다
   }
 
   // ---------- 범위 선택 (드래그 · Shift+클릭 · Shift+화살표) ----------
@@ -132,6 +133,7 @@ export class RangeSelect {
   // 열을 통째로(모든 행) 골랐으면 그 열들의 머리 칸, 행을 통째로(모든 열) 골랐으면 그 행들의 번호 칸도 칠한다(hsel)
   paintSel() {
     this.el.querySelectorAll('td.insel, .hsel').forEach(x => x.classList.remove('insel', 'hsel'));
+    this.markCross(); // 고른 칸 · 범위의 행 · 열 표시 (CrossHair)
     if (!this.hasRange()) return;
     const g = this.range(), t = this.t;
     this.el.querySelectorAll('td input[data-r]').forEach(el => {

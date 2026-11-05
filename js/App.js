@@ -2,6 +2,7 @@ import {$} from './common/util.js';
 import {Toast} from './common/Toast.js';
 import {Workbook} from './data/Workbook.js';
 import {Projects} from './data/Projects.js';
+import {StorageFull} from './data/StorageFull.js';
 import {History} from './data/History.js';
 import {GridView} from './table/GridView.js';
 import {TabsView} from './table/TabsView.js';
@@ -18,6 +19,7 @@ import {UpdateCheck} from './settings/UpdateCheck.js';
 import {Donate} from './settings/Donate.js';
 import {ProjectMenu} from './settings/ProjectMenu.js';
 import {SheetText} from './import/SheetText.js';
+import {SafariNotice} from './settings/SafariNotice.js';
 
 // 각 영역을 만들고 서로 잇는다. 영역끼리는 직접 부르지 않고 App을 거친다
 //   table/  테이블 작성 영역 (표, 탭)      json/   JSON 보기·다운로드
@@ -38,6 +40,7 @@ export class App {
     this.json = new JsonPanel(this);
     this.meta = new MetaPanel(this);
     this.exporter = new Exporter(this);
+    StorageFull.exportZip = () => this.exporter.save('project'); // 저장 공간이 꽉 찼을 때 팝업의 'zip으로 받기'
     this.importer = new Importer(this);
     this.githubAccount = new GitHubAccount(this);
     this.github = new GitHubImport(this);
@@ -47,6 +50,7 @@ export class App {
     this.updateCheck = new UpdateCheck();
     this.donate = new Donate();
     this.projectMenu = new ProjectMenu(this);
+    this.safari = new SafariNotice(this); // Safari: 오래 받아 두지 않았으면 알림 (7일 안 열면 지워질 수 있어서)
     if (this.projects.fresh) this.projectMenu.newProject(true); // 처음 쓰는 사람은 프로젝트 만들기 창으로 시작
     document.addEventListener('paste', e => this.onPaste(e));
     document.addEventListener('keydown', e => this.onUndoKey(e));

@@ -1,5 +1,6 @@
 import {Table} from './Table.js';
 import {dups} from '../common/util.js';
+import {StorageFull} from './StorageFull.js';
 
 // 탭으로 열린 테이블 전체(= 프로젝트 하나). 저장은 이 브라우저(localStorage)에만 한다
 export class Workbook {
@@ -17,7 +18,9 @@ export class Workbook {
     return new Workbook({tables: [Table.sample()]});
   }
 
-  save(json = JSON.stringify(this)) { try { localStorage.setItem(Workbook.key, json); } catch {} }
+  save(json = JSON.stringify(this)) {
+    try { localStorage.setItem(Workbook.key, json); StorageFull.saved(); } catch (e) { StorageFull.failed(e); }
+  }
 
   get current() { return this.tables[this.cur]; }
 

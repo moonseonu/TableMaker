@@ -20,7 +20,10 @@ export class Exporter {
   async save(kind) {
     const wb = this.app.workbook, date = new Date().toISOString().slice(0, 10), project = safeName(this.app.projects.current.name);
     this.menu.open = false;
-    if (kind === 'project') return saveFile(`${project}_${date}.zip`, Zip.create(this.projectFiles()), 'application/zip');
+    if (kind === 'project') {
+      saveFile(`${project}_${date}.zip`, Zip.create(this.projectFiles()), 'application/zip');
+      return this.app.safari.backedUp();
+    }
     // JSON · 설명서: 탭을 골라서. 하나면 그 파일 하나, 여러 개면 zip 하나 (여러 파일을 따로 받으면 브라우저가 매번 허락을 묻는다)
     const json = kind === 'json', tabs = wb.tables;
     const items = tabs.map(t => ({name: t.name, size: `${t.rows.length}행 × ${t.cols.length}열`, errors: json ? wb.errorCount(t) : 0}));

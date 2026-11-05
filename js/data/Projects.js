@@ -1,4 +1,6 @@
-const INDEX = 'tablemaker.projects', OLD = 'tablemaker.v2';
+import {StorageFull} from './StorageFull.js';
+
+const INDEX ='tablemaker.projects', OLD = 'tablemaker.v2';
 
 // 프로젝트 목록 (이 브라우저에 저장). 프로젝트마다 탭 묶음(Workbook)을 따로 저장한다(Projects.key).
 // 프로젝트가 하나뿐이던 예전 저장본(tablemaker.v2)은 처음 열 때 첫 프로젝트 '내 프로젝트'로 복사한다(원본은 그대로 둔다)
@@ -28,7 +30,7 @@ export class Projects {
 
   get current() { return this.list.find(p => p.id === this.cur); }
 
-  save() { try { localStorage.setItem(INDEX, JSON.stringify({list: this.list, cur: this.cur})); } catch {} }
+  save() { try { localStorage.setItem(INDEX, JSON.stringify({list: this.list, cur: this.cur})); } catch (e) { StorageFull.failed(e); } }
 
   add(name) {
     let n = 1;
