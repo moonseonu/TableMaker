@@ -129,7 +129,7 @@ export class GitHubImport {
         // 앱이 설치된 저장소가 하나도 없으면: 내 저장소면 설치, 팀 저장소면 주인에게 보낼 안내 복사
         if (!list.length && gh.isApp && gh.installUrl) $d('.who').insertAdjacentHTML('beforeend',
           '<p class="small warnline">아직 앱이 설치된 저장소가 없습니다 — ' +
-          `<a href="${gh.installUrl}">내 저장소에 앱 설치</a> · <button type="button" class="link invite">팀 저장소 주인에게 보낼 안내 복사</button></p>`);
+          `<a href="${gh.installUrl}">내 저장소에 앱 설치</a> · <button type="button" class="link invite">팀 저장소면 주인에게 설치 부탁하기</button></p>`);
       }).catch(() => {});
     };
     // 저장소를 고르면 브랜치 목록, 브랜치까지 정하면 JSON · CSV · 설명서가 든 폴더 목록 (적는 동안은 잠깐 기다렸다가)
@@ -155,7 +155,7 @@ export class GitHubImport {
     $d('.repo').addEventListener('input', lists);
     $d('.branch').addEventListener('input', lists);
     d.addEventListener('click', async e => {
-      if (e.target.closest('.invite')) return GitHubAppSetup.copy(this.app, gh);
+      if (e.target.closest('.invite')) return GitHubAppSetup.show(this.app, gh);
       if (!e.target.closest('.login')) return;
       if (await gh.login()) { who(); lists(); }
     });

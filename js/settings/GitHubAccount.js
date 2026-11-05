@@ -4,6 +4,7 @@ import {GitHubAppSetup} from './GitHubAppSetup.js';
 export const GITHUB_API = 'https://api.github.com';
 const KEY = 'tablemaker.githubToken'; // 로그인 정보 {token, refresh, expires, app}. 예전(토큰 붙여넣기)에는 토큰 글자 그대로였다
 const TRIP = 'tablemaker.ghLogin';    // GitHub에 갔다 오는 동안 기억할 것 {state, keep}
+const INSTALL = 'tablemaker.ghInstall'; // 로그인 직후 앱 설치 화면으로 한 번 보냈다는 표시 (같은 탭에서만)
 
 // GameTableMaker GitHub App (사이트 주인이 GitHub에 등록, https://github.com/apps/gametablemaker).
 // Client ID는 Cloudflare Pages 설정(GITHUB_CLIENT_ID)에 있고 /api/gh/config로 받아 온다(공개해도 되는 값).
@@ -40,11 +41,36 @@ export class GitHubAccount {
         if (!this.user) this.forget();
       }
       this.render();
-      if (back !== 'login' || !this.user) return;
-      this.app.toast(`GitHub에 ${this.user.login}(으)로 로그인했습니다`);
-      // 처음 쓰는 사람: 앱이 설치된 저장소가 하나도 없으면 바로 설치하거나 저장소 주인에게 부탁하게
-      if (this.isApp && this.installUrl && !(await this.repos().catch(() => [''])).length) GitHubAppSetup.show(this.app, this);
+      await this.afterLogin(back);
     })();
+  }
+
+  // 처음 쓰는 사람: GitHub로 로그인했는데 앱이 설치된 저장소가 하나도 없으면, 로그인을 저장해 둔 채 곧장 GitHub 앱 설치 화면으로 보낸다
+  // (화면에는 Authorize → 설치 화면으로 바로 이어지는 것처럼 보인다). 한 번만 보낸다(INSTALL 표시).
+  // 설치 화면에서 그냥 나왔거나 저장소를 안 골라 여전히 없으면, 그다음 열 때 팀 저장소 안내(주인에게 설치 부탁)를 한 번 띄운다
+  async afterLogin(back) {
+    if (!this.user || !this.isApp || !this.installUrl || back === 'info') {
+      if (back === 'info') try { sessionStorage.removeItem(INSTALL); } catch {}
+      return;
+    }
+    const none = !(await this.repos().catch(() => [''])).length;
+    let tried = false;
+    try { tried = !!sessionStorage.getItem(INSTALL); } catch {}
+    if (!none) {
+      try { sessionStorage.removeItem(INSTALL); } catch {}
+      if (back === 'login') this.app.toast(`GitHub에 ${this.user.login}(으)로 로그인했습니다`);
+      return;
+    }
+    if (back === 'login' && !tried) {
+      try { sessionStorage.setItem(INSTALL, '1'); } catch {}
+      this.app.toast('GameTableMaker 앱 설치 화면으로 이동합니다');
+      location.href = this.installUrl;
+      return;
+    }
+    if (back === 'login' || tried) {
+      try { sessionStorage.removeItem(INSTALL); } catch {}
+      GitHubAppSetup.show(this.app, this);
+    }
   }
 
   get loggedIn() { return !!this.user; }
