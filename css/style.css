@@ -65,6 +65,12 @@ dialog.newproj{width:min(680px,94vw)}
 .ghimport label.asktext{display:grid;grid-template-columns:56px 1fr}
 .ghimport .small{font-size:12px;margin:8px 0}
 .ghimport a{color:var(--accent-text)}
+/* GitHub 로그인 창: 큰 'GitHub로 로그인' 버튼, 토큰은 접힌 '고급'으로 */
+.ghlogin .big{display:block;width:100%;padding:10px;font-size:15px;margin:12px 0 4px}
+.ghlogin .adv{margin:10px 0 0;border-top:1px solid var(--line);padding-top:8px}
+.ghlogin .adv summary{cursor:pointer;color:var(--dim);font-size:13px}
+.ghlogin .adv[open] summary{margin-bottom:6px}
+.ghlogin .adv .btns{margin-top:4px}
 .ghimport .err{color:var(--badline)}
 .sheetpick .commitmsg{display:flex;margin:10px 0 0}
 .sheetpick .commitmsg input{flex:1}

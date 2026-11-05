@@ -118,11 +118,12 @@ export class GitHubImport {
     };
     const fill = (id, list) => combo[id].set(list);
     const who = () => {
+      // GitHub로 로그인했으면 목록은 앱을 설치한 저장소뿐이라, 없는 저장소는 앱 설치로 안내한다
+      const install = gh.isApp && gh.installUrl ? ` · 목록에 없으면 <a href="${gh.installUrl}" target="_blank" rel="noopener">GameTableMaker 앱 설치</a>` : '';
       $d('.who').innerHTML = gh.loggedIn
-        ? `<p class="dim small">${esc(gh.user.login)}(으)로 로그인됨 · 내 저장소를 목록에서 고를 수 있습니다</p>`
+        ? `<p class="dim small">${esc(gh.user.login)}(으)로 로그인됨 · 내 저장소를 목록에서 고를 수 있습니다${install}</p>`
         : '<p class="dim small">공개 저장소는 주소만 적으면 됩니다. 내 저장소 목록 · 비공개 저장소는 <button type="button" class="link login">GitHub 로그인</button></p>';
-      if (gh.loggedIn) gh.req(`${GITHUB_API}/user/repos?per_page=100&sort=updated`).then(r => r.json())
-        .then(rs => fill('ghRepos', rs.map(r => r.full_name))).catch(() => {});
+      if (gh.loggedIn) gh.repos().then(list => fill('ghRepos', list)).catch(() => {});
     };
     // 저장소를 고르면 브랜치 목록, 브랜치까지 정하면 JSON · CSV · 설명서가 든 폴더 목록 (적는 동안은 잠깐 기다렸다가)
     let timer = 0;

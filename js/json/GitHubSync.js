@@ -57,7 +57,7 @@ export class GitHubSync {
 
   // 브랜치 끝 커밋 (fresh: 조건부 요청 없이 새로)
   async head(l, fresh) {
-    const headers = this.app.githubAccount.headers();
+    const headers = await this.app.githubAccount.headers();
     if (!fresh && this.etag && this.latestKey === this.key) headers['If-None-Match'] = this.etag;
     const res = await fetch(`${GITHUB_API}/repos/${l.owner}/${l.repo}/commits/${encodeURIComponent(l.branch)}`, {headers, cache: 'no-store'});
     if (res.status === 304) return this.latest;
