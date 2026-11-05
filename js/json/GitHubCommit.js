@@ -5,6 +5,7 @@ import {JsonFormat} from './JsonFormat.js';
 import {JsonDiff} from './JsonDiff.js';
 
 const enc = p => p.split('/').map(encodeURIComponent).join('/');
+const MAX_LINES = 200; // 상태를 펼쳤을 때 보이는 바뀐 칸 수
 const TYPE = {string: 'String', enum: 'String', int: 'Int', float: 'Float', bool: 'Bool'}; // 표의 타입 → JSON 값 타입 (커밋 메시지의 타입 변경)
 // 글자 → base64 (Contents API는 파일 내용을 base64로 받는다). 한글이 있어 UTF-8 바이트로, 큰 파일도 되게 나눠서
 const base64 = text => {
@@ -77,8 +78,11 @@ export class GitHubCommit {
         const mine = await blobSha(f.text);
         if (mine === now) continue;
         const risky = same && now !== link.files[f.name];
-        const what = diff ? `<span title="${esc(diff.lines.slice(0, 40).join('\n') + (diff.lines.length > 40 ? `\n… 외 ${diff.lines.length - 40}개` : ''))}">${esc(JsonDiff.summary(diff))}</span>` : now ? '바뀜' : '새 파일';
-        files.push({...f, sha: mine, risky, diff, isNew: !now, state: risky ? `⚠ GitHub에서도 바뀜 (올리면 덮어씀) · ${what}` : what});
+        // 상태: 한 줄로 보이고, 누르면 아래로 펼쳐져 전부(바뀐 컬럼 · 칸 하나하나 · 더하고 뺀 줄) 보인다
+        const head = (risky ? '⚠ GitHub에서도 바뀜 (올리면 덮어씀) · ' : '') + (diff ? JsonDiff.summary(diff) : now ? '바뀜' : '새 파일');
+        const more = [...head.split(' · '), ...(diff ? diff.lines.slice(0, MAX_LINES) : []), ...(diff?.lines.length > MAX_LINES ? [`… 외 ${diff.lines.length - MAX_LINES}개`] : [])];
+        const state = more.length > 1 ? `<details class="state"><summary>${esc(head)}</summary><ul>${more.map(l => `<li>${esc(l)}</li>`).join('')}</ul></details>` : `<span class="state">${esc(head)}</span>`;
+        files.push({...f, sha: mine, risky, diff, isNew: !now, state});
       }
       if (learned) this.app.workbook.save(); // 배운 글자 모양은 표에 남긴다 (되돌리기 기록과 상관없다)
       const behind = same && [...remote].some(([p, s]) => p.startsWith(pre) && !p.slice(pre.length).includes('/') && link.files[p.slice(pre.length)] !== s);
@@ -95,11 +99,11 @@ export class GitHubCommit {
       const res = await CheckPicker.pick({
         title: esc(`GitHub에 커밋 · ${owner}/${repo}${path ? ` · ${path}` : ''} (${branch})`), ok: '커밋',
         text: (same ? '마지막으로 갱신한 뒤 내가 고친 파일만 보입니다.' : 'GitHub에 있는 것과 다른 파일만 보입니다.') +
-          ' 띄어쓰기 · 들여쓰기 같은 글자 모양 차이는 바뀐 것으로 치지 않고, GitHub 파일 모양 그대로 올립니다. 상태에 마우스를 올리면 바뀐 칸이 하나하나 보입니다. 올릴 것을 고르세요.' +
+          ' 띄어쓰기 · 들여쓰기 같은 글자 모양 차이는 바뀐 것으로 치지 않고, GitHub 파일 모양 그대로 올립니다. 상태를 누르면 펼쳐져 바뀐 칸이 하나하나 보입니다. 올릴 것을 고르세요.' +
           (files.some(f => f.risky) ? ' ⚠는 그사이 팀원도 고친 파일이라 올리면 덮어씁니다. 먼저 ↻로 갱신해 보세요.' : '') +
-          `<label class="asktext commitmsg">커밋 메시지 <span class="small">첫 줄은 제목, 아래는 자세한 설명 (⚠는 코드에 영향을 줄 수 있는 변경)</span><textarea class="msg" rows="7" spellcheck="false">${esc(msg)}</textarea></label>`,
+          `<label class="asktext commitmsg">커밋 메시지 <span class="small">첫 줄은 제목, 아래는 자세한 설명 (⚠는 코드에 영향을 줄 수 있는 변경)</span><textarea class="msg" rows="10" spellcheck="false">${esc(msg)}</textarea></label>`,
         heads: ['파일', '상태'],
-        rows: files.map(f => [`<b>${esc(pre + f.name)}</b>`, f.state]),
+        rows: files.map(f => [`<b>${esc(f.name)}</b>`, f.state]), // 폴더는 제목에 있다
         checked: files.map(f => !f.risky),
         setup: d => {
           const box = d.querySelector('.msg');

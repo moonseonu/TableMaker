@@ -23,7 +23,7 @@ export class CheckPicker {
     all.onchange = () => { boxes().forEach(b => b.checked = all.checked); mark(); };
     d.querySelector('tbody').addEventListener('click', e => {
       const box = e.target.closest('tr')?.querySelector('input[type=checkbox]');
-      if (box && !e.target.closest('input, select, a, button')) box.checked = !box.checked; // 칸 안의 드롭다운 · 입력칸을 눌렀을 때는 그대로
+      if (box && !e.target.closest('input, select, a, button, details')) box.checked = !box.checked; // 칸 안의 드롭다운 · 입력칸 · 펼치기를 눌렀을 때는 그대로
       mark();
     });
     mark();

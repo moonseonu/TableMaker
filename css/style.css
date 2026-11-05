@@ -77,8 +77,19 @@ dialog.newproj{width:min(680px,94vw)}
 .ghlogin .adv[open] summary{margin-bottom:6px}
 .ghlogin .adv .btns{margin-top:4px}
 .ghimport .err{color:var(--badline)}
+/* GitHub 커밋 창: 메시지 칸에 맞춰 좁게(빈 공간 없이). 파일 이름은 한 줄, 상태는 줄바꿈 */
+.sheetpick:has(.commitmsg){width:min(720px,94vw)}
+.sheetpick:has(.commitmsg) td:nth-child(2){white-space:nowrap}
+.sheetpick:has(.commitmsg) td:nth-child(3){white-space:normal;width:100%;max-width:0} /* max-width:0 — 한 줄 상태가 칸 폭에서 … 로 잘리게 */
+.sheetpick .state{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheetpick details.state{overflow:visible;white-space:normal}
+.sheetpick details.state summary{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;list-style:none}
+.sheetpick details.state summary::-webkit-details-marker{display:none}
+.sheetpick details.state summary::before{content:'▸ ';color:var(--dim)}
+.sheetpick details.state[open] summary::before{content:'▾ '}
+.sheetpick details.state ul{margin:4px 0 2px;padding-left:16px;max-height:220px;overflow:auto;font-size:12px;line-height:1.6;color:var(--text)}
 .sheetpick .commitmsg{display:flex;flex-direction:column;align-items:stretch;gap:4px;margin:10px 0 0}
-.sheetpick .commitmsg textarea{min-height:120px;resize:vertical;font:inherit;line-height:1.5;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;color:var(--text)}
+.sheetpick .commitmsg textarea{width:100%;min-height:200px;resize:vertical;font:inherit;line-height:1.5;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;color:var(--text)}
 /* 입력칸 + 아래로 펼치는 목록 (js/common/Combo.js) */
 .combo{position:relative;display:flex}
 .combo input{flex:1;min-width:0;padding-right:28px}
