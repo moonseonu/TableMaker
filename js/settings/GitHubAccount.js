@@ -4,7 +4,6 @@ import {GitHubAppSetup} from './GitHubAppSetup.js';
 export const GITHUB_API = 'https://api.github.com';
 const KEY = 'tablemaker.githubToken'; // 로그인 정보 {token, refresh, expires, app}. 예전(토큰 붙여넣기)에는 토큰 글자 그대로였다
 const TRIP = 'tablemaker.ghLogin';    // GitHub에 갔다 오는 동안 기억할 것 {state, keep}
-const INSTALL = 'tablemaker.ghInstall'; // 로그인 직후 앱 설치 화면으로 한 번 보냈다는 표시 (같은 탭에서만)
 
 // GameTableMaker GitHub App (사이트 주인이 GitHub에 등록, https://github.com/apps/gametablemaker).
 // Client ID는 Cloudflare Pages 설정(GITHUB_CLIENT_ID)에 있고 /api/gh/config로 받아 온다(공개해도 되는 값).
@@ -45,32 +44,12 @@ export class GitHubAccount {
     })();
   }
 
-  // 처음 쓰는 사람: GitHub로 로그인했는데 앱이 설치된 저장소가 하나도 없으면, 로그인을 저장해 둔 채 곧장 GitHub 앱 설치 화면으로 보낸다
-  // (화면에는 Authorize → 설치 화면으로 바로 이어지는 것처럼 보인다). 한 번만 보낸다(INSTALL 표시).
-  // 설치 화면에서 그냥 나왔거나 저장소를 안 골라 여전히 없으면, 그다음 열 때 팀 저장소 안내(주인에게 설치 부탁)를 한 번 띄운다
+  // 로그인하고 돌아온 직후. 앱 설치는 중간다리가 Authorize 다음에 바로 설치 화면으로 보내서 처리하니(functions/api/gh/callback.js),
+  // 여기까지 와서도 쓸 저장소가 없으면 팀 저장소만 쓰는 경우(설치 건너뛰기 · 앱은 있지만 저장소 0개)라 주인에게 부탁하는 안내를 띄운다
   async afterLogin(back) {
-    if (!this.user || !this.isApp || !this.installUrl || back === 'info') {
-      if (back === 'info') try { sessionStorage.removeItem(INSTALL); } catch {}
-      return;
-    }
-    const none = !(await this.repos().catch(() => [''])).length;
-    let tried = false;
-    try { tried = !!sessionStorage.getItem(INSTALL); } catch {}
-    if (!none) {
-      try { sessionStorage.removeItem(INSTALL); } catch {}
-      if (back === 'login') this.app.toast(`GitHub에 ${this.user.login}(으)로 로그인했습니다`);
-      return;
-    }
-    if (back === 'login' && !tried) {
-      try { sessionStorage.setItem(INSTALL, '1'); } catch {}
-      this.app.toast('GameTableMaker 앱 설치 화면으로 이동합니다');
-      location.href = this.installUrl;
-      return;
-    }
-    if (back === 'login' || tried) {
-      try { sessionStorage.removeItem(INSTALL); } catch {}
-      GitHubAppSetup.show(this.app, this);
-    }
+    if (back !== 'login' || !this.user) return;
+    this.app.toast(`GitHub에 ${this.user.login}(으)로 로그인했습니다`);
+    if (this.isApp && this.installUrl && !(await this.repos().catch(() => [''])).length) GitHubAppSetup.show(this.app, this);
   }
 
   get loggedIn() { return !!this.user; }
@@ -168,9 +147,10 @@ export class GitHubAccount {
   }
 
   // GitHub로 로그인: 갔다 올 때 맞춰 볼 값(state)과 로그인 유지 여부를 이 탭에 적어 두고 GitHub 허락 화면으로 간다.
+  // 앱이 설치된 곳이 없으면 중간다리가 허락 다음에 바로 앱 설치 화면으로 보낸다. skip: 팀 저장소만 쓸 사람(설치 화면 건너뛰기, state 끝에 .skip)
   // 표 데이터는 고칠 때마다 저장돼 있어서 페이지를 떠나도 그대로다
-  toGitHub(keep) {
-    const state = crypto.randomUUID();
+  toGitHub(keep, skip) {
+    const state = crypto.randomUUID() + (skip ? '.skip' : '');
     try { sessionStorage.setItem(TRIP, JSON.stringify({state, keep})); } catch {}
     location.href = `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(GH_APP.clientId)}` +
       `&redirect_uri=${encodeURIComponent(location.origin + '/api/gh/callback')}&state=${state}`;
@@ -202,7 +182,8 @@ export class GitHubAccount {
     d.innerHTML = '<form method="dialog"><h3>GitHub 로그인</h3>' +
       '<p class="dim">로그인하면 내 저장소를 목록에서 고르고, 비공개 저장소를 불러오고, GitHub에 커밋할 수 있습니다.</p>' +
       (app ? '<button type="button" class="primary big gh-app">GitHub로 로그인</button>' +
-        `<p class="dim small">GitHub 화면에서 <b>Authorize</b>를 누르면 돌아옵니다. 저장소는 <b>GameTableMaker 앱을 설치한 곳</b>만 보입니다${this.installUrl ? ` (<a href="${this.installUrl}" target="_blank" rel="noopener">앱 설치</a>)` : ''}.</p>` : '') +
+        '<p class="dim small">GitHub 화면에서 <b>Authorize</b>를 누르세요. 처음이면 이어서 <b>앱 설치 화면</b>이 나오니, 쓸 저장소를 고르고 Install하면 돌아옵니다.</p>' +
+        '<p class="dim small">팀원이 초대한 저장소만 쓴다면 → <button type="button" class="link gh-skip">앱 설치 없이 로그인</button> (그 저장소 주인이 앱을 설치해야 보입니다)</p>' : '') +
       '<label class="keep"><input type="checkbox" class="keepme" checked> 로그인 유지 <small class="dim">(공용 PC라면 끄세요. 끄면 이 탭을 닫을 때 로그아웃)</small></label>' +
       `<details class="adv"${app ? '' : ' open'}><summary>고급: 토큰으로 로그인</summary>` +
       '<label class="asktext">토큰 <input class="token" type="password" autocomplete="off" placeholder="github_pat_로 시작하는 글자"></label>' +
@@ -215,10 +196,12 @@ export class GitHubAccount {
     const form = d.querySelector('form'), err = d.querySelector('.err');
     let ok = false;
     d.querySelector('.cancel').onclick = () => d.close('');
-    d.querySelector('.gh-app')?.addEventListener('click', () => {
+    const go = skip => {
       if (!here) { err.innerHTML = `GitHub로 로그인은 <a href="https://${LOGIN_HOST}" target="_blank" rel="noopener">${LOGIN_HOST}</a>에서 됩니다`; return; }
-      this.toGitHub(d.querySelector('.keepme').checked);
-    });
+      this.toGitHub(d.querySelector('.keepme').checked, skip);
+    };
+    d.querySelector('.gh-app')?.addEventListener('click', () => go(false));
+    d.querySelector('.gh-skip')?.addEventListener('click', () => go(true));
     form.addEventListener('submit', async e => {
       e.preventDefault(); // 토큰이 맞는지 GitHub에 물어본 뒤에 닫는다
       const token = d.querySelector('.token').value.trim(), btn = d.querySelector('.tokenbtn');

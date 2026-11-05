@@ -1,6 +1,6 @@
 // GitHub로 로그인했는데 앱 설치 화면을 거쳐서도 쓸 저장소가 없을 때의 안내 — 팀원이 초대한 저장소인 경우.
 // 그 저장소는 주인이 GameTableMaker 앱을 설치해야 보이니, 주인에게 보낼 안내 글을 보여 주고 공유 · 복사하게 한다.
-// (처음 쓰는 사람의 내 저장소 설치는 로그인 직후 설치 화면으로 바로 보내서 처리한다, GitHubAccount.afterLogin)
+// (처음 쓰는 사람의 내 저장소 설치는 로그인 중간다리가 Authorize 다음에 바로 설치 화면으로 보내서 처리한다, functions/api/gh/callback.js)
 // account: GitHubAccount (installUrl)
 export class GitHubAppSetup {
   static invite(account) {
