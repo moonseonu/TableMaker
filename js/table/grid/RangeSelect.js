@@ -68,9 +68,12 @@ export class RangeSelect {
     requestAnimationFrame(() => this.dragScroll());
   }
 
+  // 범위 끝이 그대로면(끄는 동안 매 화면 불린다) 다시 칠하지 않는다. 아직 범위가 없는데 시작 칸이면 범위를 만들지 않는다
   dragTo(p) {
-    const n = this.t.rows.length, m = this.t.cols.length;
-    this.setSel(this.drag === 'col' ? {r: n - 1, c: p.c} : this.drag === 'row' ? {r: p.r, c: m - 1} : p);
+    const n = this.t.rows.length, m = this.t.cols.length, a = this.anchor, s = this.sel;
+    const end = this.drag === 'col' ? {r: n - 1, c: p.c} : this.drag === 'row' ? {r: p.r, c: m - 1} : p;
+    if (s ? s.r1 === a.r && s.c1 === a.c && s.r2 === end.r && s.c2 === end.c : end.r === a.r && end.c === a.c && this.drag === 'cell') return;
+    this.setSel(end);
   }
 
   // 컬럼 이름 칸을 클릭: 엑셀에서 열 머리를 누를 때처럼 그 열을 통째로 고른다(행이 없으면 바로 이름 고치기)
@@ -96,13 +99,22 @@ export class RangeSelect {
       box.scrollLeft += dx;
       box.scrollTop += dy;
       if (d === 'move') this.moveLine();
-      else { // 마우스가 표 밖에 있어도 가장 가까운 안쪽 칸까지 범위를 늘린다
-        const cx = Math.min(Math.max(x, r.left + 2), r.right - 2), cy = Math.min(Math.max(y, top + 2), r.bottom - 2);
-        const p = this.pointOf(document.elementFromPoint(cx, cy) || box);
-        if (p) this.dragTo(p);
-      }
     }
+    if (d !== 'move') this.dragToPointer(r, top);
     requestAnimationFrame(() => this.dragScroll());
+  }
+
+  // 끄는 동안 마우스가 칸 위에 없어도(표 오른쪽 빈 곳 · 표 밖 · 창 밖) 마우스 위치에서 가장 가까운 칸까지 범위를 잡는다(엑셀처럼).
+  // 마우스 위치를 지금 그려진 데이터 칸들의 영역(보이는 곳만) 안으로 당겨서 그 자리의 칸을 찾는다. 같은 칸이면 다시 칠하지 않는다
+  dragToPointer(r, top) {
+    const cells = this.el.querySelectorAll('td input[data-r]');
+    if (!cells.length) return;
+    const a = cells[0].closest('td').getBoundingClientRect(), z = cells[cells.length - 1].closest('td').getBoundingClientRect();
+    const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+    const cx = clamp(this.pointer.x, Math.max(r.left, a.left) + 2, Math.min(r.right, z.right) - 2);
+    const cy = clamp(this.pointer.y, Math.max(top, a.top) + 2, Math.min(r.bottom, z.bottom) - 2);
+    const p = this.pointOf(document.elementFromPoint(cx, cy) || this.el);
+    if (p) this.dragTo(p);
   }
 
   onMouseOver(e) {
