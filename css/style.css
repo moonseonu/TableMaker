@@ -65,6 +65,11 @@ dialog.newproj{width:min(680px,94vw)}
 .ghimport label.asktext{display:grid;grid-template-columns:56px 1fr}
 .ghimport .small{font-size:12px;margin:8px 0}
 .ghimport a{color:var(--accent-text)}
+/* 앱이 설치된 저장소가 없을 때 (GitHubAppSetup.js · 저장소 고르기 창) */
+.ghsetup{width:min(520px,92vw)}
+.ghsetup .way{border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:10px 0}
+.ghsetup .way p{margin:4px 0 8px}
+.ghimport .warnline{color:var(--warntext);margin:0 0 8px}
 /* GitHub 로그인 창: 큰 'GitHub로 로그인' 버튼, 토큰은 접힌 '고급'으로 */
 .ghlogin .big{display:block;width:100%;padding:10px;font-size:15px;margin:12px 0 4px}
 .ghlogin .adv{margin:10px 0 0;border-top:1px solid var(--line);padding-top:8px}

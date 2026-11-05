@@ -1,6 +1,7 @@
 import {$, esc, ask, askText} from '../common/util.js';
 import {GITHUB_API} from '../settings/GitHubAccount.js';
 import {Combo} from '../common/Combo.js';
+import {GitHubAppSetup} from '../settings/GitHubAppSetup.js';
 
 const SAVED = 'tablemaker.github'; // 마지막에 연 저장소 · 브랜치 · 폴더
 const OPENS = /\.(json|csv|md)$/i;  // 폴더 목록에 넣을 파일 (불러오기가 여는 것)
@@ -123,7 +124,13 @@ export class GitHubImport {
       $d('.who').innerHTML = gh.loggedIn
         ? `<p class="dim small">${esc(gh.user.login)}(으)로 로그인됨 · 내 저장소를 목록에서 고를 수 있습니다${install}</p>`
         : '<p class="dim small">공개 저장소는 주소만 적으면 됩니다. 내 저장소 목록 · 비공개 저장소는 <button type="button" class="link login">GitHub 로그인</button></p>';
-      if (gh.loggedIn) gh.repos().then(list => fill('ghRepos', list)).catch(() => {});
+      if (gh.loggedIn) gh.repos().then(list => {
+        fill('ghRepos', list);
+        // 앱이 설치된 저장소가 하나도 없으면: 내 저장소면 설치, 팀 저장소면 주인에게 보낼 안내 복사
+        if (!list.length && gh.isApp && gh.installUrl) $d('.who').insertAdjacentHTML('beforeend',
+          '<p class="small warnline">아직 앱이 설치된 저장소가 없습니다 — ' +
+          `<a href="${gh.installUrl}">내 저장소에 앱 설치</a> · <button type="button" class="link invite">팀 저장소 주인에게 보낼 안내 복사</button></p>`);
+      }).catch(() => {});
     };
     // 저장소를 고르면 브랜치 목록, 브랜치까지 정하면 JSON · CSV · 설명서가 든 폴더 목록 (적는 동안은 잠깐 기다렸다가)
     let timer = 0;
@@ -148,6 +155,7 @@ export class GitHubImport {
     $d('.repo').addEventListener('input', lists);
     $d('.branch').addEventListener('input', lists);
     d.addEventListener('click', async e => {
+      if (e.target.closest('.invite')) return GitHubAppSetup.copy(this.app, gh);
       if (!e.target.closest('.login')) return;
       if (await gh.login()) { who(); lists(); }
     });

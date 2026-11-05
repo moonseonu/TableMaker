@@ -1,4 +1,5 @@
 import {$, esc} from '../common/util.js';
+import {GitHubAppSetup} from './GitHubAppSetup.js';
 
 export const GITHUB_API = 'https://api.github.com';
 const KEY = 'tablemaker.githubToken'; // 로그인 정보 {token, refresh, expires, app}. 예전(토큰 붙여넣기)에는 토큰 글자 그대로였다
@@ -39,7 +40,10 @@ export class GitHubAccount {
         if (!this.user) this.forget();
       }
       this.render();
-      if (back && this.user) this.app.toast(`GitHub에 ${this.user.login}(으)로 로그인했습니다`);
+      if (back !== 'login' || !this.user) return;
+      this.app.toast(`GitHub에 ${this.user.login}(으)로 로그인했습니다`);
+      // 처음 쓰는 사람: 앱이 설치된 저장소가 하나도 없으면 바로 설치하거나 저장소 주인에게 부탁하게
+      if (this.isApp && this.installUrl && !(await this.repos().catch(() => [''])).length) GitHubAppSetup.show(this.app, this);
     })();
   }
 
@@ -146,22 +150,22 @@ export class GitHubAccount {
       `&redirect_uri=${encodeURIComponent(location.origin + '/api/gh/callback')}&state=${state}`;
   }
 
-  // 중간다리가 주소 # 뒤에 실어 보낸 토큰을 받는다. 받았으면(성공 · 실패 모두) true
+  // 중간다리가 주소 # 뒤에 실어 보낸 토큰을 받는다. 새로 로그인했으면 'login', 실패 · 앱 설치 알림만이면 'info', 받은 게 없으면 false
   fromGitHub() {
     if (!location.hash.startsWith('#gh=')) return false;
     let data = {}, trip = null;
     try { data = JSON.parse(decodeURIComponent(location.hash.slice(4))); } catch {}
     try { trip = JSON.parse(sessionStorage.getItem(TRIP)); sessionStorage.removeItem(TRIP); } catch {}
     history.replaceState(null, '', location.pathname + location.search); // 주소창 · 방문 기록에 토큰을 남기지 않는다
-    if (data.error) { this.app.toast('GitHub 로그인 실패\n' + data.error, 'bad'); return true; }
-    if (data.installed) { // 앱 설치 링크로 설치를 마치고 왔다 (로그인은 따로)
-      this.app.toast(`GameTableMaker 앱을 설치했습니다\n${this.token ? '불러오기 ▾ → GitHub에서 저장소를 다시 골라 보세요' : '☰ → GitHub 로그인 → GitHub로 로그인을 눌러 주세요'}`);
-      return true;
+    if (data.error) { this.app.toast('GitHub 로그인 실패\n' + data.error, 'bad'); return 'info'; }
+    if (data.installed) { // 앱 설치 화면에서 설치를 마치고 왔다 (로그인은 따로)
+      this.app.toast(`GameTableMaker 앱을 설치했습니다\n${this.token ? '불러오기 ▾ → GitHub에서 저장소를 고를 수 있습니다' : '☰ → GitHub 로그인 → GitHub로 로그인을 눌러 주세요'}`);
+      return 'info';
     }
-    if (!trip || trip.state !== data.state || !data.token) { this.app.toast('GitHub 로그인 확인 값이 맞지 않습니다. 다시 시도해 주세요', 'bad'); return true; }
+    if (!trip || trip.state !== data.state || !data.token) { this.app.toast('GitHub 로그인 확인 값이 맞지 않습니다. 다시 시도해 주세요', 'bad'); return 'info'; }
     Object.assign(this, {token: data.token, refresh: data.refresh || '', expires: data.expiresIn ? Date.now() + data.expiresIn * 1000 : 0, app_: true, keep: trip.keep});
     this.save();
-    return true;
+    return 'login';
   }
 
   // 로그인 창. 토큰으로 로그인했으면 true, 취소하면 false (GitHub로 로그인은 페이지를 떠났다가 돌아온다)
