@@ -55,9 +55,9 @@ export class GitHubCommit {
       // (팀원이 그사이 고친 파일을 내 옛 내용으로 되돌리지 않게). 그사이 GitHub에서도 바뀐 파일은 ⚠로 표시하고 처음엔 체크를 뺀다
       const link = this.app.projects.current.link;
       const same = link && link.owner === owner && link.repo === repo && link.branch === branch && link.path === path;
-      const files = [];
+      const files = [], made = this.app.exporter.projectFiles();
       let learned = false;
-      for (const f of this.app.exporter.projectFiles()) {
+      for (const f of made) {
         const now = remote.get(pre + f.name), was = await blobSha(f.text);
         if (was === now) continue;
         if (same && was === (link.local || {})[f.name]) continue; // 마지막으로 맞춘 뒤 내가 안 고침 (GitHub 쪽 변경은 ↻로 받는다)
@@ -84,6 +84,17 @@ export class GitHubCommit {
         const state = more.length > 1 ? `<details class="state"><summary>${esc(head)}</summary><ul>${more.map(l => `<li>${esc(l)}</li>`).join('')}</ul></details>` : `<span class="state">${esc(head)}</span>`;
         files.push({...f, sha: mine, risky, diff, isNew: !now, state});
       }
+      // 여기서 지운 표: 마지막으로 맞출 때 이 프로젝트에 있던 파일(link.local)인데 지금 탭에 없고 GitHub에는 남아 있으면 '삭제'로 올린다.
+      // 여기가 원본이라 지운 것도 바뀐 것이다(이름을 바꾼 탭은 옛 이름 삭제 + 새 이름 새 파일). 그사이 팀원이 고친 파일이면 ⚠, 처음엔 체크를 뺀다
+      if (same) {
+        const here = new Set(made.map(f => f.name));
+        for (const name of Object.keys(link.local || {})) {
+          const now = remote.get(pre + name);
+          if (here.has(name) || !now) continue;
+          const risky = now !== link.files[name];
+          files.push({name, del: true, risky, state: `<span class="state">${esc((risky ? '⚠ GitHub에서도 바뀜 (지우면 그 변경도 사라짐) · ' : '') + '⚠ 삭제 (여기서 지운 표)')}</span>`});
+        }
+      }
       if (learned) this.app.workbook.save(); // 배운 글자 모양은 표에 남긴다 (되돌리기 기록과 상관없다)
       const behind = same && [...remote].some(([p, s]) => p.startsWith(pre) && !p.slice(pre.length).includes('/') && link.files[p.slice(pre.length)] !== s);
       if (!files.length) return this.app.toast(`올릴 변경이 없습니다 · ${owner}/${repo}${path ? ` · ${path}` : ''}${behind ? '\nGitHub에 아직 받지 않은 변경이 있습니다. ↻로 갱신하세요' : ''}`);
@@ -92,7 +103,7 @@ export class GitHubCommit {
       const message = picked => {
         const fs = picked.map(i => files[i]).filter(f => f.name.endsWith('.json')), names = fs.map(f => f.name.slice(0, -5));
         const title = `GameTableMaker: ${names.length ? names.slice(0, 3).join(', ') + (names.length > 3 ? ` 외 ${names.length - 3}개` : '') : '설명 · 설정'} 수정`;
-        const body = fs.flatMap(f => { const n = f.name.slice(0, -5); return f.diff ? JsonDiff.notes(n, f.diff) : [f.isNew ? `+ 새 테이블: ${n}` : `· ${n}: 바뀜`]; });
+        const body = fs.flatMap(f => { const n = f.name.slice(0, -5); return f.del ? [`⚠ 테이블 삭제: ${n}`] : f.diff ? JsonDiff.notes(n, f.diff) : [f.isNew ? `+ 새 테이블: ${n}` : `· ${n}: 바뀜`]; });
         return title + (body.length ? '\n\n' + body.join('\n') : '');
       };
       const msg = message(files.map((f, i) => i).filter(i => !files[i].risky));
@@ -100,7 +111,8 @@ export class GitHubCommit {
         title: esc(`GitHub에 커밋 · ${owner}/${repo}${path ? ` · ${path}` : ''} (${branch})`), ok: '커밋',
         text: (same ? '마지막으로 갱신한 뒤 내가 고친 파일만 보입니다.' : 'GitHub에 있는 것과 다른 파일만 보입니다.') +
           ' 띄어쓰기 · 들여쓰기 같은 글자 모양 차이는 바뀐 것으로 치지 않고, GitHub 파일 모양 그대로 올립니다. 상태를 누르면 펼쳐져 바뀐 칸이 하나하나 보입니다. 올릴 것을 고르세요.' +
-          (files.some(f => f.risky) ? ' ⚠는 그사이 팀원도 고친 파일이라 올리면 덮어씁니다. 먼저 ↻로 갱신해 보세요.' : '') +
+          (files.some(f => f.del) ? ' ⚠ 삭제는 여기서 지운 표라 커밋하면 GitHub에서도 지워집니다(GitHub 기록에서 되살릴 수 있습니다).' : '') +
+          (files.some(f => f.risky) ? ' ⚠ GitHub에서도 바뀜은 그사이 팀원도 고친 파일이라 올리면 덮어씁니다. 먼저 ↻로 갱신해 보세요.' : '') +
           `<label class="asktext commitmsg">커밋 메시지 <span class="small">첫 줄은 제목, 아래는 자세한 설명 (⚠는 코드에 영향을 줄 수 있는 변경)</span><textarea class="msg" rows="10" spellcheck="false">${esc(msg)}</textarea></label>`,
         heads: ['파일', '상태'],
         rows: files.map(f => [`<b>${esc(f.name)}</b>`, f.state]), // 폴더는 제목에 있다
@@ -129,8 +141,11 @@ export class GitHubCommit {
       const sync = this.app.githubSync;
       if (!same) await sync.relink(owner, repo, branch, path);
       else {
-        const head = await sync.head(link, true), up = Object.fromEntries(res.picked.map(i => [files[i].name, files[i].sha]));
-        sync.setLink({...link, sha: head.sha, at: Date.now(), files: {...link.files, ...up}, local: {...link.local, ...up}});
+        // 올린 파일은 '맞춤'으로, 지운 파일은 기억에서 뺀다 (체크를 뺀 삭제는 남아서 다음 커밋에 또 나온다)
+        const done = res.picked.map(i => files[i]), up = Object.fromEntries(done.filter(f => !f.del).map(f => [f.name, f.sha]));
+        const gone = new Set(done.filter(f => f.del).map(f => f.name)), keep = o => Object.fromEntries(Object.entries(o).filter(([n]) => !gone.has(n)));
+        const head = await sync.head(link, true);
+        sync.setLink({...link, sha: head.sha, at: Date.now(), files: keep({...link.files, ...up}), local: keep({...link.local, ...up})});
       }
       this.app.safari.backedUp();
       this.app.toast(`GitHub에 커밋했습니다 · 파일 ${res.picked.length}개\n${owner}/${repo} (${branch})` +
@@ -141,13 +156,14 @@ export class GitHubCommit {
     }
   }
 
-  // 여러 파일을 커밋 하나로: 지금 브랜치 끝 → 그 위에 새 트리 → 커밋 → 브랜치를 새 커밋으로 (다른 사람이 먼저 옮겼으면 422)
+  // 여러 파일을 커밋 하나로: 지금 브랜치 끝 → 그 위에 새 트리 → 커밋 → 브랜치를 새 커밋으로 (다른 사람이 먼저 옮겼으면 422).
+  // 지울 파일(del)은 트리에 sha: null로 넣으면 GitHub이 그 파일을 뺀다
   async commitAll(api, branch, pre, todo, message) {
     const gh = this.app.githubAccount, send = (url, method, body) => gh.req(url, false, {method, body}).then(r => r.json());
     const head = (await (await gh.req(`${api}/git/ref/heads/${enc(branch)}`)).json()).object.sha;
     const base = (await (await gh.req(`${api}/git/commits/${head}`)).json()).tree.sha;
     const t = await send(`${api}/git/trees`, 'POST', {base_tree: base,
-      tree: todo.map(f => ({path: pre + f.name, mode: '100644', type: 'blob', content: f.text}))});
+      tree: todo.map(f => f.del ? {path: pre + f.name, mode: '100644', type: 'blob', sha: null} : {path: pre + f.name, mode: '100644', type: 'blob', content: f.text})});
     const c = await send(`${api}/git/commits`, 'POST', {message, tree: t.sha, parents: [head]});
     try { await send(`${api}/git/refs/heads/${enc(branch)}`, 'PATCH', {sha: c.sha}); } catch (err) {
       throw err.status === 422 ? new Error('그사이 다른 사람이 먼저 커밋했습니다. 덮어쓰지 않았으니 GitHub에서 다시 불러와 확인한 뒤 다시 커밋해 주세요') : err;
