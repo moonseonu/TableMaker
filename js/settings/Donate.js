@@ -15,7 +15,7 @@ export class Donate {
     b.hidden = !DONATE_URL && location.hostname !== 'localhost';
     b.onclick = async () => {
       $('appMenu').open = false;
-      if (!await ask('진짜요?', 'TableMaker는 무료이고, 후원하지 않아도 모든 기능을 그대로 쓸 수 있어요.', '네', 'primary', '아니요') || !DONATE_URL) return;
+      if (!await ask('진짜요?', 'GameTableMaker는 무료이고, 후원하지 않아도 모든 기능을 그대로 쓸 수 있어요.', '네', 'primary', '아니요') || !DONATE_URL) return;
       if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) window.open(DONATE_URL, '_blank', 'noopener');
       else this.showQr();
     };

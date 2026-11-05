@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TableMaker 사용 설명 - 웹에서 간편하게 만드는 데이터 테이블</title>
-<meta name="description" content="게임 데이터 테이블을 만들어 JSON으로 내보내는 무료 웹 도구 TableMaker의 사용 안내입니다. 엑셀 붙여넣기, ID 규칙, 다른 테이블 참조, 설명서(.md) 내보내기를 설명합니다.">
+<title>GameTableMaker 사용 설명 - 웹에서 간편하게 만드는 게임 데이터 테이블</title>
+<meta name="description" content="게임 데이터 테이블을 만들어 JSON으로 내보내는 무료 웹 도구 GameTableMaker의 사용 안내입니다. 엑셀 붙여넣기, ID 규칙, 다른 테이블 참조, 설명서(.md) 내보내기를 설명합니다.">
 <link rel="canonical" href="https://gametablemaker.pages.dev/guide.html">
 <meta property="og:type" content="article">
-<meta property="og:site_name" content="TableMaker">
-<meta property="og:title" content="TableMaker 사용 설명">
-<meta property="og:description" content="엑셀 붙여넣기, ID 규칙, 다른 테이블 참조, 설명서(.md) 내보내기까지 TableMaker 사용법을 한눈에.">
+<meta property="og:site_name" content="GameTableMaker">
+<meta property="og:title" content="GameTableMaker 사용 설명">
+<meta property="og:description" content="엑셀 붙여넣기, ID 규칙, 다른 테이블 참조, 설명서(.md) 내보내기까지 GameTableMaker 사용법을 한눈에.">
 <meta property="og:url" content="https://gametablemaker.pages.dev/guide.html">
 <meta property="og:image" content="https://gametablemaker.pages.dev/img/og.png">
 <meta property="og:locale" content="ko_KR">
@@ -21,8 +21,8 @@
 </head>
 <body>
 <header>
-  <a class="back" href="./">← TableMaker로</a>
-  <h1>TableMaker</h1>
+  <a class="back" href="./">← GameTableMaker로</a>
+  <h1>GameTableMaker</h1>
 </header>
 <div class="layout">
 <aside class="side"></aside>
@@ -73,7 +73,7 @@
     <li><i class="mk">4</i><span><b>빨간 칸</b> — 타입에 맞지 않는 값입니다(위 표의 <code>천원</code>). 위쪽에 오류 개수가 뜨고, 고치면 사라집니다.</span></li>
   </ol>
   <div class="tip"><b>칸 고르기와 고치기 (엑셀과 같음)</b> — 칸을 클릭하면 고른 상태가 되고, 화살표로 옆 칸으로 움직입니다. 그대로 타이핑하면 기존 값을 지우고 새로 쓰고, 기존 값을 일부만 고치려면 더블클릭이나 <kbd>F2</kbd>. 고치던 것은 <kbd>Esc</kbd>로 취소, 고른 칸은 <kbd>Delete</kbd>로 비웁니다. 여러 칸은 드래그해서 고르고(컬럼 이름 칸이나 행 번호를 끌면 열·행 통째로) <kbd>Ctrl</kbd>+<kbd>C</kbd>로 복사하거나 <kbd>Delete</kbd>로 한꺼번에 비우며, 잘못 고친 것은 <kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌립니다. 열 순서는 컬럼 이름 칸을 꾹 눌러 끌어서 바꿉니다. 키 전체는 <a href="#keys" style="color:var(--accent-text)">보기 · 단축키</a>에 있습니다.</div>
-  <div class="tip"><b>이미 엑셀로 만든 표가 있다면</b> — 엑셀에서 <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd> 한 뒤 TableMaker의 빈 곳을 누르고 <kbd>Ctrl</kbd>+<kbd>V</kbd>. 첫 줄이 컬럼 이름이 되고, 값을 보고 열 타입을 알아서 정합니다. 엑셀이 붙이는 <code>1,000</code> 같은 쉼표와 <code>TRUE</code>/<code>FALSE</code>도 알아봅니다.</div>
+  <div class="tip"><b>이미 엑셀로 만든 표가 있다면</b> — 엑셀에서 <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd> 한 뒤 GameTableMaker의 빈 곳을 누르고 <kbd>Ctrl</kbd>+<kbd>V</kbd>. 첫 줄이 컬럼 이름이 되고, 값을 보고 열 타입을 알아서 정합니다. 엑셀이 붙이는 <code>1,000</code> 같은 쉼표와 <code>TRUE</code>/<code>FALSE</code>도 알아봅니다.</div>
 </section>
 
 <!-- ───────── ID 규칙 ───────── -->
@@ -250,7 +250,7 @@
 
   <h3>새 커밋 받기</h3>
   <div class="mockbar" inert>
-    <div class="ghbar"><span><b>A</b>님이 GitHub에 새로 저장했어요 · <span class="dim">TableMaker: ItemDataTable 수정</span></span><button class="primary">갱신하기</button><button class="ico">✕</button><i class="mk">2</i></div>
+    <div class="ghbar"><span><b>A</b>님이 GitHub에 새로 저장했어요 · <span class="dim">GameTableMaker: ItemDataTable 수정</span></span><button class="primary">갱신하기</button><button class="ico">✕</button><i class="mk">2</i></div>
     <div class="mocktabs"><button class="sync new"><span>↻</span></button><i class="mk">1</i><div class="tab on"><span>ItemDataTable</span></div><div class="tab"><span>UnitDataTable</span></div><div class="tab"><span>CostDataTable</span></div></div>
   </div>
   <ol class="notes">
@@ -263,7 +263,7 @@
   <div class="mockwin sheetpick" inert>
     <h3>GitHub에 커밋 · Studio-FieldWave/GameData · Json (main)</h3>
     <p class="dim">마지막으로 갱신한 뒤 내가 고친 파일만 보입니다. 올릴 것을 고르세요.</p>
-    <label class="asktext commitmsg">커밋 메시지 <input value="TableMaker: UnitDataTable 수정"></label>
+    <label class="asktext commitmsg">커밋 메시지 <input value="GameTableMaker: UnitDataTable 수정"></label>
     <div class="list"><table>
       <thead><tr><th><input type="checkbox"></th><th>파일</th><th>상태</th></tr></thead>
       <tbody>
@@ -329,9 +329,9 @@
 <!-- ───────── 이용 안내 ───────── -->
 <section class="topic" id="terms">
   <h2>이용 안내</h2>
-  <p class="lead">TableMaker를 쓰기 전에 알아두면 좋은 점입니다.</p>
+  <p class="lead">GameTableMaker를 쓰기 전에 알아두면 좋은 점입니다.</p>
   <div class="cards">
-    <div class="card"><h3>프로젝트</h3><p>제목줄 왼쪽의 프로젝트 이름을 누르면 프로젝트를 바꾸거나, 새로 만들거나, 이름을 바꾸고 지울 수 있습니다. 새로 만들 때 엑셀·JSON 파일을 같이 고르면 바로 불러오고, 처음 열면 이 창으로 시작합니다. 탭 묶음은 프로젝트마다 따로 저장됩니다.</p></div>
+    <div class="card"><h3>프로젝트</h3><p>제목줄 왼쪽의 프로젝트 이름을 누르면 프로젝트를 바꾸거나, 새로 만들거나, 이름을 바꾸고 지울 수 있습니다. 새로 만들 때는 <b>빈 프로젝트 · 내 파일로 시작 · GitHub 저장소에서</b> 중 하나를 골라 확인 버튼으로 시작합니다(처음 열면 이 창이 뜨고, 첫 칸은 <b>예시로 둘러보기</b>). 탭 묶음은 프로젝트마다 따로 저장됩니다.</p></div>
     <div class="card"><h3>데이터는 내 브라우저에만</h3><p>입력한 표는 서버로 보내지 않고 지금 쓰는 브라우저에만 저장됩니다. 가입도 필요 없습니다.</p></div>
     <div class="card"><h3>백업은 직접</h3><p>브라우저 데이터를 지우거나 다른 PC로 옮기면 표가 보이지 않습니다. 중요한 작업은 <b>파일 저장 ▾ → 프로젝트 전체 (.zip)</b>로 받아 두세요.</p></div>
     <div class="card"><h3>무료</h3><p>모든 기능을 무료로 쓸 수 있습니다. 만든 데이터는 상업용 게임을 포함해 자유롭게 쓰면 됩니다. 도움이 됐다면 ☰ 메뉴의 <b>커피 한 잔 후원</b>으로 응원해 주세요.</p></div>

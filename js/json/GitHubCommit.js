@@ -63,7 +63,7 @@ export class GitHubCommit {
       const behind = same && [...remote].some(([p, s]) => p.startsWith(pre) && !p.slice(pre.length).includes('/') && link.files[p.slice(pre.length)] !== s);
       if (!files.length) return this.app.toast(`올릴 변경이 없습니다 · ${owner}/${repo}${path ? ` · ${path}` : ''}${behind ? '\nGitHub에 아직 받지 않은 변경이 있습니다. ↻로 갱신하세요' : ''}`);
       const names = files.filter(f => f.name.endsWith('.json')).map(f => f.name.slice(0, -5));
-      const msg = `TableMaker: ${names.length ? names.slice(0, 3).join(', ') + (names.length > 3 ? ` 외 ${names.length - 3}개` : '') : '설명 · 설정'} 수정`;
+      const msg = `GameTableMaker: ${names.length ? names.slice(0, 3).join(', ') + (names.length > 3 ? ` 외 ${names.length - 3}개` : '') : '설명 · 설정'} 수정`;
       const res = await CheckPicker.pick({
         title: esc(`GitHub에 커밋 · ${owner}/${repo}${path ? ` · ${path}` : ''} (${branch})`), ok: '커밋',
         text: (same ? '마지막으로 갱신한 뒤 내가 고친 파일만 보입니다.' : 'GitHub에 있는 것과 다른 파일만 보입니다.') + ' 올릴 것을 고르세요.' +
