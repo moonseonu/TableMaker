@@ -86,7 +86,7 @@ export class GridHtml {
 
   // 컬럼 머리는 두 칸: 이름 칸(nameHead, th[data-c])과 타입·버튼 칸(typeHead, th[data-tc]).
   // 가로 보기는 위아래 두 행, 세로 보기는 왼쪽 두 열이 된다. 열 고르기·옮기기·오류 표시는 이름 칸(th[data-c])으로 한다
-  // 이름 칸의 ✕는 타입 줄을 접었을 때만 보인다(펼쳐 있으면 타입 줄의 ✕를 쓴다)
+  // 열 삭제 ✕는 이름 칸 오른쪽 끝에 (타입 줄을 접어도 펴도 같은 자리)
   nameHead(c, i) {
     return `<div class="col"><input class="cname" data-c="${i}" value="${esc(c.name)}"><button class="ico namedel" data-delcol="${i}" title="열 삭제">✕</button></div>`;
   }
@@ -114,7 +114,6 @@ export class GridHtml {
     // 다른 열로 정렬하면 JSON 순서까지 바뀌고 ID 자동 정렬이 꺼져서 뺐다
     if (c.id) h += `<button class="ico sort on" data-sort="${i}" title="${sort.dir > 0
       ? '오름차순 · 누르면 내림차순' : '내림차순 · 누르면 오름차순'}">${sort.dir > 0 ? '▼' : '▲'}</button>`;
-    h += `<button class="ico" data-delcol="${i}" title="열 삭제">✕</button>`;
     return h + '</div>';
   }
 

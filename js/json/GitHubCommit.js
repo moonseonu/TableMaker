@@ -5,6 +5,7 @@ import {JsonFormat} from './JsonFormat.js';
 import {JsonDiff} from './JsonDiff.js';
 
 const enc = p => p.split('/').map(encodeURIComponent).join('/');
+const TYPE = {string: 'String', enum: 'String', int: 'Int', float: 'Float', bool: 'Bool'}; // 표의 타입 → JSON 값 타입 (커밋 메시지의 타입 변경)
 // 글자 → base64 (Contents API는 파일 내용을 base64로 받는다). 한글이 있어 UTF-8 바이트로, 큰 파일도 되게 나눠서
 const base64 = text => {
   const b = new TextEncoder().encode(text);
@@ -67,7 +68,9 @@ export class GitHubCommit {
             const text = await (await gh.req(`${api}/contents/${enc(pre + f.name)}?ref=${encodeURIComponent(branch)}`, true)).text();
             const fmt = JsonFormat.detect(text);
             if (JSON.stringify(fmt) !== JSON.stringify(f.table.fmt)) { f.table.fmt = fmt; learned = true; f.text = JsonFormat.write(f.table.toData(), fmt); }
-            diff = JsonDiff.compare(JSON.parse(text), f.table.toData());
+            // 값만 봐서는 모르는 타입: GitHub 쪽은 1.0처럼 적힌 컬럼이 Float, 내 쪽은 표에서 정한 타입
+            const types = Object.fromEntries(f.table.cols.map(c => [c.name, c.id ? f.table.prefixInJson ? 'String' : 'Int' : TYPE[c.type]]));
+            diff = JsonDiff.compare(JSON.parse(text), f.table.toData(), {a: Object.fromEntries(fmt.dot.map(c => [c, 'Float'])), b: types});
             if (diff.same) continue;
           } catch {} // 받지 못했거나 JSON이 아니면 예전처럼 파일째 비교
         }
@@ -75,22 +78,37 @@ export class GitHubCommit {
         if (mine === now) continue;
         const risky = same && now !== link.files[f.name];
         const what = diff ? `<span title="${esc(diff.lines.slice(0, 40).join('\n') + (diff.lines.length > 40 ? `\n… 외 ${diff.lines.length - 40}개` : ''))}">${esc(JsonDiff.summary(diff))}</span>` : now ? '바뀜' : '새 파일';
-        files.push({...f, sha: mine, risky, state: risky ? `⚠ GitHub에서도 바뀜 (올리면 덮어씀) · ${what}` : what});
+        files.push({...f, sha: mine, risky, diff, isNew: !now, state: risky ? `⚠ GitHub에서도 바뀜 (올리면 덮어씀) · ${what}` : what});
       }
       if (learned) this.app.workbook.save(); // 배운 글자 모양은 표에 남긴다 (되돌리기 기록과 상관없다)
       const behind = same && [...remote].some(([p, s]) => p.startsWith(pre) && !p.slice(pre.length).includes('/') && link.files[p.slice(pre.length)] !== s);
       if (!files.length) return this.app.toast(`올릴 변경이 없습니다 · ${owner}/${repo}${path ? ` · ${path}` : ''}${behind ? '\nGitHub에 아직 받지 않은 변경이 있습니다. ↻로 갱신하세요' : ''}`);
-      const names = files.filter(f => f.name.endsWith('.json')).map(f => f.name.slice(0, -5));
-      const msg = `GameTableMaker: ${names.length ? names.slice(0, 3).join(', ') + (names.length > 3 ? ` 외 ${names.length - 3}개` : '') : '설명 · 설정'} 수정`;
+      // 커밋 메시지: 첫 줄은 제목, 그 아래에 프로그래머가 알아야 할 변경(컬럼 삭제 · 타입 변경 · 컬럼 추가 · 새 테이블)과 테이블별 데이터 변화.
+      // 고른 파일이 바뀌면 다시 만든다(직접 고쳐 쓰기 시작하면 그대로 둔다)
+      const message = picked => {
+        const fs = picked.map(i => files[i]).filter(f => f.name.endsWith('.json')), names = fs.map(f => f.name.slice(0, -5));
+        const title = `GameTableMaker: ${names.length ? names.slice(0, 3).join(', ') + (names.length > 3 ? ` 외 ${names.length - 3}개` : '') : '설명 · 설정'} 수정`;
+        const body = fs.flatMap(f => { const n = f.name.slice(0, -5); return f.diff ? JsonDiff.notes(n, f.diff) : [f.isNew ? `+ 새 테이블: ${n}` : `· ${n}: 바뀜`]; });
+        return title + (body.length ? '\n\n' + body.join('\n') : '');
+      };
+      const msg = message(files.map((f, i) => i).filter(i => !files[i].risky));
       const res = await CheckPicker.pick({
         title: esc(`GitHub에 커밋 · ${owner}/${repo}${path ? ` · ${path}` : ''} (${branch})`), ok: '커밋',
         text: (same ? '마지막으로 갱신한 뒤 내가 고친 파일만 보입니다.' : 'GitHub에 있는 것과 다른 파일만 보입니다.') +
           ' 띄어쓰기 · 들여쓰기 같은 글자 모양 차이는 바뀐 것으로 치지 않고, GitHub 파일 모양 그대로 올립니다. 상태에 마우스를 올리면 바뀐 칸이 하나하나 보입니다. 올릴 것을 고르세요.' +
           (files.some(f => f.risky) ? ' ⚠는 그사이 팀원도 고친 파일이라 올리면 덮어씁니다. 먼저 ↻로 갱신해 보세요.' : '') +
-          `<label class="asktext commitmsg">커밋 메시지 <input class="msg" value="${esc(msg)}"></label>`,
+          `<label class="asktext commitmsg">커밋 메시지 <span class="small">첫 줄은 제목, 아래는 자세한 설명 (⚠는 코드에 영향을 줄 수 있는 변경)</span><textarea class="msg" rows="7" spellcheck="false">${esc(msg)}</textarea></label>`,
         heads: ['파일', '상태'],
         rows: files.map(f => [`<b>${esc(pre + f.name)}</b>`, f.state]),
         checked: files.map(f => !f.risky),
+        setup: d => {
+          const box = d.querySelector('.msg');
+          let typed = false;
+          box.addEventListener('input', () => typed = true);
+          const redo = () => { if (!typed) box.value = message([...d.querySelectorAll('tbody input[type=checkbox]')].filter(b => b.checked).map(b => +b.value)); };
+          d.addEventListener('click', redo); // 줄을 눌러 고르기 · 모두 고르기 (CheckPicker가 체크를 바꾼 뒤)
+          d.addEventListener('change', redo);
+        },
         read: d => d.querySelector('.msg').value.trim() || msg,
       });
       if (!res) return;
