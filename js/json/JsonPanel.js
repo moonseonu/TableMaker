@@ -1,3 +1,4 @@
+import {JsonFormat} from './JsonFormat.js';
 import {$} from '../common/util.js';
 
 // JSON 미리보기 패널 (하단 왼쪽)
@@ -22,7 +23,7 @@ export class JsonPanel {
 
   text() {
     this.app.workbook.syncRef(this.app.table); // ID를 적는 중이어도 참조 열은 최신 값으로
-    return JSON.stringify(this.app.table.toData(), null, 2);
+    return JsonFormat.write(this.app.table.toData(), this.app.table.fmt); // 저장할 때와 같은 모양
   }
 
   refresh() { if (this.open) $('out').textContent = this.text(); }

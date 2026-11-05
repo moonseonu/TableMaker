@@ -3,6 +3,7 @@ import {Zip} from '../common/Zip.js';
 import {MetaDoc} from '../meta/MetaDoc.js';
 import {SavePicker} from './SavePicker.js';
 import {ProjectNote} from './ProjectNote.js';
+import {JsonFormat} from './JsonFormat.js';
 
 const safeName = s => (s || 'table').replace(/[\\/:*?"<>|]/g, '_');
 
@@ -53,7 +54,7 @@ export class Exporter {
       let n = safeName(t.name);
       while (used.has(n.toLowerCase())) n += '_';
       used.add(n.toLowerCase());
-      if (kinds.includes('json')) out.push({name: n + '.json', text: JSON.stringify(t.toData(), null, 2)});
+      if (kinds.includes('json')) out.push({name: n + '.json', text: JsonFormat.write(t.toData(), t.fmt), table: t});
       if (kinds.includes('md')) out.push({name: n + '.md', text: MetaDoc.toMd(t)});
     }
     return out;

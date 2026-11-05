@@ -21,8 +21,9 @@ export class Table {
   // flip: 행/열 바꿔 보기 (화면만, 데이터는 그대로)
   // quiet: 사용자가 우클릭으로 경고를 숨긴 ID들 (일부러 그렇게 둔 행). JSON에는 영향 없다
   // flip · quiet는 테이블 설명서(.md)엔 안 적고, 프로젝트 전체 zip의 설정 메모(_TableMaker.md, ProjectNote)로 왕복한다
-  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = '', refs = ref ? [ref] : [], flip = false, quiet = []} = {}) {
-    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, refs, flip, quiet});
+  // fmt: 불러온 JSON 파일의 글자 모양 (JsonFormat, 저장 · 커밋할 때 그 모양 그대로). 여기서 만든 표는 null(기본 모양)
+  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = '', refs = ref ? [ref] : [], flip = false, quiet = [], fmt = null} = {}) {
+    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, refs, flip, quiet, fmt});
   }
 
   static sample() {
@@ -104,8 +105,9 @@ export class Table {
 
   idOut(v) { return this.prefixInJson ? this.prefix + v : v === '' ? null : parseInt(v, 10); }
 
+  // 글자 컬럼의 빈 칸은 "". 단 불러온 JSON에서 빈 값이 null이던 컬럼(col.nul)은 null 그대로
   toData() {
-    return this.rows.map(r => Object.fromEntries(this.cols.map((c, i) => [c.name, c.id ? this.idOut(r[i]) : Table.conv(r[i], c.type)])));
+    return this.rows.map(r => Object.fromEntries(this.cols.map((c, i) => [c.name, c.id ? this.idOut(r[i]) : c.nul && r[i] === '' ? null : Table.conv(r[i], c.type)])));
   }
 
   // toData의 반대: 객체 배열 → 테이블. 열 타입은 값을 보고 추정한다
@@ -135,7 +137,13 @@ export class Table {
     const split = parts.every(m => !m || m[1] === pre);
     return new Table({
       name, prefix: split ? pre : '', prefixOut: !!(split && pre),
-      cols: keys.map(k => k === idKey ? {name: k, type: 'string', id: true} : {name: k, type: given(k) || typeOf(k)}),
+      cols: keys.map(k => {
+        if (k === idKey) return {name: k, type: 'string', id: true};
+        const c = {name: k, type: given(k) || typeOf(k)};
+        // 글자 컬럼인데 빈 값을 "" 대신 null로 적은 파일이면 null을 지킨다(toData)
+        if (['string', 'enum'].includes(c.type) && list.some(o => o[k] === null) && !list.some(o => o[k] === '')) c.nul = true;
+        return c;
+      }),
       rows: list.map((o, n) => keys.map(k => k === idKey && split && parts[n] ? parts[n][2] : str(o[k]))),
     });
   }

@@ -5,6 +5,7 @@ import {MetaImport} from '../meta/MetaImport.js';
 import {ProjectNote} from '../json/ProjectNote.js';
 import {SheetText} from './SheetText.js';
 import {Xlsx} from './Xlsx.js';
+import {JsonFormat} from '../json/JsonFormat.js';
 
 const ext = name => (/\.([^.\/\\]+)$/.exec(name) || [])[1]?.toLowerCase();
 const baseName = name => name.split(/[\/\\]/).pop().replace(/\.[^.]+$/, '');
@@ -69,7 +70,12 @@ export class ImportPlan {
   static toTable(item, name) {
     if (item.kind === '시트') return SheetText.toTable(item.rows, name);
     if (item.kind === 'CSV') return SheetText.csvTable(item.text, name);
-    try { return Table.fromData(JSON.parse(item.text), name); } catch (err) { throw err instanceof SyntaxError ? new Error('JSON 문법 오류') : err; }
+    try {
+      // 파일의 글자 모양을 기억해 그대로 쓴다. 1.0처럼 적힌 컬럼은 값이 모두 정수여도 Float
+      const t = Table.fromData(JSON.parse(item.text), name), fmt = JsonFormat.detect(item.text);
+      for (const c of t.cols) if (c.type === 'int' && fmt.dot.includes(c.name)) c.type = 'float';
+      return Object.assign(t, {fmt});
+    } catch (err) { throw err instanceof SyntaxError ? new Error('JSON 문법 오류') : err; }
   }
 
   // 설명으로 붙인다 → 테이블에 없는 컬럼 이름들, 머리줄을 못 찾으면 null

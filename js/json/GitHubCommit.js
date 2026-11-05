@@ -1,6 +1,8 @@
 import {$, esc} from '../common/util.js';
 import {CheckPicker} from '../common/CheckPicker.js';
 import {GITHUB_API} from '../settings/GitHubAccount.js';
+import {JsonFormat} from './JsonFormat.js';
+import {JsonDiff} from './JsonDiff.js';
 
 const enc = p => p.split('/').map(encodeURIComponent).join('/');
 // 글자 → base64 (Contents API는 파일 내용을 base64로 받는다). 한글이 있어 UTF-8 바이트로, 큰 파일도 되게 나눠서
@@ -52,21 +54,38 @@ export class GitHubCommit {
       const link = this.app.projects.current.link;
       const same = link && link.owner === owner && link.repo === repo && link.branch === branch && link.path === path;
       const files = [];
+      let learned = false;
       for (const f of this.app.exporter.projectFiles()) {
-        const now = remote.get(pre + f.name), mine = await blobSha(f.text);
+        const now = remote.get(pre + f.name), was = await blobSha(f.text);
+        if (was === now) continue;
+        if (same && was === (link.local || {})[f.name]) continue; // 마지막으로 맞춘 뒤 내가 안 고침 (GitHub 쪽 변경은 ↻로 받는다)
+        // GitHub에 같은 JSON이 있으면 받아서 데이터를 직접 비교한다: 글자 모양은 GitHub 파일 것을 배워 그대로 쓰고(바뀐 줄만 보이게),
+        // 데이터가 같으면(모양만 달랐으면) 목록에서 뺀다. 바뀐 칸은 상태에 세어 보이고 마우스를 올리면 하나하나 보인다
+        let diff = null;
+        if (now && f.table) {
+          try {
+            const text = await (await gh.req(`${api}/contents/${enc(pre + f.name)}?ref=${encodeURIComponent(branch)}`, true)).text();
+            const fmt = JsonFormat.detect(text);
+            if (JSON.stringify(fmt) !== JSON.stringify(f.table.fmt)) { f.table.fmt = fmt; learned = true; f.text = JsonFormat.write(f.table.toData(), fmt); }
+            diff = JsonDiff.compare(JSON.parse(text), f.table.toData());
+            if (diff.same) continue;
+          } catch {} // 받지 못했거나 JSON이 아니면 예전처럼 파일째 비교
+        }
+        const mine = await blobSha(f.text);
         if (mine === now) continue;
-        if (!same) { files.push({...f, sha: mine, state: now ? '바뀜' : '새 파일'}); continue; }
-        if (mine === (link.local || {})[f.name]) continue; // 마지막으로 맞춘 뒤 내가 안 고침 (GitHub 쪽 변경은 ↻로 받는다)
-        const risky = now !== link.files[f.name];
-        files.push({...f, sha: mine, risky, state: risky ? '⚠ GitHub에서도 바뀜 (올리면 덮어씀)' : now ? '바뀜' : '새 파일'});
+        const risky = same && now !== link.files[f.name];
+        const what = diff ? `<span title="${esc(diff.lines.slice(0, 40).join('\n') + (diff.lines.length > 40 ? `\n… 외 ${diff.lines.length - 40}개` : ''))}">${esc(JsonDiff.summary(diff))}</span>` : now ? '바뀜' : '새 파일';
+        files.push({...f, sha: mine, risky, state: risky ? `⚠ GitHub에서도 바뀜 (올리면 덮어씀) · ${what}` : what});
       }
+      if (learned) this.app.workbook.save(); // 배운 글자 모양은 표에 남긴다 (되돌리기 기록과 상관없다)
       const behind = same && [...remote].some(([p, s]) => p.startsWith(pre) && !p.slice(pre.length).includes('/') && link.files[p.slice(pre.length)] !== s);
       if (!files.length) return this.app.toast(`올릴 변경이 없습니다 · ${owner}/${repo}${path ? ` · ${path}` : ''}${behind ? '\nGitHub에 아직 받지 않은 변경이 있습니다. ↻로 갱신하세요' : ''}`);
       const names = files.filter(f => f.name.endsWith('.json')).map(f => f.name.slice(0, -5));
       const msg = `GameTableMaker: ${names.length ? names.slice(0, 3).join(', ') + (names.length > 3 ? ` 외 ${names.length - 3}개` : '') : '설명 · 설정'} 수정`;
       const res = await CheckPicker.pick({
         title: esc(`GitHub에 커밋 · ${owner}/${repo}${path ? ` · ${path}` : ''} (${branch})`), ok: '커밋',
-        text: (same ? '마지막으로 갱신한 뒤 내가 고친 파일만 보입니다.' : 'GitHub에 있는 것과 다른 파일만 보입니다.') + ' 올릴 것을 고르세요.' +
+        text: (same ? '마지막으로 갱신한 뒤 내가 고친 파일만 보입니다.' : 'GitHub에 있는 것과 다른 파일만 보입니다.') +
+          ' 띄어쓰기 · 들여쓰기 같은 글자 모양 차이는 바뀐 것으로 치지 않고, GitHub 파일 모양 그대로 올립니다. 상태에 마우스를 올리면 바뀐 칸이 하나하나 보입니다. 올릴 것을 고르세요.' +
           (files.some(f => f.risky) ? ' ⚠는 그사이 팀원도 고친 파일이라 올리면 덮어씁니다. 먼저 ↻로 갱신해 보세요.' : '') +
           `<label class="asktext commitmsg">커밋 메시지 <input class="msg" value="${esc(msg)}"></label>`,
         heads: ['파일', '상태'],
