@@ -10,6 +10,7 @@ import {WarnMenu} from './grid/WarnMenu.js';
 import {GridPaste} from './grid/GridPaste.js';
 import {ColumnWidth} from './grid/ColumnWidth.js';
 import {CrossHair} from './grid/CrossHair.js';
+import {IdColor} from './grid/IdColor.js';
 
 // 테이블 작성 영역: 표 그리기, 칸 입력·검사 표시, 정렬, 맨 오른쪽 빈 열과 맨 아래 빈 행, 칸에 붙여넣기
 // 역할이 많아 js/table/grid/ 의 역할 묶음(범위 선택, 열 옮기기, 칸 상태·키, HTML, 보이는 행, Enum, 경고 메뉴, 붙여넣기, 열 너비, 고른 칸의 행·열 표시)으로 나누고 여기서 합친다
@@ -106,7 +107,9 @@ export class GridView {
       el.closest('td').classList.toggle('warn', !!warn);
       el.closest('td').classList.toggle('hushed', !!hushed);
       el.title = bad || warn || (hushed ? `경고 숨김 · ${hushed}` : '');
+      if (el.dataset.c === '0' && this.t.hasId) this.paintIdColor(el.closest('td'), el.value); // ID 첫 자리 색 띠 (IdColor)
     });
+    this.markDigits();
   }
 
   // ---------- 입력 ----------
@@ -140,6 +143,13 @@ export class GridView {
       return;
     }
     if (el.classList.contains('pout')) { t.prefixOut = el.checked; this.update(); return; }
+    if (el.classList.contains('digitcolor')) { // ID 첫 자리로 색 구분 켜기 · 끄기
+      if (e.type !== 'change') return;
+      t.digitColor = el.checked;
+      this.render();
+      this.el.querySelector('.idopt').open = true; // 설정 창은 열어 둔 채로
+      return;
+    }
     if (el.classList.contains('refon') || el.classList.contains('refpick')) {
       if (e.type !== 'change') return;
       // 켜면 ID가 겹치는 테이블들을 골라 둔다(체크로 바꿀 수 있다). 대상 체크는 후보 순서대로 모은다
@@ -221,4 +231,4 @@ export class GridView {
   }
 }
 
-mixin(GridView, RangeSelect, ColumnMove, CellKeys, GridHtml, VirtualRows, EnumHint, WarnMenu, GridPaste, ColumnWidth, CrossHair);
+mixin(GridView, RangeSelect, ColumnMove, CellKeys, GridHtml, VirtualRows, EnumHint, WarnMenu, GridPaste, ColumnWidth, CrossHair, IdColor);

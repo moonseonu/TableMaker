@@ -196,7 +196,7 @@ export class GitHubSync {
     for (const it of items.filter(it => it.dest === 'new' && it.on)) {
       try {
         const t = ImportPlan.toTable(it, it.base), old = wb.findByName(it.base);
-        if (old) { Object.assign(t, {flip: old.flip, quiet: old.quiet}); wb.tables[wb.tables.indexOf(old)] = t; }
+        if (old) { Object.assign(t, {flip: old.flip, quiet: old.quiet, digitColor: old.digitColor}); wb.tables[wb.tables.indexOf(old)] = t; }
         else wb.add(t);
         made.set(it, t);
         touched.set(it.base, t);

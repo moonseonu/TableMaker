@@ -21,9 +21,10 @@ export class Table {
   // flip: 행/열 바꿔 보기 (화면만, 데이터는 그대로)
   // quiet: 사용자가 우클릭으로 경고를 숨긴 ID들 (일부러 그렇게 둔 행). JSON에는 영향 없다
   // flip · quiet는 테이블 설명서(.md)엔 안 적고, 프로젝트 전체 zip의 설정 메모(_TableMaker.md, ProjectNote)로 왕복한다
+  // digitColor: ID 첫 자리로 색 구분 (화면만, IdColor)
   // fmt: 불러온 JSON 파일의 글자 모양 (JsonFormat, 저장 · 커밋할 때 그 모양 그대로). 여기서 만든 표는 null(기본 모양)
-  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = '', refs = ref ? [ref] : [], flip = false, quiet = [], fmt = null} = {}) {
-    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, refs, flip, quiet, fmt});
+  constructor({name = 'table', prefix = '', prefixOut = false, cols = [], rows = [], desc = '', sort = null, ref = '', refs = ref ? [ref] : [], flip = false, quiet = [], fmt = null, digitColor = true} = {}) {
+    Object.assign(this, {name, prefix, prefixOut, cols, rows, desc, sort, refs, flip, quiet, fmt, digitColor});
   }
 
   static sample() {

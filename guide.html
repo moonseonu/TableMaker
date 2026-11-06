@@ -103,6 +103,8 @@
       <label style="display:flex;gap:6px;align-items:center;color:var(--dim)">접두사 <input class="prefix" value="item_" style="width:80px;background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:1px 4px" inert></label>
       <label style="display:flex;gap:6px;align-items:center;color:var(--dim)"><input type="checkbox" inert> JSON에 포함</label>
       <label style="display:flex;gap:6px;align-items:center;color:var(--dim)"><input type="checkbox" inert> 다른 테이블 참조</label>
+      <label style="display:flex;gap:6px;align-items:center;color:var(--dim)"><input type="checkbox" checked inert> 첫 자리로 색 구분<i class="mk">5</i></label>
+      <div class="idopt" style="display:flex"><div class="digits" style="margin:-4px 0 0 22px"><span class="digit" style="--dc:var(--d1)">1</span><span class="digit" style="--dc:var(--d2)">2</span><span class="digit unused" style="--dc:var(--d3)">3</span><span class="digit unused" style="--dc:var(--d4)">4</span><span class="digit unused" style="--dc:var(--d5)">5</span><span class="digit unused" style="--dc:var(--d6)">6</span><span class="digit unused" style="--dc:var(--d7)">7</span><span class="digit unused" style="--dc:var(--d8)">8</span><span class="digit unused" style="--dc:var(--d9)">9</span></div></div>
     </div></div>
   </div>
   <ol class="notes">
@@ -111,6 +113,7 @@
     <li><i class="mk">2</i><span><b>⚙ 접두사</b> — <code>item_</code>처럼 적으면 칸 앞에 이름표가 붙어 어떤 테이블의 ID인지 보입니다. 화면에만 붙고 JSON에는 <code>1001</code>로 나갑니다. <b>JSON에 포함</b>을 켜면 <code>"item_1001"</code> 문자로 나갑니다. 설정이 있으면 ⚙가 파랗게 보입니다.</span></li>
     <li><i class="mk">3</i><span><b>정렬</b> — ▼ 오름차순, ▲ 내림차순. 번호를 적고 칸을 떠나면 그 행이 순서에 맞는 자리로 갑니다.</span></li>
     <li><i class="mk">4</i><span><b>노란 칸</b> — 다른 테이블이 같은 자릿수의 ID를 쓰고 있다는 알림입니다(위 표의 <code>2001</code>). 테이블마다 100단위, 1000단위처럼 자릿수를 나눠 쓰면 겹치지 않습니다. 저장은 막지 않습니다.</span></li>
+    <li><i class="mk">5</i><span><b>⚙ 첫 자리로 색 구분</b> — ID 첫 자리(1~9)마다 색을 정해 ID 칸 왼쪽(세로 보기는 위)에 얇은 띠로 보여 줍니다. 1xxx 씨앗 · 8xxx 업그레이드처럼 첫 자리로 종류를 나누는 표에서 구간이 한눈에 보이고, 잘못 매긴 번호가 튀어 보입니다. 아래 동그라미는 어느 색이 어느 자리인지 보여 주고(이 표에 없는 자리는 흐리게), 화면에만 보이며 JSON에는 영향이 없습니다. 테이블마다 켜고 끌 수 있고 기본은 켜짐입니다.</span></li>
   </ol>
   <div class="tip"><b>ID가 없는 테이블</b> — Config처럼 한 줄짜리 설정 테이블은 ID 열을 지우면 됩니다. 다른 열의 타입을 <b>ID</b>로 바꾸면 그 열이 맨 앞으로 가서 ID가 됩니다.</div>
 </section>

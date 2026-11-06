@@ -107,7 +107,7 @@ export class GridHtml {
       `<input type="checkbox" class="refon"${t.refs.length ? ' checked' : ''}${cands.length ? '' : ' disabled'}> 다른 테이블 참조</label>` +
       // 참조 중이면 대상 테이블을 체크로 고른다 (여러 개 가능)
       (t.refs.length ? '<div class="refs">' + cands.map(o => `<label><input type="checkbox" class="refpick" value="${esc(o.name)}"${t.refs.includes(o.name) ? ' checked' : ''}> ${esc(o.name)}</label>`).join('') + '</div>' : '') +
-      '</div></details>';
+      this.idColorOpt() + '</div></details>';
     // Enum 값 목록 보기(보기만). 칸을 고칠 때마다 바뀌어서 열 때 채운다(onToggle)
     if (c.type === 'enum' && !c.linked) h += `<details class="opt enumopt" data-c="${i}"><summary class="ico" title="Enum 값 목록 보기">⚙</summary><div class="pop"></div></details>`;
     // 정렬은 ID 열만: ▼ 오름차순(작은 값이 위), ▲ 내림차순.
