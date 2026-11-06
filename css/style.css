@@ -189,7 +189,8 @@ th.bad{box-shadow:inset 0 -2px var(--badline)}
 #grid td[data-d="1"]{--dc:var(--d1)}#grid td[data-d="2"]{--dc:var(--d2)}#grid td[data-d="3"]{--dc:var(--d3)}#grid td[data-d="4"]{--dc:var(--d4)}#grid td[data-d="5"]{--dc:var(--d5)}#grid td[data-d="6"]{--dc:var(--d6)}#grid td[data-d="7"]{--dc:var(--d7)}#grid td[data-d="8"]{--dc:var(--d8)}#grid td[data-d="9"]{--dc:var(--d9)}
 #grid td[data-d]{box-shadow:inset 4px 0 var(--dc)}
 #grid.flip td[data-d]{box-shadow:inset 0 4px var(--dc)}
-.idopt .digits{display:flex;gap:4px;margin:-2px 0 0 22px}
+.idopt .digits{display:grid;grid-template-columns:repeat(5,18px);gap:4px;margin:-2px 0 0 22px} /* 5개 · 4개 두 줄: 설정 창 폭이 바뀌지 않게 */
+.idopt .digits.off{opacity:.3}
 .idopt .digit{width:18px;height:18px;border-radius:50%;background:var(--dc);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
 .idopt .digit.unused{background:transparent;border:1.5px solid var(--dc);color:var(--dim);font-weight:400}
 .opt .pop{position:absolute;left:0;top:calc(100% + 6px);z-index:5;display:grid;gap:8px;white-space:nowrap;font-weight:400;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;box-shadow:0 6px 16px var(--shadow)}
