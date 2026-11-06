@@ -130,12 +130,21 @@ header .appmenu button.on .dot{border:3px solid var(--accent)}
 .spacer{flex:1}
 #status{color:var(--dim)}
 #status.bad{color:var(--badline)}
-#tabs{display:flex;gap:2px;align-items:flex-end;padding:8px 12px 0;border-bottom:1px solid var(--line);overflow-x:auto;overflow-y:hidden;flex:none}
+#tabs{position:relative;display:flex;gap:2px;align-items:flex-end;padding:8px 12px 0;border-bottom:1px solid var(--line);overflow-x:auto;overflow-y:hidden;flex:none;scrollbar-width:none}
+/* 탭 줄 스크롤바는 숨기고, 넘칠 때 가려진 쪽 끝을 흐리게 (TabScroll.js) */
+#tabs::-webkit-scrollbar{display:none}
+#tabs.fadeL{-webkit-mask-image:linear-gradient(to right,transparent,#000 40px);mask-image:linear-gradient(to right,transparent,#000 40px)}
+#tabs.fadeR{-webkit-mask-image:linear-gradient(to left,transparent,#000 40px);mask-image:linear-gradient(to left,transparent,#000 40px)}
+#tabs.fadeL.fadeR{-webkit-mask-image:linear-gradient(to right,transparent,#000 40px,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(to right,transparent,#000 40px,#000 calc(100% - 40px),transparent)}
 /* 선택한 탭만 회색으로 채우고, 나머지는 어둡게 */
 .tab{display:flex;align-items:center;gap:2px;padding:5px 6px 5px 12px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;background:var(--bg);color:var(--dim);cursor:pointer;white-space:nowrap}
 .tab:hover{color:var(--text)}
 .tab.on{background:var(--panel);color:var(--text);font-weight:600}
-/* 탭을 끌 때 놓을 자리 (TabDrag.js) */
+/* 탭 순서 바꾸기 (TabDrag.js): 든 탭은 마우스를 따라오고, 나머지는 미끄러지듯 비킨다 */
+#tabs.tabmoving .tab{transition:transform .15s}
+#tabs .tab.lifted{position:relative;z-index:2;transition:none;box-shadow:0 2px 10px rgba(0,0,0,.35);color:var(--text)}
+#tabs .tab.lifted.settle{transition:transform .12s}
+body.tabgrab, body.tabgrab *{cursor:grabbing !important}
 /* 탭 줄 맨 앞 ↻: GitHub 저장소에 연결된 프로젝트만 (GitHubSync.js). 새 커밋이 있으면 점, 받는 동안 돈다 */
 #ghSync{position:relative;align-self:center;margin-right:6px;padding:2px 9px;font-size:15px;line-height:1.4}
 #ghSync.new::after{content:'';position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--warntext)}
@@ -147,8 +156,6 @@ header .appmenu button.on .dot{border:3px solid var(--accent)}
 /* 새 커밋 알림 띠 */
 .ghbar{display:flex;gap:10px;align-items:center;padding:6px 12px;background:var(--accent-tint);border-top:1px solid var(--line)}
 .ghbar > span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tab.dropL{box-shadow:inset 3px 0 var(--accent)}
-.tab.dropR{box-shadow:inset -3px 0 var(--accent)}
 .tab input{width:120px;background:var(--bg);border:1px solid var(--accent);border-radius:3px;padding:0 4px}
 #addTab{margin:0 0 3px 4px}
 main{flex:1;overflow:auto}
@@ -208,11 +215,11 @@ td.insel::after{content:'';position:absolute;inset:0;background:var(--accent-tin
 #grid:focus{outline:0} /* 스크롤로 치워진 커서를 잠시 맡아 두는 동안 */
 td.insel input{cursor:cell}
 /* 열 순서 바꾸기: 든 열은 흐리게, 끼울 자리는 파란 선 */
-#grid .lift{opacity:.4}
 .hint{position:fixed;display:none;pointer-events:none;z-index:20;white-space:pre;color:var(--dim)}
 .hint i{font-style:normal;visibility:hidden}
-.moveline{position:fixed;display:none;background:var(--accent);pointer-events:none;z-index:20;border-radius:2px}
-body.colmove .moveline{display:block}
+/* 열 순서 바꾸기 (ColumnMove.js): 지나가는 열이 미끄러지듯 비킨다. 든 열의 움직임은 ColumnMove가 <style>로 */
+body.colmove #grid th,body.colmove #grid td{transition:transform .15s}
+body.colmove #grid td:not(.num){position:relative} /* 든 열이 옆 칸 위에 떠 보이게 (행 번호 칸은 왼쪽에 붙어 있어야 해서 빼고) */
 body.colmove, body.colmove *{cursor:grabbing !important}
 .idbox{display:flex;align-items:center}
 .idbox .pre{color:var(--dim);padding-left:8px}

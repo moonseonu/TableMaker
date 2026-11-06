@@ -71,7 +71,6 @@ export class VirtualRows {
     this.setPads();
     this.paint();
     this.paintSel();
-    if (this.move) this.el.querySelectorAll(`[data-c="${this.move.from}"]`).forEach(x => x.closest('td, th').classList.add('lift'));
   }
 
   // 화면 위에 붙어 있는 머리줄의 아래 끝. thead 자체는 스크롤과 함께 올라가고 칸(th)만 붙어 있어서 보이는 마지막 머리 행의 th로 잰다

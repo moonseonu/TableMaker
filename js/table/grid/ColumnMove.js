@@ -32,42 +32,62 @@ export class ColumnMove {
   }
 
   // ---------- 열 순서 바꾸기 (꾹 눌러 끌기) ----------
-  // 든 열은 흐려지고, 마우스 쪽 열 사이에 파란 선이 생긴다. 놓으면 그 자리로. 세로 보기에서는 위아래로.
+  // 든 열(머리 칸과 그 열의 모든 칸)이 마우스를 따라 움직이고, 지나가는 열들이 든 열 너비만큼 반대쪽으로 미끄러지듯 비켜서
+  // 놓일 자리가 보인다(탭 순서 바꾸기와 같은 연출). 놓으면 그 자리로 미끄러져 들어간 뒤 순서를 바꾼다. 세로 보기에서는 위아래로.
+  // 큰 표는 보이는 행만 그려서 칸마다 움직이는 대신 <style> 한 장에 열 선택자로 적는다(스크롤로 새로 그려진 행에도 그대로 맞는다).
   // ID 열 앞으로는 못 간다. 다시 그리면 App이 기록하니 Ctrl+Z로 되돌릴 수 있다
+
+  // 표 안의 위치 (넘긴 만큼 더해서). 가로 보기는 x, 세로 보기는 y
+  moveAt() {
+    const box = this.el.parentElement;
+    return this.t.flip ? this.pointer.y + box.scrollTop : this.pointer.x + box.scrollLeft;
+  }
 
   startMove() {
     if (!this.press || this.drag) return;
-    const c = this.press.c;
+    const c = this.press.c, flip = this.t.flip, box = this.el.parentElement;
+    const rects = [...this.el.querySelectorAll('th[data-c]')].map(th => th.getBoundingClientRect());
     this.drag = 'move';
-    this.move = {from: c, to: null};
-    this.el.querySelectorAll(`[data-c="${c}"]`).forEach(x => x.closest('td, th').classList.add('lift'));
+    this.move = {from: c, to: c, at0: this.moveAt(),
+      mids: rects.map(r => flip ? r.top + r.height / 2 + box.scrollTop : r.left + r.width / 2 + box.scrollLeft),
+      sizes: rects.map(r => flip ? r.height : r.width)};
     document.body.classList.add('colmove');
     this.moveLine();
     requestAnimationFrame(() => this.dragScroll());
   }
 
-  // 마우스가 어느 열 사이에 있는지(to = 그 앞에 끼울 열 번호)를 정하고 선을 그린다
+  // 한 열의 머리 칸(이름 · 타입)과 데이터 칸들
+  // body.colmove를 앞에 붙여 CSS의 transition 규칙보다 앞서게
+  colSel(i) { return [`th[data-c="${i}"]`, `th[data-tc="${i}"]`, `td:has(input[data-c="${i}"][data-r])`].map(s => `body.colmove #grid ${s}`).join(); }
+
+  // 든 열의 가운데가 지나간 열들은 비키고, 그 수가 놓일 자리(to = 옮긴 뒤의 열 번호)
   moveLine() {
-    const flip = this.t.flip, ths = [...this.el.querySelectorAll('th[data-c]')], at = flip ? this.pointer.y : this.pointer.x;
-    const rect = th => th.getBoundingClientRect();
-    let to = ths.filter(th => { const r = rect(th); return (flip ? r.top + r.bottom : r.left + r.right) / 2 < at; }).length;
-    if (this.t.hasId) to = Math.max(to, 1);
-    this.move.to = to;
-    const box = this.el.parentElement.getBoundingClientRect(), tbl = this.el.getBoundingClientRect();
-    const edge = to < ths.length ? rect(ths[to]) : rect(ths.at(-1)), px = v => Math.round(v) + 'px';
-    const a = Math.max(box.top, tbl.top), b = Math.min(box.bottom, tbl.bottom), l = Math.max(box.left, tbl.left), r = Math.min(box.right, tbl.right);
-    Object.assign(this.line.style, flip
-      ? {left: px(l), width: px(r - l), top: px((to < ths.length ? edge.top : edge.bottom) - 1), height: '3px'}
-      : {top: px(a), height: px(b - a), left: px((to < ths.length ? edge.left : edge.right) - 1), width: '3px'});
+    const m = this.move, d = this.moveAt() - m.at0, cen = m.mids[m.from] + d;
+    m.to = m.mids.filter((x, i) => i !== m.from && x < cen).length;
+    if (this.t.hasId) m.to = Math.max(m.to, 1);
+    const shift = i => m.from < m.to && i > m.from && i <= m.to ? -m.sizes[m.from] : m.to < m.from && i >= m.to && i < m.from ? m.sizes[m.from] : 0;
+    this.paintMove(d, m.mids.map((x, i) => i === m.from ? 0 : shift(i)));
   }
 
+  // 움직임을 <style> 한 장에: 든 열은 d만큼(바로 따라오게 transition 없이, 위에 떠 보이게), 나머지는 shifts만큼
+  paintMove(d, shifts, settle) {
+    const st = (this.moveStyle ||= document.head.appendChild(document.createElement('style')));
+    const m = this.move, ax = this.t.flip ? 'Y' : 'X';
+    st.textContent = `${this.colSel(m.from)}{transform:translate${ax}(${d}px);z-index:4;opacity:.9;${settle ? '' : 'transition:none'}}` +
+      shifts.map((s, i) => s ? `${this.colSel(i)}{transform:translate${ax}(${s}px)}` : '').join('');
+  }
+
+  // 놓으면 든 열이 비워 둔 자리로 미끄러져 들어간 뒤 순서를 바꾼다
   endMove() {
-    const {from, to} = this.move;
-    this.move = null;
-    document.body.classList.remove('colmove');
-    this.el.querySelectorAll('.lift').forEach(x => x.classList.remove('lift'));
-    if (to == null || to === from || to === from + 1) return;
-    this.t.moveCol(from, to > from ? to - 1 : to);
-    this.render();
+    const m = this.move, {from, to} = m;
+    const slot = to > from ? m.sizes.slice(from + 1, to + 1) : m.sizes.slice(to, from);
+    const at = slot.reduce((n, s) => n + s, 0) * (to > from ? 1 : -1);
+    this.paintMove(at, m.mids.map((x, i) => i === from ? 0 : to > from && i > from && i <= to ? -m.sizes[from] : to < from && i >= to && i < from ? m.sizes[from] : 0), true);
+    setTimeout(() => {
+      this.move = null;
+      this.moveStyle.textContent = '';
+      document.body.classList.remove('colmove');
+      if (to !== from) { this.t.moveCol(from, to); this.render(); }
+    }, 120);
   }
 }
