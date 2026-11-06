@@ -22,11 +22,11 @@ export class IdColor {
   }
 
   // ID ⚙ 안: 켜기 체크 + 1~9가 어느 색인지 보여 주는 동그라미(누를 수 없음, 5개 · 4개 두 줄). 이 표에 없는 자리는 테두리만.
-  // 꺼도 동그라미는 흐리게 남겨 두어 설정 창 크기가 바뀌지 않게
+  // 두 줄이라 켜고 꺼도 설정 창 폭은 그대로다(끄면 동그라미가 빠져 높이만 줄어든다)
   idColorOpt() {
     const t = this.t, on = t.digitColor !== false, used = new Set(t.rows.map(r => this.idDigit(r[0])));
     return `<label title="ID 첫 자리마다 색을 정해 ID 칸에 얇은 띠로 보여 줍니다(화면만, JSON에는 영향 없음)"><input type="checkbox" class="digitcolor"${on ? ' checked' : ''}> 첫 자리로 색 구분</label>` +
-      `<div class="digits${on ? '' : ' off'}">` + [1, 2, 3, 4, 5, 6, 7, 8, 9].map(d =>
-        `<span class="digit${used.has(String(d)) ? '' : ' unused'}" style="--dc:var(--d${d})" title="${d}로 시작하는 ID${used.has(String(d)) ? '' : ' (이 표에는 없음)'}">${d}</span>`).join('') + '</div>';
+      (on ? '<div class="digits">' + [1, 2, 3, 4, 5, 6, 7, 8, 9].map(d =>
+        `<span class="digit${used.has(String(d)) ? '' : ' unused'}" style="--dc:var(--d${d})" title="${d}로 시작하는 ID${used.has(String(d)) ? '' : ' (이 표에는 없음)'}">${d}</span>`).join('') + '</div>' : '');
   }
 }
