@@ -3,6 +3,7 @@ import {GITHUB_API} from '../settings/GitHubAccount.js';
 import {ImportPlan} from '../import/ImportPlan.js';
 import {ProjectNote} from './ProjectNote.js';
 import {blobSha} from './GitHubCommit.js';
+import {descName, tableOf} from './DescName.js';
 
 const OPENS = /\.(json|csv|md)$/i;
 const enc = p => p.split('/').map(encodeURIComponent).join('/');
@@ -168,7 +169,7 @@ export class GitHubSync {
       // 내가 커밋하지 않은 변경: 지금 탭에서 만든 파일이 마지막으로 맞춘 때 만들던 것과 다르다
       const now = await this.localShas(), was = l.local || {};
       const mine = changed.filter(n => n in now && n in was && now[n] !== was[n]);
-      const base = n => n.replace(/\.[^.]+$/, '');
+      const base = tableOf; // 파일 이름 → 테이블 이름 (설명서의 _Desc도 뗀다)
       let skip = new Set();
       if (mine.length) {
         const tabs = [...new Set(mine.filter(n => !ProjectNote.isNote(n)).map(base))];
@@ -179,7 +180,7 @@ export class GitHubSync {
       }
       // 받을 파일: 바뀐 것 + 바뀐 테이블의 설명서(테이블을 새로 만들면 설명을 다시 붙여야 해서)
       const want = new Set(changed.filter(n => !skip.has(n)));
-      for (const n of [...want]) if (/\.(json|csv)$/i.test(n) && remote[base(n) + '.md'] && !skip.has(base(n) + '.md')) want.add(base(n) + '.md');
+      for (const n of [...want]) if (/\.(json|csv)$/i.test(n)) for (const md of [descName(base(n)), base(n) + '.md']) if (remote[md] && !skip.has(md)) want.add(md); // 새 이름 · 예전 이름 설명서
       const files = [...want].map(n => ({name: n, webkitRelativePath: `${l.repo}/${n}`, size: 0,
         arrayBuffer: async () => (await (gh.loggedIn
           ? gh.req(`${GITHUB_API}/repos/${l.owner}/${l.repo}/contents/${enc(pre + n)}?ref=${encodeURIComponent(l.branch)}`, true)
@@ -190,7 +191,7 @@ export class GitHubSync {
       const kept = Object.fromEntries([...skip].map(n => [n, l.files[n]]));
       this.app.show(wb.cur);
       // 받은 파일은 '맞춤'으로: 그 테이블의 JSON · 설명서와 설정 메모를 지금 만들어 내는 대로 다시 기억한다
-      const fresh = new Set([...want].flatMap(n => ProjectNote.isNote(n) ? [n] : [base(n) + '.json', base(n) + '.md', base(n) + '.csv']));
+      const fresh = new Set([...want].flatMap(n => ProjectNote.isNote(n) ? [n] : [base(n) + '.json', descName(base(n)), base(n) + '.md', base(n) + '.csv']));
       fresh.add(ProjectNote.NAME);
       this.setLink({...l, sha: head.sha, at: Date.now(), files: {...remote, ...kept}, local: {...was, ...await this.localShas(fresh)}});
       const problems = errors.length ? '\n' + errors.join('\n') : '';

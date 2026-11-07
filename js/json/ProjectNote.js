@@ -13,7 +13,7 @@ export class ProjectNote {
   // tables와 names(저장한 파일 이름, 확장자 없이)는 같은 순서
   static toMd(project, tables, names) {
     return `# ${project}\n\n` +
-      `[GameTableMaker](${SITE})로 만든 게임 데이터 테이블입니다. 테이블마다 JSON(게임이 읽는 데이터)과 같은 이름의 .md(컬럼 설명)가 있습니다.\n` +
+      `[GameTableMaker](${SITE})로 만든 게임 데이터 테이블입니다. 테이블마다 JSON(게임이 읽는 데이터)과 이름 뒤에 _Desc가 붙은 .md(컬럼 설명, 예: ItemDataTable_Desc.md)가 있습니다.\n` +
       'GameTableMaker에서 이 파일이 든 zip이나 폴더를 불러오면(불러오기 ▾ → 파일 · 폴더) 아래 순서와 설정 그대로 열립니다.\n\n' +
       '| 순서 | 테이블 | 보기 | 숨긴 경고 | 열 너비 |\n|---|---|---|---|---|\n' +
       tables.map((t, i) => {

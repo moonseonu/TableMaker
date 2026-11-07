@@ -3,6 +3,7 @@ import {CheckPicker} from '../common/CheckPicker.js';
 import {GITHUB_API} from '../settings/GitHubAccount.js';
 import {JsonFormat} from './JsonFormat.js';
 import {JsonDiff} from './JsonDiff.js';
+import {oldDescName} from './DescName.js';
 
 const enc = p => p.split('/').map(encodeURIComponent).join('/');
 const MAX_LINES = 200; // 상태를 펼쳤을 때 보이는 바뀐 칸 수
@@ -86,11 +87,18 @@ export class GitHubCommit {
       }
       // 여기서 지운 표: 마지막으로 맞출 때 이 프로젝트에 있던 파일(link.local)인데 지금 탭에 없고 GitHub에는 남아 있으면 '삭제'로 올린다.
       // 여기가 원본이라 지운 것도 바뀐 것이다(이름을 바꾼 탭은 옛 이름 삭제 + 새 이름 새 파일). 그사이 팀원이 고친 파일이면 ⚠, 처음엔 체크를 뺀다
+      // 예전 이름 설명서(ItemDataTable.md): 새 이름(ItemDataTable_Desc.md)으로 올리면서 GitHub에 남은 예전 파일은 지운다 (연결 여부와 상관없이)
+      const here = new Set(made.map(f => f.name)), listed = new Set();
+      for (const f of made) {
+        const old = oldDescName(f.name);
+        if (old === f.name || here.has(old) || !remote.has(pre + old)) continue;
+        listed.add(old);
+        files.push({name: old, del: true, renamed: f.name, state: `<span class="state">${esc(`옛 이름이라 지움 (→ ${f.name})`)}</span>`});
+      }
       if (same) {
-        const here = new Set(made.map(f => f.name));
         for (const name of Object.keys(link.local || {})) {
           const now = remote.get(pre + name);
-          if (here.has(name) || !now) continue;
+          if (here.has(name) || listed.has(name) || !now) continue;
           const risky = now !== link.files[name];
           files.push({name, del: true, risky, state: `<span class="state">${esc((risky ? '⚠ GitHub에서도 바뀜 (지우면 그 변경도 사라짐) · ' : '') + '⚠ 삭제 (여기서 지운 표)')}</span>`});
         }
@@ -104,6 +112,8 @@ export class GitHubCommit {
         const fs = picked.map(i => files[i]).filter(f => f.name.endsWith('.json')), names = fs.map(f => f.name.slice(0, -5));
         const title = `GameTableMaker: ${names.length ? names.slice(0, 3).join(', ') + (names.length > 3 ? ` 외 ${names.length - 3}개` : '') : '설명 · 설정'} 수정`;
         const body = fs.flatMap(f => { const n = f.name.slice(0, -5); return f.del ? [`⚠ 테이블 삭제: ${n}`] : f.diff ? JsonDiff.notes(n, f.diff) : [f.isNew ? `+ 새 테이블: ${n}` : `· ${n}: 바뀜`]; });
+        const renamed = picked.map(i => files[i]).filter(f => f.renamed);
+        if (renamed.length) body.push(`· 설명서 이름 변경: ${renamed.length === 1 ? `${renamed[0].name} → ${renamed[0].renamed}` : `${renamed.length}개 (*.md → *_Desc.md)`}`);
         return title + (body.length ? '\n\n' + body.join('\n') : '');
       };
       const msg = message(files.map((f, i) => i).filter(i => !files[i].risky));

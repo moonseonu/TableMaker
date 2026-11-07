@@ -181,8 +181,8 @@
   <ol class="notes">
     <li><i class="mk">1</i><span><b>적기</b> — 위쪽 <b>테이블 설명</b> 버튼을 누르면 아래에 창이 열립니다. 테이블 설명과 컬럼별 설명을 적습니다. Enum 열은 타입 칸의 <b>Enum · N개 ▾</b>를 누르면 값 목록이 아래로 펼쳐집니다.</span></li>
     <li><i class="mk">2</i><span><b>엑셀 Meta 시트 붙여넣기</b> — <code>Column · Description · Type</code> 형식의 시트를 복사해 이 창에 붙여넣으면 한 번에 채워집니다. <code>컬럼명 · 설명 · 타입</code>처럼 한국어 머리줄도 알아봅니다.</span></li>
-    <li><i class="mk">3</i><span><b>설명서 내보내기</b> — <b>파일 저장 ▾ → 설명서 (.md)…</b>. 오른쪽 같은 문서가 만들어져 프로그래머에게 넘기거나 커밋에 함께 넣을 수 있습니다.</span></li>
-    <li><i class="mk">4</i><span><b>설정 되살리기</b> — JSON과 같은 이름의 .md를 함께 불러오면 설명과 함께 열 타입·접두사·참조 설정도 돌아옵니다.</span></li>
+    <li><i class="mk">3</i><span><b>설명서 내보내기</b> — <b>파일 저장 ▾ → 설명서 (.md)…</b>. 오른쪽 같은 문서가 만들어져 프로그래머에게 넘기거나 커밋에 함께 넣을 수 있습니다. 파일 이름은 <code>ItemDataTable_Desc.md</code>처럼 뒤에 <code>_Desc</code>가 붙습니다. JSON과 이름이 같으면 Unity의 <code>Resources.Load("ItemDataTable")</code>이 어느 파일인지 헷갈리기 때문입니다. 예전 이름(<code>ItemDataTable.md</code>)도 그대로 불러오고, GitHub에 커밋하면 새 이름으로 올리면서 예전 이름 파일은 지웁니다.</span></li>
+    <li><i class="mk">4</i><span><b>설정 되살리기</b> — JSON과 그 설명서(<code>이름_Desc.md</code>, 예전 <code>이름.md</code>)를 함께 불러오면 설명과 함께 열 타입·접두사·참조 설정도 돌아옵니다.</span></li>
   </ol>
 </section>
 
@@ -224,7 +224,7 @@
         <tr><td><input type="checkbox" checked></td><td><b>ItemDataTable.json</b></td><td>JSON</td><td>3.2 KB</td><td><select><option>새 탭 'ItemDataTable'</option></select><i class="mk">A</i></td></tr>
         <tr><td><input type="checkbox" checked></td><td><b>ItemDataTable_Meta.json</b></td><td>JSON</td><td>0.8 KB</td><td><select><option>설명 → 'ItemDataTable' (이번에 가져올 것)</option></select><i class="mk">B</i></td></tr>
         <tr><td><input type="checkbox" checked></td><td><b>UnitDataTable.json</b></td><td>JSON</td><td>2.1 KB</td><td><select><option>새 탭 'UnitDataTable'</option></select><div class="rename"><input value="UnitDataTable_2"><small class="warn">⚠ 같은 이름의 탭이 이미 있습니다</small></div></td></tr>
-        <tr><td><input type="checkbox" checked></td><td><b>UnitDataTable.md</b></td><td>설명서</td><td>0.5 KB</td><td><select><option>설명 → 'UnitDataTable' (이번에 가져올 것)</option></select></td></tr>
+        <tr><td><input type="checkbox" checked></td><td><b>UnitDataTable_Desc.md</b></td><td>설명서</td><td>0.5 KB</td><td><select><option>설명 → 'UnitDataTable' (이번에 가져올 것)</option></select></td></tr>
         <tr><td><input type="checkbox"></td><td><b>README.md</b></td><td>설명서</td><td>1.0 KB</td><td><select><option>붙일 테이블 고르기…</option></select><i class="mk">C</i></td></tr>
         <tr><td><input type="checkbox" checked></td><td><b>_TableMaker.md</b></td><td>설정</td><td>0.3 KB</td><td><select><option>탭 순서 · 보기 · 숨긴 경고 되살리기</option></select><i class="mk">D</i></td></tr>
       </tbody>

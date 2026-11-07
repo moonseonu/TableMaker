@@ -4,6 +4,7 @@ import {MetaDoc} from '../meta/MetaDoc.js';
 import {SavePicker} from './SavePicker.js';
 import {ProjectNote} from './ProjectNote.js';
 import {JsonFormat} from './JsonFormat.js';
+import {descName} from './DescName.js';
 
 const safeName = s => (s || 'table').replace(/[\\/:*?"<>|]/g, '_');
 
@@ -55,7 +56,7 @@ export class Exporter {
       while (used.has(n.toLowerCase())) n += '_';
       used.add(n.toLowerCase());
       if (kinds.includes('json')) out.push({name: n + '.json', text: JsonFormat.write(t.toData(), t.fmt), table: t});
-      if (kinds.includes('md')) out.push({name: n + '.md', text: MetaDoc.toMd(t)});
+      if (kinds.includes('md')) out.push({name: descName(n), text: MetaDoc.toMd(t)}); // ItemDataTable_Desc.md (DescName)
     }
     return out;
   }

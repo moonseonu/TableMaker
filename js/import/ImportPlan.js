@@ -9,7 +9,7 @@ import {JsonFormat} from '../json/JsonFormat.js';
 
 const ext = name => (/\.([^.\/\\]+)$/.exec(name) || [])[1]?.toLowerCase();
 const baseName = name => name.split(/[\/\\]/).pop().replace(/\.[^.]+$/, '');
-const META = /[\s_.-]*meta$/i; // ItemDataTable_Meta, ItemDataTableMeta → ItemDataTable의 설명
+const META = /[\s_.-]*(meta|desc)$/i; // ItemDataTable_Meta, ItemDataTableMeta, ItemDataTable_Desc(설명서 파일, DescName) → ItemDataTable의 설명
 const sizeText = n => n < 1024 ? `${n} B` : `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB`;
 const lower = s => String(s).trim().toLowerCase();
 
