@@ -98,41 +98,46 @@ export class GitHubImport {
     d.querySelector('.hint').textContent = `'${path.value}' 폴더는 커밋하면 파일과 함께 만들어집니다.`;
   }
 
-  // 저장소 고르는 창 (불러오기, 그리고 GitHub에 커밋할 곳 고르기). 확인하면 {owner, repo, branch, path, linkOnly}, 취소하면 null.
-  // linkOnly: 불러오기 창의 '현재 표로 연동'을 눌렀다
-  // newFolder: 커밋할 곳 고르기 — 폴더 목록에 저장소의 모든 폴더와 '/'(맨 위), 맨 아래 '+ 새 폴더…'(지금 칸의 폴더 아래에 이름을 정해 만든다).
-  //   Git에는 빈 폴더가 없어서 새 폴더는 커밋할 때 파일이 들어가며 생긴다. 없는 경로를 직접 적어도 같다
-  ask({title = 'GitHub에서 불러오기', ok = '폴더 열기', newFolder = false} = {}) {
-    // 처음 칸: 지금 프로젝트가 저장소에 연결돼 있으면 그 저장소 · 브랜치 · 폴더(엉뚱한 곳에 커밋하지 않게), 아니면 마지막에 연 곳
-    let saved = {};
-    try { saved = JSON.parse(localStorage.getItem(SAVED)) || {}; } catch {}
+  // 처음 칸: 지금 프로젝트가 저장소에 연결돼 있으면 그 저장소 · 브랜치 · 폴더(엉뚱한 곳에 커밋하지 않게), 아니면 마지막에 연 곳
+  savedTarget() {
     const link = this.app.projects.current.link;
-    if (link) saved = {repo: `${link.owner}/${link.repo}`, branch: link.branch, path: link.path};
-    const gh = this.account, d = document.createElement('dialog');
-    d.className = 'popup ghimport';
-    // 긴 설명은 제목 옆 (?) 도움말에 (Help)
-    const help = Help.list([
-      '세 칸 모두 <b>누르면 고를 수 있는 목록</b>이 나오고, 직접 적어도 됩니다. 저장소는 <code>owner/repo</code>나 GitHub 주소(…/tree/브랜치/폴더까지)도 됩니다.',
-      '공개 저장소는 로그인 없이 주소만 적으면 됩니다. 내 저장소 목록 · 비공개 저장소는 GitHub 로그인이 필요합니다.',
-      gh.isApp && '목록에는 <b>GameTableMaker 앱을 설치한 저장소</b>만 나옵니다. 없으면 <b>앱 설치</b>를 누르세요. 팀원 저장소는 주인이 설치해야 보입니다.',
-      newFolder ? '폴더 목록 맨 아래 <b>+ 새 폴더…</b>로 지금 고른 폴더 아래에 새 폴더를 만들 수 있습니다. 커밋할 때 파일과 함께 생깁니다.'
-        : '<b>폴더 열기</b>: 파일을 골라 탭으로 불러오고, 이 프로젝트를 그 폴더에 연결합니다. <b>현재 표로 연동</b>: 지금 탭은 그대로 두고 연결만 합니다(GitHub에만 있는 표는 받아 오고, 내용이 다른 표는 다음 커밋 목록에 나옵니다).',
-    ]);
-    d.innerHTML = `<form method="dialog">${Help.title(esc(title), help, '<div class="who"></div>')}` +
+    if (link) return {repo: `${link.owner}/${link.repo}`, branch: link.branch, path: link.path};
+    try { return JSON.parse(localStorage.getItem(SAVED)) || {}; } catch { return {}; }
+  }
+
+  remember(got) { try { localStorage.setItem(SAVED, JSON.stringify({repo: `${got.owner}/${got.repo}`, branch: got.branch, path: got.path})); } catch {} }
+
+  // 저장소 · 브랜치 · 폴더 칸 HTML (불러오기 창, 커밋 창 맨 위). 로그인 줄(.who)과 안내(.hint) · 오류(.err) 줄 포함
+  // newFolder: 커밋할 곳 — 폴더 목록에 저장소의 모든 폴더와 '/'(맨 위), 맨 아래 '+ 새 폴더…'(지금 칸의 폴더 아래에 이름을 정해 만든다).
+  //   Git에는 빈 폴더가 없어서 새 폴더는 커밋할 때 파일이 들어가며 생긴다. 없는 경로를 직접 적어도 같다
+  fieldsHtml(saved, newFolder) {
+    return '<div class="who"></div>' +
       `<label class="asktext">저장소 <input class="repo" required value="${esc(saved.repo || '')}" placeholder="owner/repo 또는 GitHub 주소" autofocus></label>` +
       `<label class="asktext">브랜치 <input class="branch" value="${esc(saved.branch || '')}" placeholder="비우면 기본 브랜치"></label>` +
       `<label class="asktext">폴더 <input class="path" value="${esc(saved.path || '')}" placeholder="${newFolder ? '예: Assets/Resources/Json (/ 나 비우면 맨 위)' : '예: Assets/Resources/Json (비우면 전체)'}"></label>` +
-      '<p class="dim small hint"></p><p class="bad small err"></p>' + // hint: 새 폴더를 만들면 그 안내
-      `<div class="btns"><button type="button" class="cancel">취소</button>` +
-      // 불러오기만: 파일을 고르지 않고 지금 탭 그대로 연결 (GitHubSync.linkHere)
-      (newFolder ? '' : '<button value="link" title="지금 탭은 그대로 두고 이 저장소 폴더에 연결만 합니다. GitHub에만 있는 표는 받아 오고, 내용이 다른 표는 다음 커밋 때 올릴 목록에 나옵니다">현재 표로 연동</button>') +
-      `<button value="ok" class="primary">${esc(ok)}</button></div></form>`;
-    const $d = c => d.querySelector(c), val = c => $d(c).value.trim(), err = $d('.err');
+      '<p class="dim small hint"></p><p class="bad small err"></p>'; // hint: 새 폴더를 만들면 그 안내
+  }
+
+  // 칸에 목록 고르기 · 로그인 줄 · 저장소를 바꾸면 브랜치 · 폴더 비우기를 단다.
+  // onChange(target): 세 칸이 바뀌어 저장소를 읽을 수 있을 때(적는 동안은 잠깐 기다렸다가) → {read() → {owner, repo, branch, path} | null, stop()}
+  wireFields(d, {newFolder = false, onChange} = {}) {
+    const gh = this.account, $d = c => d.querySelector(c), val = c => $d(c).value.trim(), err = $d('.err');
+    let timer = 0, ctimer = 0;
+    const read = () => {
+      const p = GitHubImport.parse(val('.repo'));
+      return p && {...p, branch: val('.branch') || p.branch, path: (val('.path') || p.path).replace(/^\/+|\/+$/g, '')};
+    };
+    // 칸이 바뀌면 (커밋 창은 아래 목록을 다시 계산한다)
+    const changed = () => {
+      if (!onChange) return;
+      clearTimeout(ctimer);
+      ctimer = setTimeout(() => { const t = read(); if (t) onChange(t); }, 500);
+    };
     const combo = {
       ghRepos: new Combo($d('.repo'), gh.loggedIn ? '내 저장소 목록을 받는 중이거나 없습니다. owner/repo를 직접 적어도 됩니다' : '로그인하면 내 저장소 목록이 나옵니다. owner/repo를 직접 적어도 됩니다'),
       ghBranches: new Combo($d('.branch'), '저장소를 고르면 브랜치 목록이 나옵니다. 비우면 기본 브랜치'),
       ghFolders: new Combo($d('.path'), newFolder ? '아직 폴더가 없습니다. 아래 「+ 새 폴더…」로 만들거나, 비워 두면 맨 위에 저장합니다' : '저장소를 고르면 JSON · CSV · 설명서가 든 폴더가 나옵니다',
-        newFolder ? [{label: '+ 새 폴더… (지금 칸의 폴더 아래에)', run: () => this.newFolder(d)}] : []),
+        newFolder ? [{label: '+ 새 폴더… (지금 칸의 폴더 아래에)', run: () => this.newFolder(d).then(changed)}] : []),
     };
     const fill = (id, list) => combo[id].set(list);
     const who = () => {
@@ -150,7 +155,6 @@ export class GitHubImport {
       }).catch(() => {});
     };
     // 저장소를 고르면 브랜치 목록, 브랜치까지 정하면 JSON · CSV · 설명서가 든 폴더 목록 (적는 동안은 잠깐 기다렸다가)
-    let timer = 0;
     const lists = () => {
       clearTimeout(timer);
       timer = setTimeout(async () => {
@@ -176,31 +180,52 @@ export class GitHubImport {
       const k = repoKey();
       if (k && k !== lastRepo) { $d('.branch').value = ''; $d('.path').value = ''; fill('ghBranches', []); fill('ghFolders', []); }
       if (k) lastRepo = k;
-      lists();
+      lists(); changed();
     });
-    $d('.branch').addEventListener('input', lists);
+    $d('.branch').addEventListener('input', () => { lists(); changed(); });
+    $d('.path').addEventListener('input', changed);
     d.addEventListener('click', async e => {
       if (e.target.closest('.invite')) return GitHubAppSetup.show(this.app, gh);
       if (!e.target.closest('.login')) return;
-      if (await gh.login()) { who(); lists(); }
+      if (await gh.login()) { who(); lists(); changed(); }
     });
-    $d('.cancel').onclick = () => d.close('');
+    who();
+    if (val('.repo')) lists();
+    return {read, stop: () => { clearTimeout(timer); clearTimeout(ctimer); }};
+  }
+
+  // 저장소 고르는 창 (불러오기). 확인하면 {owner, repo, branch, path, linkOnly}, 취소하면 null.
+  // linkOnly: '현재 표로 연동'을 눌렀다
+  ask({title = 'GitHub에서 불러오기', ok = '폴더 열기'} = {}) {
+    const saved = this.savedTarget(), gh = this.account, d = document.createElement('dialog');
+    d.className = 'popup ghimport';
+    // 긴 설명은 제목 옆 (?) 도움말에 (Help)
+    const help = Help.list([
+      '세 칸 모두 <b>누르면 고를 수 있는 목록</b>이 나오고, 직접 적어도 됩니다. 저장소는 <code>owner/repo</code>나 GitHub 주소(…/tree/브랜치/폴더까지)도 됩니다.',
+      '공개 저장소는 로그인 없이 주소만 적으면 됩니다. 내 저장소 목록 · 비공개 저장소는 GitHub 로그인이 필요합니다.',
+      gh.isApp && '목록에는 <b>GameTableMaker 앱을 설치한 저장소</b>만 나옵니다. 없으면 <b>앱 설치</b>를 누르세요. 팀원 저장소는 주인이 설치해야 보입니다.',
+      '<b>폴더 열기</b>: 파일을 골라 탭으로 불러오고, 이 프로젝트를 그 폴더에 연결합니다. <b>현재 표로 연동</b>: 지금 탭은 그대로 두고 연결만 합니다(GitHub에만 있는 표는 받아 오고, 내용이 다른 표는 다음 커밋 목록에 나옵니다).',
+    ]);
+    d.innerHTML = `<form method="dialog">${Help.title(esc(title), help)}${this.fieldsHtml(saved, false)}` +
+      '<div class="btns"><button type="button" class="cancel">취소</button>' +
+      // 파일을 고르지 않고 지금 탭 그대로 연결 (GitHubSync.linkHere)
+      '<button value="link" title="지금 탭은 그대로 두고 이 저장소 폴더에 연결만 합니다. GitHub에만 있는 표는 받아 오고, 내용이 다른 표는 다음 커밋 때 올릴 목록에 나옵니다">현재 표로 연동</button>' +
+      `<button value="ok" class="primary">${esc(ok)}</button></div></form>`;
+    const f = this.wireFields(d), err = d.querySelector('.err');
+    d.querySelector('.cancel').onclick = () => d.close('');
     Help.wire(d);
-    $d('form').addEventListener('submit', e => {
-      if (GitHubImport.parse(val('.repo'))) return;
+    d.querySelector('form').addEventListener('submit', e => {
+      if (f.read()) return;
       e.preventDefault(); // 저장소 주소를 못 읽으면 창을 닫지 않는다
       err.textContent = "저장소는 'owner/repo'나 GitHub 주소로 적어 주세요";
     });
-    who();
-    if (saved.repo) lists();
     document.body.append(d);
     d.showModal();
     return new Promise(done => d.addEventListener('close', () => {
-      clearTimeout(timer);
-      const p = ['ok', 'link'].includes(d.returnValue) && GitHubImport.parse(val('.repo'));
-      const got = p && {...p, branch: val('.branch') || p.branch, path: (val('.path') || p.path).replace(/^\/+|\/+$/g, ''), linkOnly: d.returnValue === 'link'};
+      f.stop();
+      const t = ['ok', 'link'].includes(d.returnValue) && f.read(), got = t && {...t, linkOnly: d.returnValue === 'link'};
       d.remove();
-      if (got) try { localStorage.setItem(SAVED, JSON.stringify({repo: `${got.owner}/${got.repo}`, branch: got.branch, path: got.path})); } catch {}
+      if (got) this.remember(got);
       done(got || null);
     }));
   }

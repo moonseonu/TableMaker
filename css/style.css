@@ -376,6 +376,27 @@ dialog.popup::backdrop{background:rgba(0,0,0,.4)}
 .helpbox ul{margin:0;padding-left:16px}
 .helpbox p{margin:0 0 4px}
 .popup p.sub{margin:0 0 10px;font-size:12px}
+/* GitHub에 커밋 창 (CommitDialog.js): 위에 저장소 칸, 아래 올릴 파일 목록과 메시지. 상태는 같은 폭의 신규 · 수정 · 삭제 */
+.commitdlg{width:min(620px,94vw)}
+.commitdlg .clist{border-top:1px solid var(--line);margin-top:4px;max-height:40vh;overflow:auto}
+.commitdlg .clist table{width:100%;border-collapse:collapse}
+.commitdlg .clist td{padding:5px 6px;border:0;border-bottom:1px solid var(--line);white-space:nowrap}
+.commitdlg .clist td:first-child{width:22px}
+.commitdlg .clist tr{cursor:pointer}
+.commitdlg .clist tr:not(.grp):hover td{background:var(--hover)}
+.commitdlg .clist tr.grp td{padding-top:12px;font-size:12px;font-weight:600;color:var(--dim);border-bottom-color:var(--headline)}
+.commitdlg .clist tr.grp:first-child td{padding-top:6px}
+.commitdlg .clist td.nm{width:100%;max-width:0;overflow:hidden;text-overflow:ellipsis}
+.commitdlg .clist td.nm .dim{font-size:12px}
+.commitdlg .clist td.st{text-align:right}
+.commitdlg .clist .empty{margin:12px 4px}
+.commitdlg .kind{display:inline-block;width:40px;text-align:center;font-size:11px;font-weight:600;line-height:1.7;border-radius:4px}
+.commitdlg .kind.new{background:color-mix(in srgb,#3fb950 18%,transparent);color:#3fb950}
+.commitdlg .kind.mod{background:var(--accent-tint);color:var(--accent-text)}
+.commitdlg .kind.del{background:var(--bad);color:var(--badline)}
+.commitdlg .risk{color:var(--warntext);margin-right:6px;cursor:help}
+.commitdlg .commitmsg{display:flex;flex-direction:column;gap:4px;margin:12px 0 0;color:var(--dim);font-size:12px}
+.commitdlg .commitmsg textarea{width:100%;min-height:110px;resize:vertical;font:inherit;font-size:13px;line-height:1.5;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;color:var(--text)}
 .popup .btns{display:flex;justify-content:flex-end;gap:8px}
 .donate img{display:block;margin:10px auto;border-radius:6px} /* QR은 흰 바탕째로 그려 다크 테마에서도 찍힌다 */
 .donate p{text-align:center}
