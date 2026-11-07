@@ -362,11 +362,12 @@ dialog.popup::backdrop{background:rgba(0,0,0,.4)}
 .listpick tr.grp td{background:transparent;padding:14px 8px 5px;font-size:12px;font-weight:600;color:var(--dim);border-bottom:1px solid var(--line) !important}
 .listpick tr.grp:first-child td{padding-top:4px}
 .listpick tbody tr.grp:hover td{background:transparent}
-/* 상태의 작은 표시: 노랑 = 코드 · 팀원에 영향, 초록 = 새 파일, 빨강 = 지움 */
+/* 상태의 작은 표시: 노랑 = 코드 · 팀원에 영향, 초록 = 새 파일, 빨강 = 지움, 파랑 = 이름 변경 */
 .bd{display:inline-block;font-size:11px;line-height:1.6;padding:0 6px;border-radius:4px;font-weight:600}
 .bd-warn{background:var(--warnbg);color:var(--warntext)}
 .bd-new{background:color-mix(in srgb,#3fb950 18%,transparent);color:#3fb950}
 .bd-del{background:var(--bad);color:var(--badline)}
+.bd-ren{background:var(--accent-tint);color:var(--accent-text)} /* 이름 변경 */
 /* 창 제목 옆 (?) 도움말 (Help.js) */
 .htitle{display:flex;align-items:center;gap:8px}
 .helpbtn{margin-left:auto;flex:none;width:22px;height:22px;border-radius:50%;padding:0;font-size:12px;font-weight:600;line-height:1;color:var(--dim);border:1px solid var(--line);background:transparent;cursor:pointer}

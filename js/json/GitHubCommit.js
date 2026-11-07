@@ -11,7 +11,8 @@ const MAX_LINES = 200; // 상태를 펼쳤을 때 보이는 바뀐 칸 수
 // 상태 조각 → 작은 표시: ⚠로 시작하면 노란 표시(코드 · 팀원에 영향), 새 파일 초록, 지움 빨강, 나머지는 흐린 글자.
 // 펼칠 것(lines)이 있으면 ▸ 눌러 펼치기
 const chip = p => p.startsWith('⚠') ? `<span class="bd bd-warn">${esc(p.replace(/^⚠\s*/, ''))}</span>`
-  : p === '새 파일' ? '<span class="bd bd-new">새 파일</span>' : p === '지움' ? '<span class="bd bd-del">지움</span>' : esc(p);
+  : p === '새 파일' ? '<span class="bd bd-new">새 파일</span>' : p === '지움' ? '<span class="bd bd-del">지움</span>' : p === '이름 변경' ? '<span class="bd bd-ren">이름 변경</span>' : esc(p);
+const extOf = n => n.slice(n.lastIndexOf('.')); // 이름을 바꾼 탭 짝 찾기: 같은 종류 파일끼리만
 const stateHtml = (parts, lines = []) => {
   const head = parts.map(chip).join(' · ');
   return lines.length ? `<details class="state"><summary>${head}</summary><ul>${[...parts, ...lines].map(l => `<li>${esc(l)}</li>`).join('')}</ul></details>` : `<span class="state">${head}</span>`;
@@ -93,23 +94,30 @@ export class GitHubCommit {
         const lines = diff ? [...diff.lines.slice(0, MAX_LINES), ...(diff.lines.length > MAX_LINES ? [`… 외 ${diff.lines.length - MAX_LINES}개`] : [])] : [];
         files.push({...f, sha: mine, risky, diff, isNew: !now, state: stateHtml(parts, lines)});
       }
-      // 여기서 지운 표: 마지막으로 맞출 때 이 프로젝트에 있던 파일(link.local)인데 지금 탭에 없고 GitHub에는 남아 있으면 '삭제'로 올린다.
-      // 여기가 원본이라 지운 것도 바뀐 것이다(이름을 바꾼 탭은 옛 이름 삭제 + 새 이름 새 파일). 그사이 팀원이 고친 파일이면 ⚠, 처음엔 체크를 뺀다
-      // 예전 이름 설명서(ItemDataTable.md): 새 이름(ItemDataTable_Desc.md)으로 올리면서 GitHub에 남은 예전 파일은 지운다 (연결 여부와 상관없이)
-      const here = new Set(made.map(f => f.name)), listed = new Set();
+      // 이름만 바뀐 파일은 '새 파일 + 지움' 두 줄이 아니라 '이름 변경' 한 줄로: 새 이름 줄에 예전 이름(renamedFrom)을 달고, 커밋할 때 예전 파일을 함께 지운다.
+      //  · 예전 이름 설명서(ItemDataTable.md → ItemDataTable_Desc.md): 연결 여부와 상관없이
+      //  · 이름을 바꾼 탭(연결된 프로젝트): 지운 파일과 내용이 똑같은 새 파일
+      const here = new Set(made.map(f => f.name)), paired = new Set(), fresh = name => files.find(f => f.name === name && f.isNew && !f.renamedFrom);
+      const rename = (f, old) => { paired.add(old); Object.assign(f, {renamedFrom: old, state: stateHtml(['이름 변경'])}); };
       for (const f of made) {
-        const old = oldDescName(f.name);
-        if (old === f.name || here.has(old) || !remote.has(pre + old)) continue;
-        listed.add(old);
-        files.push({name: old, del: true, renamed: f.name, state: stateHtml(['지움', `옛 이름 → ${f.name}`])});
+        const old = oldDescName(f.name), nf = fresh(f.name);
+        if (old !== f.name && !here.has(old) && remote.has(pre + old) && nf) rename(nf, old);
       }
+      // 여기서 지운 표: 마지막으로 맞출 때 이 프로젝트에 있던 파일(link.local)인데 지금 탭에 없고 GitHub에는 남아 있으면 '삭제'로 올린다.
+      // 여기가 원본이라 지운 것도 바뀐 것이다. 그사이 팀원이 고친 파일이면 ⚠, 처음엔 체크를 뺀다
       if (same) {
         for (const name of Object.keys(link.local || {})) {
           const now = remote.get(pre + name);
-          if (here.has(name) || listed.has(name) || !now) continue;
-          const risky = now !== link.files[name];
+          if (here.has(name) || paired.has(name) || !now) continue;
+          const risky = now !== link.files[name], twin = !risky && files.find(f => f.isNew && !f.renamedFrom && f.sha === now && extOf(f.name) === extOf(name));
+          if (twin) { rename(twin, name); continue; }
           files.push({name, del: true, risky, state: stateHtml([...(risky ? ['⚠ 팀원도 고침'] : []), '지움', '여기서 지운 표'])});
         }
+      }
+      // 예전 이름 설명서인데 새 이름 파일은 이미 GitHub에 같은 내용으로 있으면(올릴 게 없으면) 예전 파일만 지운다
+      for (const f of made) {
+        const old = oldDescName(f.name);
+        if (old !== f.name && !here.has(old) && remote.has(pre + old) && !paired.has(old)) { paired.add(old); files.push({name: old, del: true, state: stateHtml(['지움', '예전 이름'])}); }
       }
       if (learned) this.app.workbook.save(); // 배운 글자 모양은 표에 남긴다 (되돌리기 기록과 상관없다)
       const behind = same && [...remote].some(([p, s]) => p.startsWith(pre) && !p.slice(pre.length).includes('/') && link.files[p.slice(pre.length)] !== s);
@@ -119,9 +127,9 @@ export class GitHubCommit {
       const message = picked => {
         const fs = picked.map(i => files[i]).filter(f => f.name.endsWith('.json')), names = fs.map(f => f.name.slice(0, -5));
         const title = `GameTableMaker: ${names.length ? names.slice(0, 3).join(', ') + (names.length > 3 ? ` 외 ${names.length - 3}개` : '') : '설명 · 설정'} 수정`;
-        const body = fs.flatMap(f => { const n = f.name.slice(0, -5); return f.del ? [`⚠ 테이블 삭제: ${n}`] : f.diff ? JsonDiff.notes(n, f.diff) : [f.isNew ? `+ 새 테이블: ${n}` : `· ${n}: 바뀜`]; });
-        const renamed = picked.map(i => files[i]).filter(f => f.renamed);
-        if (renamed.length) body.push(`· 설명서 이름 변경: ${renamed.length === 1 ? `${renamed[0].name} → ${renamed[0].renamed}` : `${renamed.length}개 (*.md → *_Desc.md)`}`);
+        const body = fs.flatMap(f => { const n = f.name.slice(0, -5); return f.renamedFrom ? [`⚠ 테이블 이름 변경: ${f.renamedFrom.slice(0, -5)} → ${n}`] : f.del ? [`⚠ 테이블 삭제: ${n}`] : f.diff ? JsonDiff.notes(n, f.diff) : [f.isNew ? `+ 새 테이블: ${n}` : `· ${n}: 바뀜`]; });
+        const renamed = picked.map(i => files[i]).filter(f => f.renamedFrom && f.name.endsWith('.md'));
+        if (renamed.length) body.push(`· 설명서 이름 변경: ${renamed.length === 1 ? `${renamed[0].renamedFrom} → ${renamed[0].name}` : `${renamed.length}개`}`);
         return title + (body.length ? '\n\n' + body.join('\n') : '');
       };
       const msg = message(files.map((f, i) => i).filter(i => !files[i].risky));
@@ -134,14 +142,14 @@ export class GitHubCommit {
           '띄어쓰기 · 들여쓰기 같은 글자 모양 차이는 바뀐 것으로 치지 않고, GitHub 파일 모양 그대로 올립니다.',
           files.some(f => f.diff) && '<b>▸ 상태</b>를 누르면 바뀐 칸이 하나하나 보입니다.',
           files.some(f => f.risky) && '<b>팀원도 고침</b>: 그사이 GitHub에서도 바뀐 파일이라 올리면 덮어씁니다. 처음엔 체크가 빠져 있으니, 먼저 ↻로 갱신해 보세요.',
-          files.some(f => f.del && !f.renamed) && '<b>지움 · 여기서 지운 표</b>: 커밋하면 GitHub에서도 지워집니다(GitHub 기록에서 되살릴 수 있습니다).',
-          files.some(f => f.renamed) && '<b>지움 · 옛 이름</b>: 설명서 이름이 <code>이름_Desc.md</code>로 바뀌어 예전 이름 파일을 지웁니다.',
+          files.some(f => f.del) && '<b>지움</b>: 여기서 지운 표(또는 예전 이름 설명서)라 커밋하면 GitHub에서도 지워집니다(GitHub 기록에서 되살릴 수 있습니다).',
+          files.some(f => f.renamedFrom) && '<b>이름 변경</b>: 같은 파일의 이름만 바뀐 것입니다(설명서는 <code>이름_Desc.md</code>로). 새 이름으로 올리면서 예전 이름 파일은 지웁니다.',
           files.some(f => f.name.endsWith('.json')) && files.some(f => f.name.endsWith('.md')) && '묶음 제목의 체크로 <b>JSON만 · 설명서만</b> 올릴 수 있습니다.',
           '커밋 메시지는 고른 파일에 맞춰 적힙니다. 첫 줄은 제목, 아래는 자세한 설명이고, <b>⚠</b>는 컬럼 삭제 · 이름 · 타입 변경처럼 코드에 영향을 줄 수 있는 변경입니다.',
         ]),
         foot: `<label class="commitmsg"><span>커밋 메시지</span><textarea class="msg" rows="7" spellcheck="false">${esc(msg)}</textarea></label>`,
         heads: ['파일', '상태'],
-        rows: files.map(f => [`<b>${esc(f.name)}</b>`, f.state]), // 폴더는 제목에 있다
+        rows: files.map(f => [`<b>${esc(f.name)}</b>` + (f.renamedFrom ? ` <span class="dim small">← ${esc(f.renamedFrom)}</span>` : ''), f.state]), // 폴더는 제목에 있다
         checked: files.map(f => !f.risky),
         // JSON(데이터)과 설명서 · 설정(MD)을 묶음으로 나눠, 묶음마다 모두 고르기 · 풀기 (둘 다 있을 때만)
         groups: (g => g.every(x => x.rows.length) ? g : null)([
@@ -158,7 +166,8 @@ export class GitHubCommit {
         read: d => d.querySelector('.msg').value.trim() || msg,
       });
       if (!res) return;
-      let todo = res.picked.map(i => files[i]);
+      // 이름 변경은 새 이름 올리기 + 예전 이름 지우기
+      let todo = res.picked.flatMap(i => files[i].renamedFrom ? [files[i], {name: files[i].renamedFrom, del: true}] : [files[i]]);
       if (empty) { // 빈 저장소: 첫 파일로 저장소(와 브랜치)를 시작한다
         const [first] = todo;
         // 브랜치는 적지 않는다: 빈 저장소에서는 아직 없는 브랜치라, 저장소 기본 브랜치로 시작하게 둔다
@@ -173,7 +182,7 @@ export class GitHubCommit {
       else {
         // 올린 파일은 '맞춤'으로, 지운 파일은 기억에서 뺀다 (체크를 뺀 삭제는 남아서 다음 커밋에 또 나온다)
         const done = res.picked.map(i => files[i]), up = Object.fromEntries(done.filter(f => !f.del).map(f => [f.name, f.sha]));
-        const gone = new Set(done.filter(f => f.del).map(f => f.name)), keep = o => Object.fromEntries(Object.entries(o).filter(([n]) => !gone.has(n)));
+        const gone = new Set(done.flatMap(f => f.del ? [f.name] : f.renamedFrom ? [f.renamedFrom] : [])), keep = o => Object.fromEntries(Object.entries(o).filter(([n]) => !gone.has(n)));
         const head = await sync.head(link, true);
         sync.setLink({...link, sha: head.sha, at: Date.now(), files: keep({...link.files, ...up}), local: keep({...link.local, ...up})});
       }
