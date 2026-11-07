@@ -30,6 +30,7 @@ export class GridView {
     el.addEventListener('click', e => this.onClick(e));
     el.addEventListener('contextmenu', e => this.onContextMenu(e));
     el.addEventListener('keydown', e => this.onKey(e));
+    document.addEventListener('keydown', e => this.onSelectAllKey(e)); // Ctrl+A: 표 전체 고르기 (RangeSelect)
     // 열 너비 손잡이는 열 고르기 · 순서 바꾸기 · 이름 고치기보다 먼저 받는다 (capture)
     el.addEventListener('mousedown', e => this.onGripDown(e), true);
     el.addEventListener('dblclick', e => this.onGripDbl(e), true);

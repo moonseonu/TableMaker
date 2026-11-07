@@ -133,6 +133,21 @@ export class RangeSelect {
 
   clearSel() { this.sel = null; this.paintSel(); }
 
+  // Ctrl+A (한글 자판 'ㅁ'도): 표 전체를 고른다 (엑셀처럼). 칸에 글자를 치거나 고치는 중이거나, 다른 입력칸 · 창에 있으면 그 글자 전체 고르기 그대로.
+  // 커서가 표 밖에 있었으면 첫 칸에 두고 고른다(그래야 이어서 Ctrl+C · Delete가 범위에 먹는다). 커서 칸과 Shift+화살표 기준(anchor)은 그대로
+  onSelectAllKey(e) {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.code !== 'KeyA' || document.querySelector('dialog[open]')) return;
+    const a = document.activeElement, t = this.t;
+    const inGrid = this.el.contains(a), cell = inGrid && a.dataset.r != null && (a.type === 'checkbox' || a.dataset.mode === 'select');
+    const typing = a && a !== this.el && (a.matches('input, textarea, select') || a.isContentEditable);
+    if (typing && !cell) return;
+    e.preventDefault();
+    if (!t.rows.length) return;
+    if (!cell && a !== this.el) this.focusCell(0, 0);
+    this.sel = {r1: 0, c1: 0, r2: t.rows.length - 1, c2: t.cols.length - 1};
+    this.paintSel();
+  }
+
   hasRange() { const s = this.sel; return !!s && (s.r1 !== s.r2 || s.c1 !== s.c2); }
 
   // 범위를 위·아래·왼쪽·오른쪽 끝으로 (드래그 방향과 상관없이)

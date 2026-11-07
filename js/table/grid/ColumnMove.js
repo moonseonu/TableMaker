@@ -3,8 +3,11 @@
 export class ColumnMove {
   // 컬럼 머리칸을 누름. 이름 칸에 바로 커서를 넣지 않고(끌 수도 있으니) 떼거나 움직일 때 정한다.
   // 고치던 칸은 먼저 내보낸다: 열을 옮긴 뒤에 늦게 저장되면 옮겨 간 다른 열에 들어간다
+  // 더블클릭의 두 번째 누름(e.detail 2)은 아무것도 바꾸지 않는다: 첫 클릭으로 고른 열을 그대로 두었다가 dblclick이 이름 고치기로 넘긴다
+  // (지웠다 다시 고르면 열이 깜빡인다)
   pressHead(e, c) {
     e.preventDefault();
+    if (e.detail >= 2) return;
     if (this.el.contains(document.activeElement)) document.activeElement.blur();
     this.clearSel();
     this.pointer = {x: e.clientX, y: e.clientY};
