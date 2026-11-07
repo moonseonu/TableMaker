@@ -1,3 +1,4 @@
+import {Help} from '../common/Help.js';
 import {$, esc} from '../common/util.js';
 import {GitHubAppSetup} from './GitHubAppSetup.js';
 
@@ -179,12 +180,17 @@ export class GitHubAccount {
     await this.config;
     const d = document.createElement('dialog'), here = location.host === LOGIN_HOST, app = !!GH_APP.clientId;
     d.className = 'popup ghimport ghlogin';
-    d.innerHTML = '<form method="dialog"><h3>GitHub 로그인</h3>' +
-      '<p class="dim">로그인하면 내 저장소를 목록에서 고르고, 비공개 저장소를 불러오고, GitHub에 커밋할 수 있습니다.</p>' +
+    // 긴 설명은 제목 옆 (?) 도움말에 (Help)
+    const help = Help.list([
+      '로그인하면 내 저장소를 목록에서 고르고, 비공개 저장소를 불러오고, GitHub에 커밋할 수 있습니다.',
+      app && '<b>GitHub로 로그인</b>을 누르면 GitHub 화면으로 갑니다. <b>Authorize</b>를 누르고, 처음이면 이어서 나오는 <b>앱 설치 화면</b>에서 쓸 저장소를 고르고 Install하면 돌아옵니다.',
+      app && '<b>앱 설치 없이 로그인</b>: 팀원이 초대한 저장소만 쓸 때. 그 저장소 주인이 앱을 설치해야 목록에 보입니다.',
+      '<b>로그인 유지</b>를 끄면 이 탭을 닫을 때 로그아웃됩니다. 공용 PC라면 끄세요.',
+    ]);
+    d.innerHTML = `<form method="dialog">${Help.title('GitHub 로그인', help)}` +
       (app ? '<button type="button" class="primary big gh-app">GitHub로 로그인</button>' +
-        '<p class="dim small">GitHub 화면에서 <b>Authorize</b>를 누르세요. 처음이면 이어서 <b>앱 설치 화면</b>이 나오니, 쓸 저장소를 고르고 Install하면 돌아옵니다.</p>' +
-        '<p class="dim small">팀원이 초대한 저장소만 쓴다면 → <button type="button" class="link gh-skip">앱 설치 없이 로그인</button> (그 저장소 주인이 앱을 설치해야 보입니다)</p>' : '') +
-      '<label class="keep"><input type="checkbox" class="keepme" checked> 로그인 유지 <small class="dim">(공용 PC라면 끄세요. 끄면 이 탭을 닫을 때 로그아웃)</small></label>' +
+        '<p class="dim small">팀원 저장소만 쓴다면 → <button type="button" class="link gh-skip">앱 설치 없이 로그인</button></p>' : '') +
+      '<label class="keep"><input type="checkbox" class="keepme" checked> 로그인 유지</label>' +
       `<details class="adv"${app ? '' : ' open'}><summary>고급: 토큰으로 로그인</summary>` +
       '<label class="asktext">토큰 <input class="token" type="password" autocomplete="off" placeholder="github_pat_로 시작하는 글자"></label>' +
       '<p class="dim small">토큰 만드는 법: <b>내 프로필 사진 → Settings</b>(저장소 Settings 아님) → Developer settings → ' +
@@ -193,6 +199,7 @@ export class GitHubAccount {
       '<div class="btns"><button value="token" class="tokenbtn">토큰으로 로그인</button></div></details>' +
       '<p class="bad small err"></p>' +
       '<div class="btns"><button type="button" class="cancel">취소</button></div></form>';
+    Help.wire(d);
     const form = d.querySelector('form'), err = d.querySelector('.err');
     let ok = false;
     d.querySelector('.cancel').onclick = () => d.close('');

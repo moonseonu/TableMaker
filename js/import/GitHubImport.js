@@ -2,6 +2,7 @@ import {$, esc, ask, askText} from '../common/util.js';
 import {GITHUB_API} from '../settings/GitHubAccount.js';
 import {Combo} from '../common/Combo.js';
 import {GitHubAppSetup} from '../settings/GitHubAppSetup.js';
+import {Help} from '../common/Help.js';
 
 const SAVED = 'tablemaker.github'; // 마지막에 연 저장소 · 브랜치 · 폴더
 const OPENS = /\.(json|csv|md)$/i;  // 폴더 목록에 넣을 파일 (불러오기가 여는 것)
@@ -109,11 +110,19 @@ export class GitHubImport {
     if (link) saved = {repo: `${link.owner}/${link.repo}`, branch: link.branch, path: link.path};
     const gh = this.account, d = document.createElement('dialog');
     d.className = 'popup ghimport';
-    d.innerHTML = `<form method="dialog"><h3>${esc(title)}</h3><div class="who"></div>` +
+    // 긴 설명은 제목 옆 (?) 도움말에 (Help)
+    const help = Help.list([
+      '세 칸 모두 <b>누르면 고를 수 있는 목록</b>이 나오고, 직접 적어도 됩니다. 저장소는 <code>owner/repo</code>나 GitHub 주소(…/tree/브랜치/폴더까지)도 됩니다.',
+      '공개 저장소는 로그인 없이 주소만 적으면 됩니다. 내 저장소 목록 · 비공개 저장소는 GitHub 로그인이 필요합니다.',
+      gh.isApp && '목록에는 <b>GameTableMaker 앱을 설치한 저장소</b>만 나옵니다. 없으면 <b>앱 설치</b>를 누르세요. 팀원 저장소는 주인이 설치해야 보입니다.',
+      newFolder ? '폴더 목록 맨 아래 <b>+ 새 폴더…</b>로 지금 고른 폴더 아래에 새 폴더를 만들 수 있습니다. 커밋할 때 파일과 함께 생깁니다.'
+        : '<b>폴더 열기</b>: 파일을 골라 탭으로 불러오고, 이 프로젝트를 그 폴더에 연결합니다. <b>현재 표로 연동</b>: 지금 탭은 그대로 두고 연결만 합니다(GitHub에만 있는 표는 받아 오고, 내용이 다른 표는 다음 커밋 목록에 나옵니다).',
+    ]);
+    d.innerHTML = `<form method="dialog">${Help.title(esc(title), help, '<div class="who"></div>')}` +
       `<label class="asktext">저장소 <input class="repo" required value="${esc(saved.repo || '')}" placeholder="owner/repo 또는 GitHub 주소" autofocus></label>` +
       `<label class="asktext">브랜치 <input class="branch" value="${esc(saved.branch || '')}" placeholder="비우면 기본 브랜치"></label>` +
       `<label class="asktext">폴더 <input class="path" value="${esc(saved.path || '')}" placeholder="${newFolder ? '예: Assets/Resources/Json (/ 나 비우면 맨 위)' : '예: Assets/Resources/Json (비우면 전체)'}"></label>` +
-      `<p class="dim small hint">칸을 누르면 고를 수 있는 목록이 나옵니다.${newFolder ? ' 폴더 목록 맨 아래 「+ 새 폴더…」로 지금 고른 폴더 아래에 새 폴더를 만들 수 있습니다.' : ''}</p><p class="bad small err"></p>` +
+      '<p class="dim small hint"></p><p class="bad small err"></p>' + // hint: 새 폴더를 만들면 그 안내
       `<div class="btns"><button type="button" class="cancel">취소</button>` +
       // 불러오기만: 파일을 고르지 않고 지금 탭 그대로 연결 (GitHubSync.linkHere)
       (newFolder ? '' : '<button value="link" title="지금 탭은 그대로 두고 이 저장소 폴더에 연결만 합니다. GitHub에만 있는 표는 받아 오고, 내용이 다른 표는 다음 커밋 때 올릴 목록에 나옵니다">현재 표로 연동</button>') +
@@ -128,10 +137,10 @@ export class GitHubImport {
     const fill = (id, list) => combo[id].set(list);
     const who = () => {
       // GitHub로 로그인했으면 목록은 앱을 설치한 저장소뿐이라, 없는 저장소는 앱 설치로 안내한다
-      const install = gh.isApp && gh.installUrl ? ` · 목록에 없으면 <a href="${gh.installUrl}" target="_blank" rel="noopener">GameTableMaker 앱 설치</a>` : '';
+      const install = gh.isApp && gh.installUrl ? ` · <a href="${gh.installUrl}" target="_blank" rel="noopener">앱 설치</a>` : '';
       $d('.who').innerHTML = gh.loggedIn
-        ? `<p class="dim small">${esc(gh.user.login)}(으)로 로그인됨 · 내 저장소를 목록에서 고를 수 있습니다${install}</p>`
-        : '<p class="dim small">공개 저장소는 주소만 적으면 됩니다. 내 저장소 목록 · 비공개 저장소는 <button type="button" class="link login">GitHub 로그인</button></p>';
+        ? `<p class="dim small">${esc(gh.user.login)}(으)로 로그인됨${install}</p>`
+        : '<p class="dim small">로그인 안 됨 · <button type="button" class="link login">GitHub 로그인</button></p>';
       if (gh.loggedIn) gh.repos().then(list => {
         fill('ghRepos', list);
         // 앱이 설치된 저장소가 하나도 없으면: 내 저장소면 설치, 팀 저장소면 주인에게 보낼 안내 복사
@@ -176,6 +185,7 @@ export class GitHubImport {
       if (await gh.login()) { who(); lists(); }
     });
     $d('.cancel').onclick = () => d.close('');
+    Help.wire(d);
     $d('form').addEventListener('submit', e => {
       if (GitHubImport.parse(val('.repo'))) return;
       e.preventDefault(); // 저장소 주소를 못 읽으면 창을 닫지 않는다

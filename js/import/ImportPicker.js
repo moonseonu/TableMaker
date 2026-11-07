@@ -1,5 +1,6 @@
 import {esc} from '../common/util.js';
 import {CheckPicker} from '../common/CheckPicker.js';
+import {Help} from '../common/Help.js';
 
 // 불러오기 목록 창: 가져올 항목(파일 · 엑셀 시트)을 체크하고, 웹이 짐작한 '들어갈 곳'(ImportPlan.classify)을 드롭다운으로 고친다.
 // 새 탭인데 이미 있는 탭과 이름이 겹치면 그 아래 이름 칸(기본은 _2)에서 바로 고칠 수 있다.
@@ -14,7 +15,8 @@ export class ImportPicker {
       '<small class="warn">⚠ 같은 이름의 탭이 이미 있습니다</small></div>' : '';
     const res = await CheckPicker.pick({
       title: esc(title), ok: '불러오기',
-      text: '가져올 것을 고르세요. 들어갈 곳은 웹이 먼저 짐작한 것이니, 다르면 바꿔 주세요.',
+      help: Help.list(['가져올 것을 고르세요. <b>들어갈 곳</b>은 웹이 먼저 짐작한 것이니, 다르면 바꿔 주세요.', '설명서(.md) · 표로 만든 Meta는 짝이 되는 테이블에 설명으로 붙습니다.',
+        '이미 같은 이름의 탭이 있으면 새 탭 이름을 바로 아래 칸에서 고칠 수 있습니다(기본은 뒤에 _2).']),
       heads: ['파일', '종류', '크기', '들어갈 곳'],
       rows: items.map((it, i) => [`<b>${esc(it.label)}</b>`, it.kind, it.size, select(it, i) + rename(it, i)]),
       checked: items.map(it => it.on && !!it.options.length),

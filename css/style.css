@@ -88,8 +88,8 @@ dialog.newproj{width:min(680px,94vw)}
 .sheetpick details.state summary::before{content:'▸ ';color:var(--dim)}
 .sheetpick details.state[open] summary::before{content:'▾ '}
 .sheetpick details.state ul{margin:4px 0 2px;padding-left:16px;max-height:220px;overflow:auto;font-size:12px;line-height:1.6;color:var(--text)}
-.sheetpick .commitmsg{display:flex;flex-direction:column;align-items:stretch;gap:4px;margin:10px 0 0}
-.sheetpick .commitmsg textarea{width:100%;min-height:200px;resize:vertical;font:inherit;line-height:1.5;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;color:var(--text)}
+.sheetpick .commitmsg{display:flex;flex-direction:column;align-items:stretch;gap:4px;margin:14px 0 0;color:var(--dim);font-size:12px}
+.sheetpick .commitmsg textarea{width:100%;min-height:130px;resize:vertical;font:inherit;font-size:13px;line-height:1.5;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;color:var(--text)}
 /* 입력칸 + 아래로 펼치는 목록 (js/common/Combo.js) */
 .combo{position:relative;display:flex}
 .combo input{flex:1;min-width:0;padding-right:28px}
@@ -106,7 +106,7 @@ dialog.newproj{width:min(680px,94vw)}
 dialog.ghimport{overflow:visible}
 .ghimport .keep{display:flex;gap:6px;align-items:center;margin:10px 0 4px}
 .ghimport .who p{margin:2px 0 8px}
-button.link{background:none;border:0;padding:0;color:var(--accent-text);text-decoration:underline;cursor:pointer;font:inherit}
+button.link{display:inline;background:none;border:0;padding:0;color:var(--accent-text);text-decoration:underline;cursor:pointer;font:inherit}
 /* ☰ → GitHub 계정: 로그인했으면 프로필 사진 · 이름 · 로그아웃 */
 #ghAccount .ghuser{display:flex;align-items:center;gap:8px;padding:5px 10px}
 #ghAccount .ghuser img{width:20px;height:20px;border-radius:50%}
@@ -342,6 +342,7 @@ dialog.popup::backdrop{background:rgba(0,0,0,.4)}
 .sheetpick th,.sheetpick td{padding:5px 10px;text-align:left;vertical-align:middle;background:transparent}
 .sheetpick thead th{position:sticky;top:0;background:var(--head);color:var(--dim);font-weight:400;font-size:12px}
 .sheetpick tbody tr{cursor:pointer}
+.sheetpick tr.grp td{background:var(--head);font-size:12px;font-weight:600;color:var(--text);padding-top:6px;padding-bottom:6px} /* 묶음 머리줄 (커밋 창의 JSON · MD) */
 .sheetpick tbody tr:hover td{background:var(--hover)}
 .sheetpick tr.dim{color:var(--dim);cursor:default}
 .sheetpick td:nth-child(3),.sheetpick td:nth-child(4){color:var(--dim);white-space:nowrap}
@@ -350,6 +351,30 @@ dialog.popup::backdrop{background:rgba(0,0,0,.4)}
 .sheetpick .rename{margin-top:4px}
 .sheetpick .rename input{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:2px 6px;color:var(--text);width:180px}
 .sheetpick .warn{display:block;color:var(--warntext);margin-top:2px}
+/* 목록 모양 (커밋 창, CheckPicker list): 칸 선 없이 파일 이름 왼쪽 · 상태 오른쪽, 묶음 제목은 제목처럼 */
+.listpick table{border-collapse:separate;border-spacing:0}
+.listpick th,.listpick td{border:0 !important}
+.listpick.grouped thead{display:none}
+.listpick tbody td:first-child{width:22px}
+.listpick tbody tr:not(.grp) td{padding:5px 8px}
+.listpick tbody tr:not(.grp) td:last-child{text-align:right;font-size:12px}
+.listpick details.state ul{text-align:left}
+.listpick tr.grp td{background:transparent;padding:14px 8px 5px;font-size:12px;font-weight:600;color:var(--dim);border-bottom:1px solid var(--line) !important}
+.listpick tr.grp:first-child td{padding-top:4px}
+.listpick tbody tr.grp:hover td{background:transparent}
+/* 상태의 작은 표시: 노랑 = 코드 · 팀원에 영향, 초록 = 새 파일, 빨강 = 지움 */
+.bd{display:inline-block;font-size:11px;line-height:1.6;padding:0 6px;border-radius:4px;font-weight:600}
+.bd-warn{background:var(--warnbg);color:var(--warntext)}
+.bd-new{background:color-mix(in srgb,#3fb950 18%,transparent);color:#3fb950}
+.bd-del{background:var(--bad);color:var(--badline)}
+/* 창 제목 옆 (?) 도움말 (Help.js) */
+.htitle{display:flex;align-items:center;gap:8px}
+.helpbtn{margin-left:auto;flex:none;width:22px;height:22px;border-radius:50%;padding:0;font-size:12px;font-weight:600;line-height:1;color:var(--dim);border:1px solid var(--line);background:transparent;cursor:pointer}
+.helpbtn:hover,.helpbtn.on{color:var(--accent-text);border-color:var(--accent)}
+.helpbox{margin:4px 0 12px;padding:8px 12px;border-left:3px solid var(--accent);background:var(--accent-tint);border-radius:0 6px 6px 0;font-size:12px;line-height:1.6}
+.helpbox ul{margin:0;padding-left:16px}
+.helpbox p{margin:0 0 4px}
+.popup p.sub{margin:0 0 10px;font-size:12px}
 .popup .btns{display:flex;justify-content:flex-end;gap:8px}
 .donate img{display:block;margin:10px auto;border-radius:6px} /* QR은 흰 바탕째로 그려 다크 테마에서도 찍힌다 */
 .donate p{text-align:center}

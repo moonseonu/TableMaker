@@ -4,9 +4,18 @@ import {GITHUB_API} from '../settings/GitHubAccount.js';
 import {JsonFormat} from './JsonFormat.js';
 import {JsonDiff} from './JsonDiff.js';
 import {oldDescName} from './DescName.js';
+import {Help} from '../common/Help.js';
 
 const enc = p => p.split('/').map(encodeURIComponent).join('/');
 const MAX_LINES = 200; // 상태를 펼쳤을 때 보이는 바뀐 칸 수
+// 상태 조각 → 작은 표시: ⚠로 시작하면 노란 표시(코드 · 팀원에 영향), 새 파일 초록, 지움 빨강, 나머지는 흐린 글자.
+// 펼칠 것(lines)이 있으면 ▸ 눌러 펼치기
+const chip = p => p.startsWith('⚠') ? `<span class="bd bd-warn">${esc(p.replace(/^⚠\s*/, ''))}</span>`
+  : p === '새 파일' ? '<span class="bd bd-new">새 파일</span>' : p === '지움' ? '<span class="bd bd-del">지움</span>' : esc(p);
+const stateHtml = (parts, lines = []) => {
+  const head = parts.map(chip).join(' · ');
+  return lines.length ? `<details class="state"><summary>${head}</summary><ul>${[...parts, ...lines].map(l => `<li>${esc(l)}</li>`).join('')}</ul></details>` : `<span class="state">${head}</span>`;
+};
 const TYPE = {string: 'String', enum: 'String', int: 'Int', float: 'Float', bool: 'Bool'}; // 표의 타입 → JSON 값 타입 (커밋 메시지의 타입 변경)
 // 글자 → base64 (Contents API는 파일 내용을 base64로 받는다). 한글이 있어 UTF-8 바이트로, 큰 파일도 되게 나눠서
 const base64 = text => {
@@ -79,11 +88,10 @@ export class GitHubCommit {
         const mine = await blobSha(f.text);
         if (mine === now) continue;
         const risky = same && now !== link.files[f.name];
-        // 상태: 한 줄로 보이고, 누르면 아래로 펼쳐져 전부(바뀐 컬럼 · 칸 하나하나 · 더하고 뺀 줄) 보인다
-        const head = (risky ? '⚠ GitHub에서도 바뀜 (올리면 덮어씀) · ' : '') + (diff ? JsonDiff.summary(diff) : now ? '바뀜' : '새 파일');
-        const more = [...head.split(' · '), ...(diff ? diff.lines.slice(0, MAX_LINES) : []), ...(diff?.lines.length > MAX_LINES ? [`… 외 ${diff.lines.length - MAX_LINES}개`] : [])];
-        const state = more.length > 1 ? `<details class="state"><summary>${esc(head)}</summary><ul>${more.map(l => `<li>${esc(l)}</li>`).join('')}</ul></details>` : `<span class="state">${esc(head)}</span>`;
-        files.push({...f, sha: mine, risky, diff, isNew: !now, state});
+        // 상태: 한 줄로 보이고, 바뀐 칸이 있으면 누르면 아래로 펼쳐져 전부(바뀐 컬럼 · 칸 하나하나 · 더하고 뺀 줄) 보인다
+        const parts = [...(risky ? ['⚠ 팀원도 고침'] : []), ...(diff ? JsonDiff.summary(diff).split(' · ') : [now ? '바뀜' : '새 파일'])];
+        const lines = diff ? [...diff.lines.slice(0, MAX_LINES), ...(diff.lines.length > MAX_LINES ? [`… 외 ${diff.lines.length - MAX_LINES}개`] : [])] : [];
+        files.push({...f, sha: mine, risky, diff, isNew: !now, state: stateHtml(parts, lines)});
       }
       // 여기서 지운 표: 마지막으로 맞출 때 이 프로젝트에 있던 파일(link.local)인데 지금 탭에 없고 GitHub에는 남아 있으면 '삭제'로 올린다.
       // 여기가 원본이라 지운 것도 바뀐 것이다(이름을 바꾼 탭은 옛 이름 삭제 + 새 이름 새 파일). 그사이 팀원이 고친 파일이면 ⚠, 처음엔 체크를 뺀다
@@ -93,14 +101,14 @@ export class GitHubCommit {
         const old = oldDescName(f.name);
         if (old === f.name || here.has(old) || !remote.has(pre + old)) continue;
         listed.add(old);
-        files.push({name: old, del: true, renamed: f.name, state: `<span class="state">${esc(`옛 이름이라 지움 (→ ${f.name})`)}</span>`});
+        files.push({name: old, del: true, renamed: f.name, state: stateHtml(['지움', `옛 이름 → ${f.name}`])});
       }
       if (same) {
         for (const name of Object.keys(link.local || {})) {
           const now = remote.get(pre + name);
           if (here.has(name) || listed.has(name) || !now) continue;
           const risky = now !== link.files[name];
-          files.push({name, del: true, risky, state: `<span class="state">${esc((risky ? '⚠ GitHub에서도 바뀜 (지우면 그 변경도 사라짐) · ' : '') + '⚠ 삭제 (여기서 지운 표)')}</span>`});
+          files.push({name, del: true, risky, state: stateHtml([...(risky ? ['⚠ 팀원도 고침'] : []), '지움', '여기서 지운 표'])});
         }
       }
       if (learned) this.app.workbook.save(); // 배운 글자 모양은 표에 남긴다 (되돌리기 기록과 상관없다)
@@ -118,20 +126,32 @@ export class GitHubCommit {
       };
       const msg = message(files.map((f, i) => i).filter(i => !files[i].risky));
       const res = await CheckPicker.pick({
-        title: esc(`GitHub에 커밋 · ${owner}/${repo}${path ? ` · ${path}` : ''} (${branch})`), ok: '커밋',
-        text: (same ? '마지막으로 갱신한 뒤 내가 고친 파일만 보입니다.' : 'GitHub에 있는 것과 다른 파일만 보입니다.') +
-          ' 띄어쓰기 · 들여쓰기 같은 글자 모양 차이는 바뀐 것으로 치지 않고, GitHub 파일 모양 그대로 올립니다. 상태를 누르면 펼쳐져 바뀐 칸이 하나하나 보입니다. 올릴 것을 고르세요.' +
-          (files.some(f => f.del) ? ' ⚠ 삭제는 여기서 지운 표라 커밋하면 GitHub에서도 지워집니다(GitHub 기록에서 되살릴 수 있습니다).' : '') +
-          (files.some(f => f.risky) ? ' ⚠ GitHub에서도 바뀜은 그사이 팀원도 고친 파일이라 올리면 덮어씁니다. 먼저 ↻로 갱신해 보세요.' : '') +
-          `<label class="asktext commitmsg">커밋 메시지 <span class="small">첫 줄은 제목, 아래는 자세한 설명 (⚠는 코드에 영향을 줄 수 있는 변경)</span><textarea class="msg" rows="10" spellcheck="false">${esc(msg)}</textarea></label>`,
+        title: 'GitHub에 커밋', ok: '커밋', list: true, count: true,
+        sub: esc(`${owner}/${repo} · ${path || '맨 위'} · ${branch}`),
+        // 긴 설명은 (?) 도움말에. 이번 목록에 해당하는 것만
+        help: Help.list([
+          same ? '마지막으로 갱신한 뒤 <b>내가 고친 파일</b>만 보입니다.' : 'GitHub에 있는 것과 <b>데이터가 다른 파일</b>만 보입니다.',
+          '띄어쓰기 · 들여쓰기 같은 글자 모양 차이는 바뀐 것으로 치지 않고, GitHub 파일 모양 그대로 올립니다.',
+          files.some(f => f.diff) && '<b>▸ 상태</b>를 누르면 바뀐 칸이 하나하나 보입니다.',
+          files.some(f => f.risky) && '<b>팀원도 고침</b>: 그사이 GitHub에서도 바뀐 파일이라 올리면 덮어씁니다. 처음엔 체크가 빠져 있으니, 먼저 ↻로 갱신해 보세요.',
+          files.some(f => f.del && !f.renamed) && '<b>지움 · 여기서 지운 표</b>: 커밋하면 GitHub에서도 지워집니다(GitHub 기록에서 되살릴 수 있습니다).',
+          files.some(f => f.renamed) && '<b>지움 · 옛 이름</b>: 설명서 이름이 <code>이름_Desc.md</code>로 바뀌어 예전 이름 파일을 지웁니다.',
+          files.some(f => f.name.endsWith('.json')) && files.some(f => f.name.endsWith('.md')) && '묶음 제목의 체크로 <b>JSON만 · 설명서만</b> 올릴 수 있습니다.',
+          '커밋 메시지는 고른 파일에 맞춰 적힙니다. 첫 줄은 제목, 아래는 자세한 설명이고, <b>⚠</b>는 컬럼 삭제 · 이름 · 타입 변경처럼 코드에 영향을 줄 수 있는 변경입니다.',
+        ]),
+        foot: `<label class="commitmsg"><span>커밋 메시지</span><textarea class="msg" rows="7" spellcheck="false">${esc(msg)}</textarea></label>`,
         heads: ['파일', '상태'],
         rows: files.map(f => [`<b>${esc(f.name)}</b>`, f.state]), // 폴더는 제목에 있다
         checked: files.map(f => !f.risky),
+        // JSON(데이터)과 설명서 · 설정(MD)을 묶음으로 나눠, 묶음마다 모두 고르기 · 풀기 (둘 다 있을 때만)
+        groups: (g => g.every(x => x.rows.length) ? g : null)([
+          {label: 'JSON', rows: files.map((f, i) => i).filter(i => !files[i].name.endsWith('.md'))},
+          {label: '설명서 · 설정', rows: files.map((f, i) => i).filter(i => files[i].name.endsWith('.md'))}]),
         setup: d => {
           const box = d.querySelector('.msg');
           let typed = false;
           box.addEventListener('input', () => typed = true);
-          const redo = () => { if (!typed) box.value = message([...d.querySelectorAll('tbody input[type=checkbox]')].filter(b => b.checked).map(b => +b.value)); };
+          const redo = () => { if (!typed) box.value = message([...d.querySelectorAll('tbody input[type=checkbox]:not(.gall)')].filter(b => b.checked).map(b => +b.value)); };
           d.addEventListener('click', redo); // 줄을 눌러 고르기 · 모두 고르기 (CheckPicker가 체크를 바꾼 뒤)
           d.addEventListener('change', redo);
         },
