@@ -1,8 +1,9 @@
-// 탭을 마우스로 눌러 끌면 그 탭이 마우스를 따라 움직이고, 지나가는 탭들이 옆으로 비켜서 놓일 자리가 보인다(크롬 탭처럼).
+// 탭을 꾹(0.4초) 누르면 탭이 떠오르고, 그대로 끌면 그 탭이 마우스를 따라 움직이고, 지나가는 탭들이 옆으로 비켜서 놓일 자리가 보인다(크롬 탭처럼).
 // 놓으면 그 자리로 미끄러져 들어간다. 끄는 동안 탭 줄 양 끝에 가면 그쪽으로 넘어간다.
 // 순서는 저장되고, 파일 저장의 여러 탭 zip · 프로젝트 전체 zip도 이 순서로 담긴다. Ctrl+Z로 되돌릴 수 있다.
+// 컬럼 순서 바꾸기와 같은 꾹 누르기라, 그냥 누르거나 누른 채 바로 움직이면 순서는 그대로다(탭 고르기만).
 // 손가락(터치)으로는 탭 줄을 쓸어 넘기므로 순서 바꾸기는 마우스로
-const MOVE = 4, EDGE = 40, GAP = 2, SETTLE = 120; // 끌기 시작 거리, 넘기기 시작하는 끝 너비, 탭 사이(#tabs gap), 놓을 때 미끄러지는 시간(ms)
+const MOVE = 4, HOLD = 400, EDGE = 40, GAP = 2, SETTLE = 120; // 꾹 누르기 전 움직이면 취소되는 거리, 꾹 누르는 시간(ms), 넘기기 시작하는 끝 너비, 탭 사이(#tabs gap), 놓을 때 미끄러지는 시간(ms)
 
 export class TabDrag {
   constructor(view) {
@@ -24,21 +25,27 @@ export class TabDrag {
     const tabs = [...this.el.querySelectorAll('.tab')];
     this.d = {tab, tabs, from: +tab.dataset.t, to: +tab.dataset.t, x0: this.x(e.clientX), px: e.clientX, on: false,
       mids: tabs.map(t => t.offsetLeft + t.offsetWidth / 2), w: tab.offsetWidth + GAP};
+    this.d.timer = setTimeout(() => this.lift(), HOLD);
+  }
+
+  // 꾹 눌렀다: 탭을 띄우고 그때부터 마우스를 따라간다
+  lift() {
+    const d = this.d;
+    if (!d) return;
+    d.on = true;
+    this.el.classList.add('tabmoving');
+    d.tab.classList.add('lifted');
+    document.body.classList.add('tabgrab');
+    this.place();
+    requestAnimationFrame(() => this.edgeScroll());
   }
 
   drag(e) {
     const d = this.d;
     if (!d) return;
     d.px = e.clientX;
-    if (!d.on) {
-      if (Math.abs(this.x(e.clientX) - d.x0) < MOVE) return;
-      d.on = true;
-      this.el.classList.add('tabmoving');
-      d.tab.classList.add('lifted');
-      document.body.classList.add('tabgrab');
-      requestAnimationFrame(() => this.edgeScroll());
-    }
-    this.place();
+    if (d.on) return this.place();
+    if (Math.abs(this.x(e.clientX) - d.x0) >= MOVE) { clearTimeout(d.timer); this.d = null; } // 꾹 누르기 전에 움직였다: 순서 바꾸기 아님
   }
 
   // 든 탭은 마우스를 따라가고, 그 탭의 가운데가 지나간 탭들은 든 탭 너비만큼 반대쪽으로 비킨다
@@ -67,7 +74,8 @@ export class TabDrag {
   up() {
     const d = this.d;
     this.d = null;
-    if (!d || !d.on) return;
+    if (d) clearTimeout(d.timer);
+    if (!d || !d.on) return; // 그냥 누른 것: 탭 고르기(click)는 그대로
     this.dropped = true;
     setTimeout(() => this.dropped = false); // 뒤따르는 click 하나만 막는다
     const slot = d.to > d.from ? d.tabs.slice(d.from + 1, d.to + 1) : d.tabs.slice(d.to, d.from);
