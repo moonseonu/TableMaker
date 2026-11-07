@@ -69,9 +69,25 @@ export class GitHubSync {
     return this.latest = await res.json();
   }
 
+  // 브랜치 끝이 움직였어도 연결된 폴더의 파일이 그대로면(코드만 바꾼 커밋, 브랜치 합치기 등) 알림 없이 '맞춤'으로 기록한다.
+  // 폴더 파일이 바뀌었거나 새로 생겼을 때만(= ↻가 실제로 받을 것이 있을 때만) ↻의 점과 띠를 띄운다.
+  // 폴더 목록은 브랜치 끝이 새 커밋일 때 한 번만 받는다 (평소 확인은 조건부 요청이라 한도에 안 셈)
   async check() {
-    if (!this.link) return this.mark();
-    try { await this.head(this.link); } catch {} // 오프라인 등: 알림만 못 띄운다
+    const l = this.link;
+    if (!l) return this.mark();
+    try {
+      await this.head(l);
+      if (this.fresh && this.latest.sha !== this.looked) {
+        this.looked = this.latest.sha;
+        const {tree} = await this.app.github.tree(l.owner, l.repo, l.branch, true);
+        const remote = this.remoteFiles(tree, l.path);
+        if (!Object.keys(remote).some(n => remote[n] !== l.files[n])) {
+          const {latest, etag} = this;
+          this.setLink({...l, sha: latest.sha});
+          Object.assign(this, {latest, etag, latestKey: this.key}); // 다음 확인도 조건부 요청으로
+        }
+      }
+    } catch {} // 오프라인 등: 알림만 못 띄운다
     this.mark();
   }
 
