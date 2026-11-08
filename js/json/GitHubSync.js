@@ -17,7 +17,7 @@ const ago = t => {
 //   files: 그때 GitHub에 있던 파일의 git 번호 (GitHub 쪽이 바뀌었나), local: 그때 이 툴이 만들어 낸 파일의 번호 (내가 고쳤나).
 //   이 툴은 설명서를 자기 형식으로 다시 써서, 내가 안 고쳐도 GitHub 파일과 글자가 다를 수 있어 둘을 따로 둔다
 // (Projects 목록에 link로. 되돌리기 기록에 섞이지 않게 탭 묶음과는 따로).
-// 연결된 프로젝트는 탭 줄 맨 앞에 ↻: 누르면 바로 GitHub을 확인해 바뀐 파일만 받아 같은 탭을 새 내용으로 바꾼다(새 테이블은 탭으로 더한다).
+// 연결된 프로젝트는 탭 줄 오른쪽 고정 칸에 ↻: 누르면 바로 GitHub을 확인해 바뀐 파일만 받아 같은 탭을 새 내용으로 바꾼다(새 테이블은 탭으로 더한다).
 // 열 때 · 탭으로 돌아올 때 · 보는 동안 1분마다 브랜치 끝 커밋을 확인한다. 조건부 요청이라 안 바뀌었으면 304(한도에 안 셈).
 // 새 커밋이 있으면 ↻에 점, 위에 '○○님이 새로 저장했어요 · [갱신하기]' 띠.
 // 내가 커밋하지 않은 변경이 있는 탭을 GitHub 것이 덮게 되면 확인 팝업으로 묻는다.
@@ -29,7 +29,7 @@ export class GitHubSync {
     this.app = app;
     this.latest = null; // 마지막으로 확인한 브랜치 끝 커밋
     this.etag = null;
-    app.tabs.el.addEventListener('click', e => { if (e.target.closest('#ghSync')) this.sync(); });
+    app.tabs.tools.addEventListener('click', e => { if (e.target.closest('#ghSync')) this.sync(); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) this.check(); });
     setInterval(() => { if (!document.hidden) this.check(); }, 60000);
     app.githubAccount.ready.then(() => this.check());
@@ -213,7 +213,7 @@ export class GitHubSync {
     for (const it of items.filter(it => it.dest === 'new' && it.on)) {
       try {
         const t = ImportPlan.toTable(it, it.base), old = wb.findByName(it.base);
-        if (old) { Object.assign(t, {flip: old.flip, quiet: old.quiet, digitColor: old.digitColor}); wb.tables[wb.tables.indexOf(old)] = t; }
+        if (old) { Object.assign(t, {flip: old.flip, quiet: old.quiet, digitColor: old.digitColor, locked: old.locked}); wb.tables[wb.tables.indexOf(old)] = t; }
         else wb.add(t);
         made.set(it, t);
         touched.set(it.base, t);

@@ -254,10 +254,10 @@
   <h3>새 커밋 받기</h3>
   <div class="mockbar" inert>
     <div class="ghbar"><span><b>A</b>님이 GitHub에 새로 저장했어요 · <span class="dim">GameTableMaker: ItemDataTable 수정</span></span><button class="primary">갱신하기</button><button class="ico">✕</button><i class="mk">2</i></div>
-    <div class="mocktabs"><button class="sync new"><span>↻</span></button><i class="mk">1</i><div class="tab on"><span>ItemDataTable</span></div><div class="tab"><span>UnitDataTable</span></div><div class="tab"><span>CostDataTable</span></div></div>
+    <div class="mocktabs"><div class="tab on"><span>ItemDataTable</span></div><div class="tab"><span>UnitDataTable</span></div><div class="tab"><span>CostDataTable</span></div><span class="mtools"><button>+</button><button class="sync new"><span>↻</span></button><button>⚙</button><i class="mk">1</i></span></div>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>↻ (탭 줄 맨 앞)</b> — 연결된 프로젝트에 생깁니다. 누르면 GitHub에서 바뀐 파일만 받아 <b>같은 탭을 새 내용으로</b> 바꿉니다(새 테이블은 탭으로 더함, <kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌리기). 새 커밋이 있으면 점이 붙습니다.</span></li>
+    <li><i class="mk">1</i><span><b>↻ (탭 줄 오른쪽 끝)</b> — 연결된 프로젝트에 생깁니다. 탭을 넘겨도 + · ⚙와 함께 같은 자리에 있습니다. 누르면 GitHub에서 바뀐 파일만 받아 <b>같은 탭을 새 내용으로</b> 바꿉니다(새 테이블은 탭으로 더함, <kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌리기). 새 커밋이 있으면 점이 붙습니다.</span></li>
     <li><i class="mk">2</i><span><b>알림 띠</b> — 열 때 · 이 탭으로 돌아올 때 · 보는 동안 1분마다 확인해서, 연결된 브랜치에 <b>연결된 폴더의 파일을 바꾼</b> 커밋이 들어오면 뜹니다. 코드만 바꾼 커밋이나 브랜치를 합친 커밋처럼 폴더 파일이 그대로면 뜨지 않습니다. <b>갱신하기</b>는 ↻와 같고, 아직 커밋하지 않은 내 변경이 있는 탭을 GitHub 것이 덮게 되면 <b>그 탭은 두기 · 덮어쓰기</b>를 묻습니다.</span></li>
     <li><i class="mk">3</i><span><b>내 변경과 겹칠 때</b> — 아직 커밋하지 않은 탭을 GitHub 것이 덮게 되면 먼저 묻습니다(그 탭은 두기 · 덮어쓰기).</span></li>
   </ol>
@@ -311,7 +311,7 @@
     </table>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>⇄ 행/열 바꿔 보기</b> — 표 왼쪽 위 모서리. Config처럼 한 줄에 열이 수십 개인 테이블을 위아래로 훑어볼 수 있습니다. 보는 방향만 바뀌고 JSON은 그대로이며, 테이블마다 따로 기억합니다. 행이 수천 개인 테이블은 가로 보기가 훨씬 빠릅니다(가로 보기는 화면에 보이는 행만 그립니다).</span></li>
+    <li><i class="mk">1</i><span><b>⇄ 행/열 바꿔 보기</b> — 표 왼쪽 위 모서리(탭 줄 ⚙ → 보기 방향도 같음). Config처럼 한 줄에 열이 수십 개인 테이블을 위아래로 훑어볼 수 있습니다. 보는 방향만 바뀌고 JSON은 그대로이며, 테이블마다 따로 기억합니다. 행이 수천 개인 테이블은 가로 보기가 훨씬 빠릅니다(가로 보기는 화면에 보이는 행만 그립니다).</span></li>
     <li><i class="mk">1</i><span><b>︽ 타입 줄 접기</b> — ⇄ 바로 옆 버튼. 타입 줄(세로 보기에서는 타입 열, 버튼은 «)을 통째로 접어 값만 보이게 합니다. 열 삭제 ✕는 접든 펴든 컬럼 이름 칸 오른쪽 끝에 있고, 타입을 바꿀 때는 ︾(»)로 다시 펴세요. 접은 상태는 이 브라우저에 기억됩니다.</span></li>
   </ol>
   <h3>단축키</h3>
@@ -323,6 +323,7 @@
     <tr><th>드래그 · <kbd>Shift</kbd>+클릭 · <kbd>Shift</kbd>+<kbd>←↑↓→</kbd></th><td>여러 칸 범위 고르기. 드래그하다 표 가장자리로 끌면 그쪽으로 표가 저절로 넘어가며 계속 고를 수 있습니다. 끄는 동안 마우스가 표 밖이나 오른쪽 빈 곳으로 나가도 마우스 위치에서 가장 가까운 칸까지 고릅니다(엑셀처럼). 세로 보기(⇄)에서도 똑같이 되고, 빨간 오류 칸도 고르면 파랗게 덮입니다. <kbd>Esc</kbd>나 다른 칸 클릭으로 풀기</td></tr>
     <tr><th>컬럼 이름 칸 클릭·끌기 · 행 번호 클릭·끌기</th><td>열 · 행을 통째로 고르기. 컬럼 이름은 <b>더블클릭</b>해서 고칩니다</td></tr>
     <tr><th>컬럼 이름 칸을 꾹 눌러 끌기</th><td>열 순서 바꾸기. 0.4초 누르면 열이 떠올라 마우스를 따라오고, 지나가는 열들이 옆으로 비켜서 놓일 자리를 보여 줍니다. 놓으면 그 자리로 옮겨지고 JSON 키 순서도 바뀝니다(<kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌리기). ID 열은 맨 앞 고정, 세로 보기(⇄)에서는 위아래로 끕니다</td></tr>
+    <tr><th>탭 줄 오른쪽 + · ⚙</th><td>탭 줄은 두 칸으로, 왼쪽 탭들만 넘어가고 오른쪽 <b>+ 새 테이블 · ↻ 갱신(GitHub 연결 시) · ⚙ 테이블 설정</b>은 늘 같은 자리에 있습니다. ⚙에는 지금 탭의 <b>이름 바꾸기 · 복제(새 탭으로) · 보기 방향 · 잠금 · 테이블 삭제</b>가 있습니다. <b>잠금</b>을 켜면 탭 이름 앞에 자물쇠가 붙고 칸 · 컬럼(이름 · 타입 · ID 설정) · 탭 이름을 고치거나 지울 수 없습니다(실수로 고치는 것 방지, 고르기 · 복사 · 보기 설정은 됩니다). 잠금은 이 브라우저에만 저장됩니다</td></tr>
     <tr><th>탭을 꾹 눌러 끌기 · 탭 줄에서 휠</th><td>탭 순서 바꾸기. 0.4초 누르면 탭이 떠오르고, 끄는 탭이 마우스를 따라오고 다른 탭들이 비켜서 놓일 자리를 보여 줍니다(탭 줄 끝으로 가면 그쪽으로 넘어감). 탭이 많아 넘치면 가려진 쪽 끝이 흐려지고, 탭 줄 위에서 휠을 굴리거나, 탭을 누르자마자 좌우로 끌거나(꾹 누르기 전에), 터치로 쓸어 넘깁니다. 여러 탭 zip · 프로젝트 전체 zip도 이 순서로 저장되고, 프로젝트 zip을 다시 열면 이 순서로 열립니다</td></tr>
     <tr><th>탭 더블클릭 · 탭·열의 ✕</th><td>테이블 이름 바꾸기 · 테이블·열 삭제 (확인 창에서 <b>삭제</b>를 누르면 지워지고, <kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌릴 수 있습니다)</td></tr>
     <tr><th>창 제목 옆 <b>?</b></th><td>그 창의 도움말을 펼치고 접기. 처음에만 필요한 긴 설명은 평소에 숨겨 둡니다(GitHub에 커밋 · GitHub에서 불러오기 · 불러오기 목록 · 저장 · GitHub 로그인)</td></tr>

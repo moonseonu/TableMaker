@@ -2,13 +2,20 @@ import {esc, ask} from '../common/util.js';
 import {Table} from '../data/Table.js';
 import {TabDrag} from './TabDrag.js';
 import {TabScroll} from './TabScroll.js';
+import {TableMenu} from './TableMenu.js';
 
-// 표 위의 테이블 탭 줄: 고르기, + 새 테이블, 삭제, 더블클릭으로 이름 바꾸기, 끌어서 순서 바꾸기(TabDrag), 넘기기(TabScroll)
+const LOCK = '<svg class="lock" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+
+// 표 위의 테이블 탭 줄: 고르기, 삭제, 더블클릭으로 이름 바꾸기, 끌어서 순서 바꾸기(TabDrag), 넘기기(TabScroll).
+// 줄은 두 칸: 왼쪽은 탭만 넘어가는 칸(#tabs), 오른쪽은 넘어가지 않는 고정 칸(#tabtools: + 새 테이블 · ↻ GitHub 갱신 · ⚙ 테이블 설정)
 export class TabsView {
   constructor(el, app) {
     this.el = el;
     this.app = app;
+    this.tools = document.getElementById('tabtools');
     el.addEventListener('click', e => this.onClick(e));
+    this.tools.addEventListener('click', e => { if (e.target.id === 'addTab') this.app.show(this.app.workbook.add(Table.empty(this.app.workbook.newName()))); });
+    this.menu = new TableMenu(this, this.tools);
     el.addEventListener('dblclick', e => this.rename(e));
     new TabDrag(this);
     this.scroll = new TabScroll(el);
@@ -16,36 +23,47 @@ export class TabsView {
 
   render() {
     const wb = this.app.workbook, sync = this.app.githubSync;
-    // GitHub 저장소에 연결된 프로젝트는 맨 앞에 ↻ (GitHubSync: 누르면 갱신, 새 커밋이 있으면 점)
-    this.el.innerHTML = (this.app.projects.current.link
-      ? `<button id="ghSync" class="sync${sync?.fresh ? ' new' : ''}" title="${esc(sync?.tip() || '')}"><span>↻</span></button>` : '') + wb.tables.map((t, i) =>
-      `<div class="tab${i === wb.cur ? ' on' : ''}" data-t="${i}" title="더블클릭해서 이름 바꾸기 · 꾹 눌러 끌면 순서 바꾸기"><span>${esc(t.name || '(이름 없음)')}</span>` +
-      (wb.tables.length > 1 ? `<button class="ico" data-deltab="${i}" title="테이블 삭제">✕</button>` : '') + '</div>'
-    ).join('') + '<button id="addTab" title="새 테이블">+</button>';
+    this.el.innerHTML = wb.tables.map((t, i) =>
+      `<div class="tab${i === wb.cur ? ' on' : ''}" data-t="${i}" title="${t.locked ? '잠긴 테이블 · ⚙에서 풀 수 있습니다' : '더블클릭해서 이름 바꾸기 · 꾹 눌러 끌면 순서 바꾸기'}">` +
+      `${t.locked ? LOCK : ''}<span>${esc(t.name || '(이름 없음)')}</span>` +
+      (wb.tables.length > 1 && !t.locked ? `<button class="ico" data-deltab="${i}" title="테이블 삭제">✕</button>` : '') + '</div>'
+    ).join('');
+    // GitHub 저장소에 연결된 프로젝트만 ↻ (GitHubSync: 누르면 갱신, 새 커밋이 있으면 점)
+    this.tools.innerHTML = '<button id="addTab" title="새 테이블">+</button><span class="gap"></span>' + (this.app.projects.current.link
+      ? `<button id="ghSync" class="sync${sync?.fresh ? ' new' : ''}" title="${esc(sync?.tip() || '')}"><span>↻</span></button>` : '') + this.menu.html();
     this.scroll.reveal(); // 고른 탭이 가려져 있으면 보이게 넘기고, 끝 흐림을 다시 정한다
   }
 
   onClick(e) {
     const wb = this.app.workbook;
     const del = e.target.closest('[data-deltab]');
-    if (del) {
-      const t = wb.tables[+del.dataset.deltab];
-      ask(`'${t.name}' 탭을 삭제할까요?`, `${t.rows.length}행 × ${t.cols.length}열 · 지운 뒤에도 Ctrl+Z로 되돌릴 수 있습니다`, '삭제').then(ok => {
-        if (!ok) return;
-        wb.remove(wb.tables.indexOf(t));
-        this.app.show(wb.cur);
-      });
-      return;
-    }
-    if (e.target.id === 'addTab') { this.app.show(wb.add(Table.empty(wb.newName()))); return; }
+    if (del) return this.removeAt(+del.dataset.deltab);
     const tab = e.target.closest('.tab');
     if (tab && !tab.querySelector('input') && +tab.dataset.t !== wb.cur) this.app.show(+tab.dataset.t);
   }
 
+  // 탭 ✕ · ⚙ 테이블 삭제: 확인 창을 띄우고 지운다 (잠긴 테이블은 지우지 않는다)
+  removeAt(i) {
+    const wb = this.app.workbook, t = wb.tables[i];
+    if (!t || t.locked || wb.tables.length < 2) return;
+    ask(`'${t.name}' 탭을 삭제할까요?`, `${t.rows.length}행 × ${t.cols.length}열 · 지운 뒤에도 Ctrl+Z로 되돌릴 수 있습니다`, '삭제').then(ok => {
+      if (!ok) return;
+      wb.remove(wb.tables.indexOf(t));
+      this.app.show(wb.cur);
+    });
+  }
+
   rename(e) {
     const tab = e.target.closest('.tab');
+    if (tab) this.renameAt(+tab.dataset.t);
+  }
+
+  // 탭 더블클릭 · ⚙ 이름 바꾸기: 탭 이름 자리에 입력칸 (잠긴 테이블은 바꾸지 않는다)
+  renameAt(i) {
+    const tab = this.el.querySelector(`.tab[data-t="${i}"]`);
     if (!tab || tab.querySelector('input')) return;
-    const t = this.app.workbook.tables[+tab.dataset.t];
+    const t = this.app.workbook.tables[i];
+    if (t.locked) return;
     const span = tab.querySelector('span');
     tab.draggable = false; // 이름 칸에서 글자를 고를 수 있게 (다 고치면 render로 돌아온다)
     span.innerHTML = `<input value="${esc(t.name)}">`;

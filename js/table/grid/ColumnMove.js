@@ -12,7 +12,7 @@ export class ColumnMove {
     this.clearSel();
     this.pointer = {x: e.clientX, y: e.clientY};
     this.press = {c, x: e.clientX, y: e.clientY};
-    if (!this.t.cols[c].id) this.press.timer = setTimeout(() => this.startMove(), 400); // ID 열은 맨 앞 고정
+    if (!this.t.cols[c].id && !this.t.locked) this.press.timer = setTimeout(() => this.startMove(), 400); // ID 열은 맨 앞 고정
   }
 
   onMouseMove(e) {

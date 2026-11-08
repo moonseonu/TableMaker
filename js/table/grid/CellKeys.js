@@ -12,7 +12,7 @@ export class CellKeys {
       && (el.dataset.r != null || el.hasAttribute('data-ghostrow') || el.dataset.gr != null);
   }
 
-  locked(el) { return !!el.closest('td.linked'); } // 참조로 가져온 칸은 늘 잠김
+  locked(el) { return this.t.locked || !!el.closest('td.linked'); } // 잠근 테이블(탭 ⚙ → 잠금)과 참조로 가져온 칸은 고칠 수 없다
 
   // 고른 상태도 칸은 편집 가능하게 둔다(커서만 숨김). 읽기 전용으로 두면 한글 입력기가 첫 키를 조합하지 못해
   // '검'을 치면 'r검'처럼 첫 글자가 영어로 들어간다. 대신 첫 키를 누르는 순간 기존 값을 비운다(modeKey)

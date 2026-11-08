@@ -44,7 +44,9 @@ kbd{display:inline-block;padding:1px 6px;border:1px solid var(--line);border-bot
 .mocktabs{display:flex;gap:2px;align-items:flex-end;padding:8px 12px 0;border-top:1px solid var(--line)}
 .mocktabs .sync{position:relative;align-self:center;margin-right:6px;padding:2px 9px;font-size:15px;line-height:1.4}
 .mocktabs .sync.new::after{content:'';position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--warntext)}
-.mocktabs > .mk{align-self:center;margin:0 8px 0 0}
+.mocktabs .mtools{margin-left:auto;align-self:center;display:flex;gap:4px;align-items:center;padding:0 0 4px 10px;border-left:1px solid var(--line)}
+.mocktabs .mtools > button{padding:2px 9px;font-size:15px;line-height:1.4}
+.mocktabs .mk{align-self:center;margin:0 0 0 4px}
 .card h3 .mk{margin:0 6px 0 0}
 .cards.steps{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
 .topic a{color:var(--accent-text)}

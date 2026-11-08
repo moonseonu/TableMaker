@@ -68,13 +68,21 @@ export class GridView {
       ? '행/열을 원래대로 (가로로 보기)' : '행/열 바꿔 보기 (열이 많은 테이블을 세로로)'}">⇄</button><button class="ico cbtn" id="typeToggle"></button></div></th>`;
     const ghostColHead = '<div class="col"><input class="cname" data-ghost placeholder="+ 새 열"></div>';
     this.el.classList.toggle('flip', !!t.flip);
+    this.el.classList.toggle('locked', !!t.locked); // 잠근 테이블: 빈 줄 · 빈 열 · 삭제 ✕ · 🔗 를 숨긴다 (CSS)
     this.win = t.flip ? null : {first: 0, last: -1}; // 아직 그린 행 없음. 아래 fillRows가 보이는 행을 그린다
     this.el.innerHTML = t.flip ? this.flippedHtml(corner, ghostColHead) : this.normalHtml(corner, ghostColHead);
     if (!t.flip) this.fitColumns(); // 아래쪽 긴 값 때문에 스크롤할 때 열이 넓어지지 않게 미리
     this.showTypes(!this.typesHidden);
+    if (t.locked) this.lockHeads();
     this.setPads();
     this.fillRows();
     this.update();
+  }
+
+  // 잠근 테이블: 머리 칸(이름 · 타입 · ID 설정)은 보기만. 데이터 칸은 고를 때 읽기 전용이 된다(CellKeys.locked)
+  lockHeads() {
+    this.el.querySelectorAll('.cname, .prefix').forEach(x => x.readOnly = true);
+    this.el.querySelectorAll('select, .pout, .refon, .refpick').forEach(x => x.disabled = true);
   }
 
   // 검사 결과만 칸에 칠하고 나머지(상태 줄·미리보기·저장)는 App에 알린다. 구조가 그대로일 때는 다시 그리지 않는다
@@ -117,6 +125,8 @@ export class GridView {
 
   onEdit(e) {
     const t = this.t, el = e.target, c = +el.dataset.c;
+    // 잠근 테이블: 체크박스(Space 등)로 바뀐 값은 되돌린다. 보기 설정(ID 색 구분)만 바꿀 수 있다
+    if (t.locked && !el.classList.contains('digitcolor')) { if (el.type === 'checkbox') this.render(); return; }
     if (el.hasAttribute('data-ghost')) {
       if (e.isComposing || e.type === 'change' || !el.value) return; // 한글 조합 중에 다시 그리면 글자가 깨진다
       const nc = t.cols.length, header = el.classList.contains('cname');
@@ -227,6 +237,7 @@ export class GridView {
   onClick(e) {
     const b = e.target.closest('button'), t = this.t;
     if (!b) return;
+    if (t.locked && (b.dataset.link || b.dataset.sort || b.dataset.delcol || b.dataset.delrow)) return; // 잠근 테이블
     if (b.id === 'flipView') { t.flip = !t.flip; this.render(); }
     else if (b.id === 'typeToggle') { this.showTypes(this.typesHidden); this.stickHeads(); }
     else if (b.dataset.link) { const c = t.cols[+b.dataset.link]; c.unlink = !c.unlink; this.render(); }

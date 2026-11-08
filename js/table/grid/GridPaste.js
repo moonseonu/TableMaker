@@ -13,6 +13,7 @@ export class GridPaste {
   // 칸에 커서가 있을 때. 처리했으면 true (한 칸짜리는 브라우저 기본 붙여넣기에 맡긴다)
   paste(rows, el) {
     const t = this.t, g = this.hasRange() && this.range();
+    if (t.locked) return true; // 잠근 테이블: 붙여넣지 않는다
     if (g && rows.length === 1 && rows[0].length === 1) { // 범위에 한 값: 범위 전체를 그 값으로 (엑셀과 같게)
       for (let r = g.top; r <= g.bottom; r++) for (let c = g.left; c <= g.right; c++) {
         if (!t.cols[c].linked) t.rows[r][c] = t.pasteValue(t.cols[c], rows[0][0]);

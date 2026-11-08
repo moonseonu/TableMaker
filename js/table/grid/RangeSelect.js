@@ -213,6 +213,7 @@ export class RangeSelect {
   // 범위를 한꺼번에 비운다 (참조로 가져온 칸은 빼고). 행 순서는 그대로 두고, 범위와 커서도 그대로 둔다
   clearRange() {
     const g = this.range(), t = this.t, keep = this.sel;
+    if (t.locked) return; // 잠근 테이블
     for (let r = g.top; r <= g.bottom; r++) for (let c = g.left; c <= g.right; c++) if (!t.cols[c].linked) t.rows[r][c] = '';
     this.render(true);
     this.focusCell(this.anchor.r, this.anchor.c);

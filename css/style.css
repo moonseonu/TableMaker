@@ -135,7 +135,13 @@ header .appmenu button.on .dot{border:3px solid var(--accent)}
 .spacer{flex:1}
 #status{color:var(--dim)}
 #status.bad{color:var(--badline)}
-#tabs{position:relative;display:flex;gap:2px;align-items:flex-end;padding:8px 12px 0;border-bottom:1px solid var(--line);overflow-x:auto;overflow-y:hidden;flex:none;scrollbar-width:none}
+/* 탭 줄은 두 칸: 왼쪽 #tabs만 넘어가고, 오른쪽 #tabtools(+ · ↻ · ⚙)는 고정 (TabsView) */
+.tabbar{display:flex;align-items:stretch;border-bottom:1px solid var(--line);flex:none}
+#tabs{position:relative;flex:1;min-width:0;display:flex;gap:2px;align-items:flex-end;padding:8px 12px 0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+#tabtools{flex:none;display:flex;align-items:center;gap:4px;padding:6px 12px 4px 10px;border-left:1px solid var(--line)}
+#tabtools .gap{width:6px}
+#tabtools > button,#tabtools .tablemenu summary{padding:2px 9px;font-size:15px;line-height:1.4}
+.tab .lock{flex:none;margin-right:4px;color:var(--dim)}
 /* 탭 줄 스크롤바는 숨기고, 넘칠 때 가려진 쪽 끝을 흐리게 (TabScroll.js) */
 #tabs::-webkit-scrollbar{display:none}
 #tabs.fadeL{-webkit-mask-image:linear-gradient(to right,transparent,#000 40px);mask-image:linear-gradient(to right,transparent,#000 40px)}
@@ -150,8 +156,8 @@ header .appmenu button.on .dot{border:3px solid var(--accent)}
 #tabs .tab.lifted{position:relative;z-index:2;transition:none;box-shadow:0 2px 10px rgba(0,0,0,.35);color:var(--text)}
 #tabs .tab.lifted.settle{transition:transform .12s}
 body.tabgrab, body.tabgrab *{cursor:grabbing !important}
-/* 탭 줄 맨 앞 ↻: GitHub 저장소에 연결된 프로젝트만 (GitHubSync.js). 새 커밋이 있으면 점, 받는 동안 돈다 */
-#ghSync{position:relative;align-self:center;margin-right:6px;padding:2px 9px;font-size:15px;line-height:1.4}
+/* 탭 줄 오른쪽 ↻: GitHub 저장소에 연결된 프로젝트만 (GitHubSync.js). 새 커밋이 있으면 점, 받는 동안 돈다 */
+#ghSync{position:relative}
 #ghSync.new::after{content:'';position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--warntext)}
 /* 받는 동안 버튼은 그대로 두고 안의 화살표만 돈다 */
 #ghSync span{display:inline-block}
@@ -162,7 +168,15 @@ body.tabgrab, body.tabgrab *{cursor:grabbing !important}
 .ghbar{display:flex;gap:10px;align-items:center;padding:6px 12px;background:var(--accent-tint);border-top:1px solid var(--line)}
 .ghbar > span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tab input{width:120px;background:var(--bg);border:1px solid var(--accent);border-radius:3px;padding:0 4px}
-#addTab{margin:0 0 3px 4px}
+/* 탭 ⚙ 테이블 설정 메뉴 (TableMenu.js) */
+.tablemenu .menu .tmlock{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:4px;cursor:pointer;white-space:nowrap}
+.tablemenu .menu .tmlock:hover{background:var(--hover)}
+.tablemenu .menu .tmlock small{margin-left:auto}
+.tablemenu .menu button.bad{color:var(--badline)}
+.dropmenu .menu button:disabled{opacity:.45;cursor:default;background:transparent}
+/* 잠근 테이블: 새 행 · 새 열 칸, 삭제 ✕, 🔗, 체크박스 누르기를 막는다 (GridView) */
+#grid.locked .ghost,#grid.locked tr.ghostrow,#grid.locked td:has([data-ghostrow]),#grid.locked .namedel,#grid.locked [data-delrow],#grid.locked .link{display:none}
+#grid.locked td input[type=checkbox]{pointer-events:none}
 main{flex:1;overflow:auto}
 /* 테두리는 칸마다 오른쪽·아래를 직접 갖는다(separate). collapse로 이웃 칸과 함께 그리면, 위·왼쪽에 붙어 있는(sticky)
    머리 칸이 따라와도 테두리 선은 아래 내용과 함께 스크롤돼서 그 1px 틈으로 아래 글자가 비친다 */
