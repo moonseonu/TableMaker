@@ -26,7 +26,7 @@ export class GridView {
     el.addEventListener('focusout', e => this.onFocusOut(e));
     el.addEventListener('toggle', e => this.onToggle(e), true); // toggle은 버블링이 안 돼서 capture로
     el.addEventListener('focusin', e => this.onFocusIn(e));
-    el.addEventListener('dblclick', e => e.target.classList.contains('cname') ? this.focusEl(e.target) : this.setMode(e.target, 'edit')); // 이름 칸은 더블클릭으로 고친다
+    el.addEventListener('dblclick', e => this.onDblClick(e));
     el.addEventListener('click', e => this.onClick(e));
     el.addEventListener('contextmenu', e => this.onContextMenu(e));
     el.addEventListener('keydown', e => this.onKey(e));
@@ -212,6 +212,16 @@ export class GridView {
     if (col && col.id && (t.sortOf().c === 0 || t.refs.length)) this.resortKeepFocus();
     // 빈 줄에 미리 채운 번호를 받지 않고 다른 데로 가면 지운다 (행으로 친 게 아니니까)
     if (el.hasAttribute('data-ghostrow') && el.type !== 'checkbox') el.value = '';
+  }
+
+  // 더블클릭: 이름 칸은 고치기, 글자 칸은 칸 어디를 눌러도(글자 오른쪽 빈 곳 · ID 접두사 쪽도) 수정 시작.
+  // 이미 고치는 중이면 브라우저 기본(단어 고르기) 그대로
+  onDblClick(e) {
+    if (e.target.classList.contains('cname')) return this.focusEl(e.target);
+    const cell = this.cellOf(e.target) || e.target; // 맨 아래 빈 줄 · 빈 열 칸은 cellOf에 안 잡혀 그 칸 그대로
+    if (!this.isCellText(cell) || (cell.dataset.mode && cell.dataset.mode !== 'select')) return;
+    if (cell !== document.activeElement) cell.focus();
+    this.setMode(cell, 'edit');
   }
 
   onClick(e) {

@@ -29,6 +29,7 @@ export class ColumnMove {
   onMouseUp() {
     const p = this.press, d = this.drag;
     this.press = this.drag = null;
+    document.body.classList.remove('rangedrag'); // 범위 끌기 동안 막았던 글자 선택 풀기 (RangeSelect.setSel)
     if (p) clearTimeout(p.timer);
     if (d === 'move') this.endMove();
     else if (p && !d) this.selectCol(p.c);

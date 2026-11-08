@@ -56,6 +56,9 @@ export class RangeSelect {
     }
     // Bool 칸: 체크박스 밖(칸)을 누르면 값은 그대로 두고 칸만 고른다. 체크박스를 누르면 평소처럼 켜고 끈다(고른 상태에서 Space도)
     if (cell.type === 'checkbox' && e.target !== cell) { e.preventDefault(); cell.focus(); }
+    // 글자 칸은 고치는 중(enter · edit)일 때만 브라우저 기본 동작(커서 놓기 · 글자 고르기)을 쓴다.
+    // 고른 상태에서는 글자가 파랗게 골라지지 않게 막고 칸만 고른다: 끌기 · 더블클릭 두 번째 누름(단어 고르기)도 같다. 수정은 dblclick이 시작한다
+    else if (this.isCellText(cell) && !(e.target === cell && cell === document.activeElement && cell.dataset.mode !== 'select')) { e.preventDefault(); cell.focus(); }
     this.startDrag('cell', p);
   }
 
@@ -128,6 +131,12 @@ export class RangeSelect {
     this.sel = {r1: this.anchor.r, c1: this.anchor.c, r2: end.r, c2: end.c};
     const a = document.activeElement;
     if (this.hasRange() && this.el.contains(a) && this.isCellText(a) && a.dataset.mode !== 'select') this.setMode(a, 'select');
+    // 끌어서 범위가 생기면 브라우저의 글자 선택(여러 칸 글자가 파랗게)은 지우고, 손을 뗄 때까지 다시 안 생기게 (ColumnMove.onMouseUp에서 풂)
+    if (this.drag && this.hasRange()) {
+      document.body.classList.add('rangedrag');
+      getSelection().removeAllRanges();
+      if (this.isCellText(a)) a.setSelectionRange(a.selectionEnd, a.selectionEnd); // 고치던 칸에서 끌기 시작했으면 그 칸 글자 고름도 푼다
+    }
     this.paintSel();
   }
 
