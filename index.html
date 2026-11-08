@@ -44,7 +44,7 @@
   </details>
 </header>
 <div class="layout">
-<!-- 광고 자리 (160×600 세로 광고). 좁은 화면에서는 숨긴다 -->
+<!-- 광고 자리 (왼쪽만, 160×600 세로 광고). 지금은 비워 둔다 -->
 <aside class="side"></aside>
 <div class="work">
 <div class="toolbar">
@@ -90,7 +90,8 @@
   </section>
 </div>
 </div>
-<aside class="side"></aside>
+<!-- 메모장 (Memo.js): 넓은 화면에서 늘 떠 있고, 좁은 화면에서는 숨긴다 -->
+<aside class="side"><label class="memo"><span>메모</span><textarea id="memo" spellcheck="false" placeholder="커밋 메시지나 작업 기록을 적어 두세요. 프로젝트마다 따로 저장됩니다"></textarea></label></aside>
 </div>
 <script type="module">
 import {App} from './js/App.js';
