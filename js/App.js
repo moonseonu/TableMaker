@@ -21,6 +21,7 @@ import {ProjectMenu} from './settings/ProjectMenu.js';
 import {SheetText} from './import/SheetText.js';
 import {SafariNotice} from './settings/SafariNotice.js';
 import {Memo} from './memo/Memo.js';
+import {Tv} from './memo/Tv.js';
 
 // 각 영역을 만들고 서로 잇는다. 영역끼리는 직접 부르지 않고 App을 거친다
 //   table/  테이블 작성 영역 (표, 탭)      json/   JSON 보기·다운로드
@@ -52,6 +53,7 @@ export class App {
     this.donate = new Donate();
     this.projectMenu = new ProjectMenu(this);
     this.memo = new Memo(this); // 오른쪽 여백의 메모장 (프로젝트마다)
+    this.tv = new Tv(); // 메모장 위 TV (재미로)
     this.safari = new SafariNotice(this); // Safari: 오래 받아 두지 않았으면 알림 (7일 안 열면 지워질 수 있어서)
     if (this.projects.fresh) this.projectMenu.newProject(true); // 처음 쓰는 사람은 프로젝트 만들기 창으로 시작
     document.addEventListener('paste', e => this.onPaste(e));
