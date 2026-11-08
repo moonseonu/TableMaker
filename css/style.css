@@ -148,7 +148,7 @@ header .appmenu button.on .dot{border:3px solid var(--accent)}
 #tabs.fadeR{-webkit-mask-image:linear-gradient(to left,transparent,#000 40px);mask-image:linear-gradient(to left,transparent,#000 40px)}
 #tabs.fadeL.fadeR{-webkit-mask-image:linear-gradient(to right,transparent,#000 40px,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(to right,transparent,#000 40px,#000 calc(100% - 40px),transparent)}
 /* 선택한 탭만 회색으로 채우고, 나머지는 어둡게 */
-.tab{display:flex;align-items:center;gap:2px;padding:5px 6px 5px 12px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;background:var(--bg);color:var(--dim);cursor:pointer;white-space:nowrap}
+.tab{display:flex;align-items:center;gap:2px;padding:5px 12px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;background:var(--bg);color:var(--dim);cursor:pointer;white-space:nowrap}
 .tab:hover{color:var(--text)}
 .tab.on{background:var(--panel);color:var(--text);font-weight:600}
 /* 탭 순서 바꾸기 (TabDrag.js): 든 탭은 마우스를 따라오고, 나머지는 미끄러지듯 비킨다 */

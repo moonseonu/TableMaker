@@ -6,7 +6,7 @@ import {TableMenu} from './TableMenu.js';
 
 const LOCK = '<svg class="lock" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
 
-// 표 위의 테이블 탭 줄: 고르기, 삭제, 더블클릭으로 이름 바꾸기, 끌어서 순서 바꾸기(TabDrag), 넘기기(TabScroll).
+// 표 위의 테이블 탭 줄: 고르기, 더블클릭으로 이름 바꾸기(삭제는 ⚙ 메뉴에만: 탭을 고르다 잘못 누르지 않게), 끌어서 순서 바꾸기(TabDrag), 넘기기(TabScroll).
 // 줄은 두 칸: 왼쪽은 탭만 넘어가는 칸(#tabs), 오른쪽은 넘어가지 않는 고정 칸(#tabtools: + 새 테이블 · ↻ GitHub 갱신 · ⚙ 테이블 설정)
 export class TabsView {
   constructor(el, app) {
@@ -25,8 +25,7 @@ export class TabsView {
     const wb = this.app.workbook, sync = this.app.githubSync;
     this.el.innerHTML = wb.tables.map((t, i) =>
       `<div class="tab${i === wb.cur ? ' on' : ''}" data-t="${i}" title="${t.locked ? '잠긴 테이블 · ⚙에서 풀 수 있습니다' : '더블클릭해서 이름 바꾸기 · 꾹 눌러 끌면 순서 바꾸기'}">` +
-      `${t.locked ? LOCK : ''}<span>${esc(t.name || '(이름 없음)')}</span>` +
-      (wb.tables.length > 1 && !t.locked ? `<button class="ico" data-deltab="${i}" title="테이블 삭제">✕</button>` : '') + '</div>'
+      `${t.locked ? LOCK : ''}<span>${esc(t.name || '(이름 없음)')}</span></div>`
     ).join('');
     // GitHub 저장소에 연결된 프로젝트만 ↻ (GitHubSync: 누르면 갱신, 새 커밋이 있으면 점)
     this.tools.innerHTML = '<button id="addTab" title="새 테이블">+</button><span class="gap"></span>' + (this.app.projects.current.link
@@ -36,13 +35,11 @@ export class TabsView {
 
   onClick(e) {
     const wb = this.app.workbook;
-    const del = e.target.closest('[data-deltab]');
-    if (del) return this.removeAt(+del.dataset.deltab);
     const tab = e.target.closest('.tab');
     if (tab && !tab.querySelector('input') && +tab.dataset.t !== wb.cur) this.app.show(+tab.dataset.t);
   }
 
-  // 탭 ✕ · ⚙ 테이블 삭제: 확인 창을 띄우고 지운다 (잠긴 테이블은 지우지 않는다)
+  // ⚙ 테이블 삭제: 확인 창을 띄우고 지운다 (잠긴 테이블은 지우지 않는다)
   removeAt(i) {
     const wb = this.app.workbook, t = wb.tables[i];
     if (!t || t.locked || wb.tables.length < 2) return;
