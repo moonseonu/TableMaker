@@ -104,6 +104,7 @@ export class RangeSelect {
       if (d === 'move') this.moveLine();
     }
     if (d !== 'move') this.dragToPointer(r, top);
+    if (d === 'cell' && this.hasRange()) this.unselectText(); // 끄는 동안 브라우저가 시작 칸 글자를 다시 고르면 바로 푼다
     requestAnimationFrame(() => this.dragScroll());
   }
 
@@ -135,7 +136,7 @@ export class RangeSelect {
     if (this.drag && this.hasRange()) {
       document.body.classList.add('rangedrag');
       getSelection().removeAllRanges();
-      if (this.isCellText(a)) a.setSelectionRange(a.selectionEnd, a.selectionEnd); // 고치던 칸에서 끌기 시작했으면 그 칸 글자 고름도 푼다
+      this.unselectText(a); // 고치던 칸에서 끌기 시작했으면 그 칸 글자 고름도 푼다
     }
     this.paintSel();
   }

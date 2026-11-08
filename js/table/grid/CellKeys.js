@@ -20,10 +20,15 @@ export class CellKeys {
     if (!this.isCellText(el)) return;
     if (mode !== 'select' && el.dataset.mode === 'select') el.dataset.orig = el.value; // Esc로 되돌릴 값
     el.dataset.mode = mode;
-    if (mode === 'select') this.hideHint();
+    if (mode === 'select') { this.hideHint(); this.unselectText(el); }
     el.readOnly = this.locked(el);
     if (clear) el.value = '';
     if (mode === 'edit') el.setSelectionRange(el.value.length, el.value.length);
+  }
+
+  // 고른 상태 칸은 글자에 파란 선택 표시를 두지 않는다 (예전에 고친 글자 고름이 다시 포커스될 때 되살아나거나, 끄는 동안 번지는 것)
+  unselectText(el = document.activeElement) {
+    if (this.isCellText(el) && el.selectionStart !== el.selectionEnd) el.setSelectionRange(el.selectionEnd, el.selectionEnd);
   }
 
   // 코드로 칸 값을 바꾸고, 사람이 친 것처럼 저장·검사가 돌게 한다
