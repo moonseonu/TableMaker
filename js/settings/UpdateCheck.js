@@ -1,7 +1,7 @@
 import {$} from '../common/util.js';
 
 // 지금 화면의 코드 버전. 배포할 때마다 올리고, 루트의 version.json도 같은 번호로 맞춘다
-export const VERSION = '1.0.6';
+export const VERSION = '1.0.7';
 
 // 새 버전 알림. GitHub Pages는 파일을 브라우저에 10분까지 두게 해서, 배포 직후엔 예전 코드나 옛것·새것이 섞인 화면이 보일 수 있다.
 // 열 때와 탭으로 돌아올 때 version.json(캐시 안 씀)을 보고, 지금 코드와 다르면 맨 위에 띠를 띄운다.
