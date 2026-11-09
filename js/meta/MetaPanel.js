@@ -15,6 +15,12 @@ export class MetaPanel {
       app.table.cols[+e.target.dataset.desc].desc = e.target.value;
       app.commit('desc' + e.target.dataset.desc);
     };
+    $('cdesc').addEventListener('keydown', e => this.onKey(e));
+    // 테이블 설명(여러 줄)에서 Tab: 중간 버튼을 건너뛰고 첫 컬럼 설명 칸으로
+    $('tdesc').addEventListener('keydown', e => {
+      const first = $('cdesc').querySelector('[data-desc]');
+      if (e.key === 'Tab' && !e.shiftKey && first) { e.preventDefault(); this.focusEnd(first); }
+    });
     this.openEnums = new Set(); // 목록을 펴 둔 Enum 열 이름
     $('cdesc').addEventListener('toggle', e => { // toggle은 버블링이 안 돼서 capture로
       const d = e.target;
@@ -39,6 +45,25 @@ export class MetaPanel {
     $('tdesc').value = t.desc || '';
     $('cdesc').innerHTML = t.cols.map((c, i) =>
       `<tr><th>${esc(c.name)}</th><td class="t">${this.typeHtml(t, c, i)}</td><td><input data-desc="${i}" value="${esc(c.desc || '')}" placeholder="설명"></td></tr>`).join('');
+  }
+
+  // 컬럼 설명 칸끼리 표처럼 옮겨 다닌다: ↓ · Enter · Tab 다음 칸, ↑ · Shift+Enter · Shift+Tab 이전 칸(첫 칸에서는 테이블 설명으로).
+  // 중간의 Enum ▾ 같은 버튼에 걸리지 않는다. ← →는 글자 사이 그대로(설명은 긴 글이라). 한글 조합 중에는 움직이지 않는다
+  onKey(e) {
+    const el = e.target, k = e.key;
+    if (el.dataset.desc == null || e.isComposing || e.keyCode === 229 || e.altKey || e.ctrlKey || e.metaKey) return;
+    const step = k === 'ArrowDown' || ((k === 'Enter' || k === 'Tab') && !e.shiftKey) ? 1
+      : k === 'ArrowUp' || ((k === 'Enter' || k === 'Tab') && e.shiftKey) ? -1 : 0;
+    if (!step) return;
+    const next = $('cdesc').querySelector(`[data-desc="${+el.dataset.desc + step}"]`) || (step < 0 ? $('tdesc') : null);
+    if (!next) { if (k !== 'Tab') e.preventDefault(); return; } // 마지막 칸: Tab은 창 밖으로, 나머지는 그대로
+    e.preventDefault();
+    this.focusEnd(next);
+  }
+
+  focusEnd(el) {
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
   }
 
   // Enum은 값을 한 줄로 늘어놓으면 창이 옆으로 길어져서, 'Enum · N개 ▾'를 누르면 아래로 목록을 편다.
