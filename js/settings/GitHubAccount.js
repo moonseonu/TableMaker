@@ -36,9 +36,9 @@ export class GitHubAccount {
     // GitHub에서 돌아왔으면 그 토큰부터. 기억해 둔 토큰이 아직 맞는지 묻는 동안은 로그인 여부를 모르니, GitHub 창들은 ready를 기다린다
     this.ready = (async () => {
       const back = this.fromGitHub();
-      if (this.token) {
-        this.user = await this.whoami(await this.fresh());
-        if (!this.user) this.forget();
+      if (this.token) { // 확인을 못 했으면(연결 끊김) 저장된 로그인은 지우지 않는다. 이번에만 로그인 안 한 것으로 보고, 다음에 열 때 다시 확인
+        const u = await this.whoami(await this.fresh());
+        if (u) this.user = u; else if (u === null) this.forget();
       }
       this.render();
       await this.afterLogin(back);
@@ -79,27 +79,47 @@ export class GitHubAccount {
       : '<button data-gh-login>GitHub 로그인 <small>저장소에서 불러오기 · 커밋</small></button>';
   }
 
-  // 쓸 수 있는 토큰. GitHub로 로그인한 토큰이 곧 끝나면 새로 받는다(못 받으면 로그아웃)
-  async fresh() {
-    if (!this.refresh || !this.expires || Date.now() < this.expires - 5 * 60e3) return this.token;
+  // GitHub로 로그인한 토큰이 곧(5분 안에) 끝나는지
+  get expired() { return !!this.refresh && !!this.expires && Date.now() >= this.expires - 5 * 60e3; }
+
+  // 쓸 수 있는 토큰. 곧 끝나면 새로 받는다. refresh 토큰은 한 번 쓰면 버려져서,
+  // 한꺼번에 온 요청들(파일 여러 개 받기)은 갱신 하나를 같이 기다린다
+  fresh() {
+    if (!this.expired) return Promise.resolve(this.token);
+    return this.renewing ||= this.renew().finally(() => { this.renewing = null; });
+  }
+
+  // 갱신 직전에 이 브라우저에 저장된 것을 다시 읽는다: 다른 탭이 먼저 새로 받아 뒀으면 그걸 쓴다.
+  // 로그아웃은 GitHub이 refresh 토큰을 거절했을 때만. 연결이 끊긴 것 등은 로그인을 그대로 두고 다음 요청 때 다시 해 본다
+  async renew() {
+    this.load();
+    if (!this.token) { this.forget(); this.render(); return ''; } // 다른 탭에서 로그아웃했다
+    if (!this.expired) return this.token;
+    const sent = this.refresh;
+    let res, t = {};
     try {
-      const res = await fetch('/api/gh/refresh', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({refresh: this.refresh})});
-      const t = await res.json();
-      if (!res.ok || !t.token) throw new Error(t.error);
-      Object.assign(this, {token: t.token, refresh: t.refresh || this.refresh, expires: t.expiresIn ? Date.now() + t.expiresIn * 1000 : 0});
+      res = await fetch('/api/gh/refresh', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({refresh: sent})});
+      t = await res.json().catch(() => ({}));
+    } catch { return this.token; }
+    if (res.ok && t.token) {
+      Object.assign(this, {token: t.token, refresh: t.refresh || sent, expires: t.expiresIn ? Date.now() + t.expiresIn * 1000 : 0});
       this.save();
-    } catch {
-      this.forget();
-      this.render();
-      this.app.toast('GitHub 로그인이 끝났습니다. ☰ → GitHub 로그인을 다시 해 주세요', 'warn');
+      return this.token;
     }
-    return this.token;
+    if (res.status !== 401) return this.token;
+    this.load();
+    if (this.refresh && this.refresh !== sent) return this.token; // 같은 순간 다른 탭이 먼저 새로 받았다
+    this.forget();
+    this.render();
+    this.app.toast('GitHub 로그인이 끝났습니다. ☰ → GitHub 로그인을 다시 해 주세요', 'warn');
+    return '';
   }
 
   // API 요청에 붙일 머리 (로그인했으면 토큰)
   async headers(raw) {
     const h = {Accept: raw ? 'application/vnd.github.raw' : 'application/vnd.github+json'};
-    if (this.token && this.user) h.Authorization = `Bearer ${await this.fresh()}`;
+    const token = this.token && this.user && await this.fresh();
+    if (token) h.Authorization = `Bearer ${token}`;
     return h;
   }
 
@@ -128,12 +148,12 @@ export class GitHubAccount {
     return lists.flatMap(l => l.repositories.map(r => r.full_name));
   }
 
-  // 토큰이 맞으면 GitHub 사용자 정보, 아니면 null
+  // 토큰이 맞으면 GitHub 사용자 정보, GitHub이 거절하면 null, 물어보지 못했으면(연결 끊김 · GitHub 오류) false
   async whoami(token) {
     try {
       const res = await fetch(`${GITHUB_API}/user`, {headers: {Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json'}, cache: 'no-store'});
-      return res.ok ? await res.json() : null;
-    } catch { return null; }
+      return res.ok ? await res.json() : res.status === 401 ? null : false;
+    } catch { return false; }
   }
 
   forget() {
