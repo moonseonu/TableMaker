@@ -34,10 +34,10 @@ export class GitHubImport {
     const {owner, repo, path} = got, gh = this.account, link = this.app.projects.current.link;
     try {
       const {branch, tree, empty} = await this.tree(owner, repo, got.branch);
-      // 이미 이 저장소 · 브랜치 · 폴더에 연결된 프로젝트면 탭을 또 더하지 않고 갱신한다(↻와 같다)
+      // 이미 이 저장소 · 브랜치 · 폴더에 연결된 프로젝트면 탭을 또 더하지 않고 갱신한다(↻와 같고, 여기서 지운 표도 다시 받는다)
       if (link && link.owner === owner && link.repo === repo && link.branch === branch && link.path === path) {
-        if (await ask('이미 연결된 저장소입니다', `이 프로젝트는 ${owner}/${repo}${path ? ` · ${path}` : ''} (${branch})에 연결돼 있습니다. 새 탭으로 더하지 않고 GitHub 것으로 갱신할까요?`, '갱신하기', 'primary'))
-          this.app.githubSync.sync();
+        if (await ask('이미 연결된 저장소입니다', `이 프로젝트는 ${owner}/${repo}${path ? ` · ${path}` : ''} (${branch})에 연결돼 있습니다. 새 탭으로 더하지 않고 GitHub 것으로 갱신할까요? 여기서 지운 테이블도 다시 받습니다.`, '갱신하기', 'primary'))
+          this.app.githubSync.sync(true);
         return;
       }
       if (got.linkOnly) return await this.app.githubSync.linkHere(owner, repo, branch, path, tree, empty);

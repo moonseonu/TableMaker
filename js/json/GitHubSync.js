@@ -151,7 +151,9 @@ export class GitHubSync {
     return out;
   }
 
-  async sync() {
+  // restore: 불러오기에서 부를 때. 여기서 지운 표(탭이 없는 JSON · CSV)도 GitHub 것으로 다시 받는다.
+  // ↻는 받지 않는다(여기가 원본이라 지운 표는 다음 커밋에 삭제로 올라간다)
+  async sync(restore = false) {
     const l = this.link, wb = this.app.workbook, gh = this.app.githubAccount;
     if (!l || this.busy) return;
     const btn = $('ghSync');
@@ -161,7 +163,8 @@ export class GitHubSync {
       const head = await this.head(l, true);
       const {tree} = await this.app.github.tree(l.owner, l.repo, l.branch, true);
       const remote = this.remoteFiles(tree, l.path), pre = l.path ? l.path + '/' : '';
-      const changed = Object.keys(remote).filter(n => remote[n] !== l.files[n]);
+      const gone = n => restore && /\.(json|csv)$/i.test(n) && !wb.findByName(tableOf(n));
+      const changed = Object.keys(remote).filter(n => remote[n] !== l.files[n] || gone(n));
       if (!changed.length) {
         this.setLink({...l, sha: head.sha, at: Date.now()});
         return this.app.toast('이미 최신입니다');
