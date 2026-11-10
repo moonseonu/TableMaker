@@ -21,7 +21,7 @@ const ago = t => {
 // 연결된 프로젝트는 탭 줄 오른쪽 고정 칸에 ↻: 누르면 GitHub을 확인해 받을 것을 목록으로 보여 주고, 고른 파일로 같은 탭을 새 내용으로 바꾼다(새 테이블은 탭으로 더한다).
 // 열 때 · 탭으로 돌아올 때 · 보는 동안 1분마다 브랜치 끝 커밋을 확인한다. 조건부 요청이라 안 바뀌었으면 304(한도에 안 셈).
 // 새 커밋이 있으면 ↻에 점, 위에 '○○님이 새로 저장했어요 · [갱신하기]' 띠.
-// ↻를 누르면 받을 목록 창(SyncPicker: 신규 · 수정 · 지움)에서 고른 파일만 받는다. 내 변경도 있는 파일은 ⚠ 체크를 빼 둔다.
+// ↻를 누르면 받을 목록 창(SyncPicker: 신규 · 수정)에서 고른 파일만 받는다. 내 변경도 있는 파일은 ⚠ 체크를 빼 둔다.
 // GitHub에서만 지운 파일은 여기서 탭을 지우지 않는다(여기가 원본. 다음 커밋 때 새 파일로 다시 올라간다).
 // 여기서 지운 탭은 GitHubCommit이 다음 커밋에 '삭제'로 올린다.
 // ponytail: 폴더 바로 아래 파일만 맞춘다(하위 폴더는 불러오기로)
@@ -153,7 +153,7 @@ export class GitHubSync {
   }
 
   // 받을 목록을 만들어 창(SyncPicker)에서 고르게 하고, 고른 파일만 받는다.
-  // all: 불러오기의 '갱신하기'에서. '지움'(여기서 지운 테이블)만 있어도 창을 띄운다(↻는 '이미 최신')
+  // all: 불러오기의 '갱신하기'에서. 여기서 지운 테이블만 있어도 창을 띄운다(↻는 '이미 최신')
   async sync(all = false) {
     const l = this.link, wb = this.app.workbook, gh = this.app.githubAccount;
     if (!l || this.busy) return;
@@ -166,7 +166,7 @@ export class GitHubSync {
       const remote = this.remoteFiles(tree, l.path), pre = l.path ? l.path + '/' : '';
       const now = await this.localShas(), was = l.local || {}, base = tableOf; // base: 파일 이름 → 테이블 이름 (설명서의 _Desc도 뗀다)
       const rows = this.plan(remote, now, was);
-      if (!rows.some(r => all || r.kind !== 'del')) {
+      if (!rows.some(r => all || !r.gone)) {
         this.setLink({...l, sha: head.sha, at: Date.now()});
         return this.app.toast('이미 최신입니다');
       }
@@ -199,9 +199,9 @@ export class GitHubSync {
     }
   }
 
-  // 갱신 창의 목록. 탭이 있는지로 신규 · 지움을 가른다(연결 기록이 아니라서, 처음 불러올 때 안 고른 파일도 '신규'로 나온다)
-  //   신규: 여기에 탭이 없는 테이블(안 받은 것 · 팀원이 새로 올린 것) — 체크
-  //   지움: 마지막으로 맞출 때는 있었는데 여기서 지운 테이블 — 체크 뺌(안 받으면 다음 커밋에 GitHub에서도 지운다)
+  // 갱신 창의 목록. 상태는 GitHub 쪽에서 본 것:
+  //   신규: GitHub에는 있고 여기에 탭이 없는 테이블(연결 기록이 아니라 탭으로 가려서, 처음 불러올 때 안 고른 것도 나온다) — 체크.
+  //     여기서 지운 테이블(gone)이면 체크 뺌(안 받으면 다음 커밋에 GitHub에서도 지운다)
   //   수정: GitHub에서 바뀐 파일 — 체크. 아직 커밋하지 않은 내 변경도 있으면 ⚠ 체크 뺌
   // 탭이 없는 테이블의 설명서는 목록에 따로 넣지 않고 테이블을 받을 때 함께 받는다
   plan(remote, now, was) {
@@ -211,15 +211,14 @@ export class GitHubSync {
       const tab = ProjectNote.isNote(n) || wb.findByName(tableOf(n));
       if (!tab) {
         if (!/\.(json|csv)$/i.test(n)) continue;
-        rows.push(n in was ? {name: n, kind: 'del', on: false, why: '여기서 지운 테이블 · 안 받으면 다음 커밋에 GitHub에서도 지움'}
-          : {name: n, kind: 'new', on: true, why: '여기에 없는 테이블 · 새 탭으로'});
+        const gone = n in was;
+        rows.push({name: n, kind: 'new', on: !gone, gone, tip: gone ? '여기서 지운 테이블입니다. 받으면 되살리고, 안 받으면 다음 커밋에 GitHub에서도 지웁니다' : ''});
       } else if (remote[n] !== l.files[n]) {
         const risky = mine(n);
-        rows.push({name: n, kind: 'mod', on: !risky, risky, why: risky ? '내가 고친 것도 있음 · 받으면 덮어씀' : 'GitHub에서 바뀜'});
+        rows.push({name: n, kind: 'mod', on: !risky, risky});
       }
     }
-    const order = {new: 0, mod: 1, del: 2};
-    return rows.sort((a, b) => order[a.kind] - order[b.kind]);
+    return rows.sort((a, b) => (a.kind === 'mod') - (b.kind === 'mod') || a.gone - b.gone);
   }
 
   // 받은 것을 이름이 같은 탭에: 테이블은 내용을 바꾸고(보기 · 숨긴 경고는 그대로, 설정 메모가 있으면 그것대로), 없으면 새 탭으로.

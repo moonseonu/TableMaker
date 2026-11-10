@@ -1,9 +1,9 @@
 import {esc} from '../common/util.js';
 
-const KIND = {new: '신규', mod: '수정', del: '지움'};
+const KIND = {new: '신규', mod: '수정'};
 
 // GitHub에서 갱신 창 (↻ · 불러오기의 갱신하기): 받을 파일을 체크로 고른다. 모양은 커밋 창(CommitDialog)과 같다.
-// rows: [{name, kind: 'new'|'mod'|'del', on(처음 체크), risky(내 변경도 있음), why(한 줄 설명)}]
+// rows: [{name, kind: 'new'|'mod'(GitHub 쪽에서 본 상태), on(처음 체크), risky(내 변경도 있음), tip(마우스를 올리면 보일 설명)}]
 // 맨 위에 연결된 곳과 브랜치 끝 커밋(누가 · 언제 · 메시지). → 고른 파일 이름 Set, 취소하면 null
 export class SyncPicker {
   static show(link, head, rows, ago) {
@@ -12,7 +12,7 @@ export class SyncPicker {
     const who = head?.author?.login || c?.author?.name || '', when = c?.author?.date ? ago(Date.parse(c.author.date)) : '', msg = (c?.message || '').split('\n')[0];
     const groups = [['JSON', rows.filter(r => !r.name.endsWith('.md'))], ['설명서 · 설정', rows.filter(r => r.name.endsWith('.md'))]].filter(([, l]) => l.length);
     const row = (r, k) => `<tr data-g="${k}"><td><input type="checkbox" value="${esc(r.name)}"${r.on ? ' checked' : ''}></td>` +
-      `<td class="nm" title="${esc(r.why)}"><b>${esc(r.name)}</b> <span class="dim">${esc(r.why)}</span></td>` +
+      `<td class="nm"${r.tip ? ` title="${esc(r.tip)}"` : ''}><b>${esc(r.name)}</b></td>` +
       `<td class="st">${r.risky ? '<span class="risk" title="받으면 아직 커밋하지 않은 내 변경을 덮어씁니다 (Ctrl+Z로 되돌릴 수 있습니다)">⚠</span>' : ''}<span class="kind ${r.kind}">${KIND[r.kind]}</span></td></tr>`;
     d.innerHTML = '<form method="dialog"><h3>GitHub에서 갱신</h3>' +
       `<p class="dim small">${esc(`${link.owner}/${link.repo} · ${link.branch}${link.path ? ` · ${link.path}` : ''}`)}` +
