@@ -1,4 +1,4 @@
-import {esc, ask} from '../common/util.js';
+import {esc, ask, askText} from '../common/util.js';
 import {Table} from '../data/Table.js';
 import {TabDrag} from './TabDrag.js';
 import {TabScroll} from './TabScroll.js';
@@ -15,7 +15,7 @@ export class TabsView {
     this.app = app;
     this.tools = document.getElementById('tabtools');
     el.addEventListener('click', e => this.onClick(e));
-    this.tools.addEventListener('click', e => { if (e.target.id === 'addTab') this.app.show(this.app.workbook.add(Table.empty(this.app.workbook.newName()))); });
+    this.tools.addEventListener('click', e => { if (e.target.id === 'addTab') this.add(); });
     this.menu = new TableMenu(this, this.tools);
     el.addEventListener('dblclick', e => this.rename(e));
     el.addEventListener('contextmenu', e => this.onMenu(e));
@@ -39,6 +39,13 @@ export class TabsView {
     const wb = this.app.workbook;
     const tab = e.target.closest('.tab');
     if (tab && !tab.querySelector('input') && +tab.dataset.t !== wb.cur) this.app.show(+tab.dataset.t);
+  }
+
+  // + 새 테이블: 이름을 적고 확인해야 만든다 (누르자마자 table3 같은 탭이 생기지 않게). 같은 이름이 있으면 창에서 알려 준다
+  async add() {
+    const wb = this.app.workbook;
+    const name = await askText('새 테이블', '테이블 이름', wb.newName(), '만들기', n => !n ? '이름을 적어 주세요' : wb.findByName(n) ? '같은 이름의 테이블이 이미 있습니다' : '');
+    if (name) this.app.show(wb.add(Table.empty(name)));
   }
 
   // 탭 우클릭: 그 탭의 이름 바꾸기 · 삭제 (탭을 먼저 열지 않아도 된다). 이름을 고치는 중이면 브라우저 기본 메뉴

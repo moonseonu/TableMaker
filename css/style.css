@@ -77,6 +77,8 @@ dialog.newproj{width:min(680px,94vw)}
 .ghlogin .adv[open] summary{margin-bottom:6px}
 .ghlogin .adv .btns{margin-top:4px}
 .ghimport .err{color:var(--badline)}
+.popup .err:empty{display:none}
+.popup .err{color:var(--badline);margin:6px 0 0}
 /* GitHub 커밋 창: 메시지 칸에 맞춰 좁게(빈 공간 없이). 파일 이름은 한 줄, 상태는 줄바꿈 */
 .sheetpick:has(.commitmsg){width:min(720px,94vw)}
 .sheetpick:has(.commitmsg) td:nth-child(2){white-space:nowrap}
