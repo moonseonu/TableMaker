@@ -256,9 +256,23 @@
     <div class="mocktabs"><div class="tab on"><span>ItemDataTable</span></div><div class="tab"><span>UnitDataTable</span></div><div class="tab"><span>CostDataTable</span></div><span class="mtools"><button>+</button><button class="sync new"><span>↻</span></button><button>⚙</button><i class="mk">1</i></span></div>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>↻ (탭 줄 오른쪽 끝)</b> — 연결된 프로젝트에 생깁니다. 누르면 GitHub에서 바뀐 파일만 받아 <b>같은 탭을 새 내용으로</b> 바꿉니다(<kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌리기). 새 커밋이 있으면 점이 붙습니다.</span></li>
+    <li><i class="mk">1</i><span><b>↻ (탭 줄 오른쪽 끝)</b> — 연결된 프로젝트에 생깁니다. 누르면 받을 파일 목록이 뜨고, 고른 파일로 <b>같은 탭을 새 내용으로</b> 바꿉니다(<kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌리기). 새 커밋이 있으면 점이 붙습니다.</span></li>
     <li><i class="mk">2</i><span><b>알림 띠</b> — 보는 동안 1분마다 확인해서, <b>연결된 폴더의 파일을 바꾼</b> 커밋이 들어오면 뜹니다(코드만 바꾼 커밋은 조용히). <b>갱신하기</b>는 ↻와 같습니다.</span></li>
-    <li><i class="mk">3</i><span><b>내 변경과 겹칠 때</b> — 아직 커밋하지 않은 탭을 GitHub 것이 덮게 되면 먼저 묻습니다(그 탭은 두기 · 덮어쓰기).</span></li>
+  </ol>
+  <div class="mockwin ghimport commitdlg" inert style="width:min(580px,100%)">
+    <h3>GitHub에서 갱신</h3>
+    <p class="dim small">Studio-FieldWave/GameData · main · Json<br>A님 · 2시간 전 · "WarningMessage 추가"</p>
+    <div class="clist"><table>
+      <tr><td><input type="checkbox" checked></td><td class="nm"><b>WarningMessage.json</b> <span class="dim">여기에 없는 테이블 · 새 탭으로</span></td><td class="st"><span class="kind new">신규</span><i class="mk">3</i></td></tr>
+      <tr><td><input type="checkbox" checked></td><td class="nm"><b>UnitDataTable.json</b> <span class="dim">GitHub에서 바뀜</span></td><td class="st"><span class="kind mod">수정</span></td></tr>
+      <tr><td><input type="checkbox"></td><td class="nm"><b>ItemDataTable.json</b> <span class="dim">내가 고친 것도 있음 · 받으면 덮어씀</span></td><td class="st"><span class="risk">⚠</span><span class="kind mod">수정</span><i class="mk">4</i></td></tr>
+      <tr><td><input type="checkbox"></td><td class="nm"><b>CostDataTable.json</b> <span class="dim">여기서 지운 테이블 · 안 받으면 다음 커밋에 GitHub에서도 지움</span></td><td class="st"><span class="kind del">지움</span><i class="mk">5</i></td></tr>
+    </table></div>
+  </div>
+  <ol class="notes">
+    <li><i class="mk">3</i><span><b>신규</b> — 여기에 탭이 없는 테이블입니다. 처음 불러올 때 고르지 않았거나 팀원이 새로 올린 것으로, 받으면 새 탭이 됩니다(설명서도 함께).</span></li>
+    <li><i class="mk">4</i><span><b>⚠ 내 변경과 겹칠 때</b> — 아직 커밋하지 않은 내 변경이 있는 파일은 체크가 빠져 있습니다. 체크하면 GitHub 것으로 덮어씁니다.</span></li>
+    <li><i class="mk">5</i><span><b>지움</b> — 여기서 지운 테이블입니다. 체크하면 되살리고, 그대로 두면 다음 커밋에 GitHub에서도 지워집니다. ↻는 이것만 남았을 때 "이미 최신"으로 넘어가고, <b>불러오기</b>로 같은 저장소를 열면 목록에 나옵니다.</span></li>
   </ol>
 
   <h3>내 변경 올리기</h3>
@@ -288,7 +302,7 @@
     <li><i class="mk">6</i><span><b>저장소 · 브랜치 · 폴더</b> — 연결된 저장소로 채워져 열립니다. 바꾸면 아래 목록이 그 폴더 기준으로 다시 계산되고, 폴더 목록 맨 아래 <b>+ 새 폴더…</b>로 새 폴더도 만듭니다.</span></li>
     <li><i class="mk">7</i><span><b>커밋 메시지</b> — 고른 파일에 맞춰 자동으로 적힙니다. 바뀐 칸 수와 <b>⚠ 컬럼 삭제 · 이름 · 타입 변경</b>처럼 프로그래머가 알아야 할 변경이 들어가니, 필요하면 이유를 덧붙여 주세요.</span></li>
   </ol>
-  <div class="tip"><b>알아 둘 것</b> — 그사이 누가 먼저 커밋했으면 덮어쓰지 않고 알려 줍니다. GitHub에서만 지운 파일은 여기가 원본이라, 다음 커밋 때 다시 올라갑니다. 반대로 여기서 지운 표는 ↻로는 돌아오지 않고, 같은 저장소를 <b>불러오기</b>로 다시 열면 받아 옵니다. ↻는 연결된 폴더 바로 아래 파일만 맞추고, 같은 탭을 둘이 고치면 칸끼리 합치지 않고 파일 하나를 고릅니다. <b>빈 저장소를 GitHub Desktop 등으로 먼저 받아 두었다면</b>, 첫 커밋 뒤 다시 받아야 파일이 보입니다.</div>
+  <div class="tip"><b>알아 둘 것</b> — 그사이 누가 먼저 커밋했으면 덮어쓰지 않고 알려 줍니다. GitHub에서만 지운 파일은 여기가 원본이라, 다음 커밋 때 다시 올라갑니다. ↻는 연결된 폴더 바로 아래 파일만 맞추고, 같은 탭을 둘이 고치면 칸끼리 합치지 않고 파일 하나를 고릅니다. <b>빈 저장소를 GitHub Desktop 등으로 먼저 받아 두었다면</b>, 첫 커밋 뒤 다시 받아야 파일이 보입니다.</div>
 </section>
 
 <!-- ───────── 보기 · 단축키 ───────── -->

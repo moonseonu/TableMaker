@@ -1,9 +1,10 @@
-import {$, esc, ask} from '../common/util.js';
+import {$, esc} from '../common/util.js';
 import {GITHUB_API} from '../settings/GitHubAccount.js';
 import {ImportPlan} from '../import/ImportPlan.js';
 import {ProjectNote} from './ProjectNote.js';
 import {blobSha} from './GitHubCommit.js';
 import {descName, tableOf} from './DescName.js';
+import {SyncPicker} from './SyncPicker.js';
 
 const OPENS = /\.(json|csv|md)$/i;
 const enc = p => p.split('/').map(encodeURIComponent).join('/');
@@ -17,10 +18,10 @@ const ago = t => {
 //   files: 그때 GitHub에 있던 파일의 git 번호 (GitHub 쪽이 바뀌었나), local: 그때 이 툴이 만들어 낸 파일의 번호 (내가 고쳤나).
 //   이 툴은 설명서를 자기 형식으로 다시 써서, 내가 안 고쳐도 GitHub 파일과 글자가 다를 수 있어 둘을 따로 둔다
 // (Projects 목록에 link로. 되돌리기 기록에 섞이지 않게 탭 묶음과는 따로).
-// 연결된 프로젝트는 탭 줄 오른쪽 고정 칸에 ↻: 누르면 바로 GitHub을 확인해 바뀐 파일만 받아 같은 탭을 새 내용으로 바꾼다(새 테이블은 탭으로 더한다).
+// 연결된 프로젝트는 탭 줄 오른쪽 고정 칸에 ↻: 누르면 GitHub을 확인해 받을 것을 목록으로 보여 주고, 고른 파일로 같은 탭을 새 내용으로 바꾼다(새 테이블은 탭으로 더한다).
 // 열 때 · 탭으로 돌아올 때 · 보는 동안 1분마다 브랜치 끝 커밋을 확인한다. 조건부 요청이라 안 바뀌었으면 304(한도에 안 셈).
 // 새 커밋이 있으면 ↻에 점, 위에 '○○님이 새로 저장했어요 · [갱신하기]' 띠.
-// 내가 커밋하지 않은 변경이 있는 탭을 GitHub 것이 덮게 되면 확인 팝업으로 묻는다.
+// ↻를 누르면 받을 목록 창(SyncPicker: 신규 · 수정 · 지움)에서 고른 파일만 받는다. 내 변경도 있는 파일은 ⚠ 체크를 빼 둔다.
 // GitHub에서만 지운 파일은 여기서 탭을 지우지 않는다(여기가 원본. 다음 커밋 때 새 파일로 다시 올라간다).
 // 여기서 지운 탭은 GitHubCommit이 다음 커밋에 '삭제'로 올린다.
 // ponytail: 폴더 바로 아래 파일만 맞춘다(하위 폴더는 불러오기로)
@@ -151,9 +152,9 @@ export class GitHubSync {
     return out;
   }
 
-  // restore: 불러오기에서 부를 때. 여기서 지운 표(탭이 없는 JSON · CSV)도 GitHub 것으로 다시 받는다.
-  // ↻는 받지 않는다(여기가 원본이라 지운 표는 다음 커밋에 삭제로 올라간다)
-  async sync(restore = false) {
+  // 받을 목록을 만들어 창(SyncPicker)에서 고르게 하고, 고른 파일만 받는다.
+  // all: 불러오기의 '갱신하기'에서. '지움'(여기서 지운 테이블)만 있어도 창을 띄운다(↻는 '이미 최신')
+  async sync(all = false) {
     const l = this.link, wb = this.app.workbook, gh = this.app.githubAccount;
     if (!l || this.busy) return;
     const btn = $('ghSync');
@@ -163,42 +164,32 @@ export class GitHubSync {
       const head = await this.head(l, true);
       const {tree} = await this.app.github.tree(l.owner, l.repo, l.branch, true);
       const remote = this.remoteFiles(tree, l.path), pre = l.path ? l.path + '/' : '';
-      const gone = n => restore && /\.(json|csv)$/i.test(n) && !wb.findByName(tableOf(n));
-      const changed = Object.keys(remote).filter(n => remote[n] !== l.files[n] || gone(n));
-      if (!changed.length) {
+      const now = await this.localShas(), was = l.local || {}, base = tableOf; // base: 파일 이름 → 테이블 이름 (설명서의 _Desc도 뗀다)
+      const rows = this.plan(remote, now, was);
+      if (!rows.some(r => all || r.kind !== 'del')) {
         this.setLink({...l, sha: head.sha, at: Date.now()});
         return this.app.toast('이미 최신입니다');
       }
-      // 내가 커밋하지 않은 변경: 지금 탭에서 만든 파일이 마지막으로 맞춘 때 만들던 것과 다르다
-      const now = await this.localShas(), was = l.local || {};
-      const mine = changed.filter(n => n in now && n in was && now[n] !== was[n]);
-      const base = tableOf; // 파일 이름 → 테이블 이름 (설명서의 _Desc도 뗀다)
-      let skip = new Set();
-      if (mine.length) {
-        const tabs = [...new Set(mine.filter(n => !ProjectNote.isNote(n)).map(base))];
-        const over = await ask('아직 커밋하지 않은 내 변경이 있습니다',
-          `${tabs.length ? tabs.join(', ') : '탭 순서 · 보기 설정'}에 GitHub에 올리지 않은 변경이 있는데, GitHub에도 새 내용이 있습니다. GitHub 것으로 덮어쓸까요? (Ctrl+Z로 되돌릴 수 있습니다)`,
-          '덮어쓰기', 'warn', '그 탭은 두기');
-        if (!over) skip = new Set(mine);
-      }
-      // 받을 파일: 바뀐 것 + 바뀐 테이블의 설명서(테이블을 새로 만들면 설명을 다시 붙여야 해서)
-      const want = new Set(changed.filter(n => !skip.has(n)));
-      for (const n of [...want]) if (/\.(json|csv)$/i.test(n)) for (const md of [descName(base(n)), base(n) + '.md']) if (remote[md] && !skip.has(md)) want.add(md); // 새 이름 · 예전 이름 설명서
+      const pick = await SyncPicker.show(l, head, rows, ago);
+      if (!pick) return;
+      // 받을 파일: 고른 것 + 고른 테이블의 설명서(테이블을 새로 만들면 설명을 다시 붙여야 해서). 목록에서 체크를 뺀 설명서는 빼고
+      const want = new Set(pick), off = new Set(rows.filter(r => !pick.has(r.name)).map(r => r.name));
+      for (const n of pick) if (/\.(json|csv)$/i.test(n)) for (const md of [descName(base(n)), base(n) + '.md']) if (remote[md] && !off.has(md)) want.add(md); // 새 이름 · 예전 이름 설명서
       const files = [...want].map(n => ({name: n, webkitRelativePath: `${l.repo}/${n}`, size: 0,
         arrayBuffer: async () => (await (gh.loggedIn
           ? gh.req(`${GITHUB_API}/repos/${l.owner}/${l.repo}/contents/${enc(pre + n)}?ref=${encodeURIComponent(l.branch)}`, true)
           : gh.req(`https://raw.githubusercontent.com/${l.owner}/${l.repo}/${enc(l.branch)}/${enc(pre + n)}`))).arrayBuffer()}));
       const errors = [], items = await ImportPlan.read(files, true, errors);
       const done = this.apply(items, errors);
-      // 덮어쓰지 않은 파일은 예전 번호로 둬서 다음에도 '바뀜'으로 남는다
-      const kept = Object.fromEntries([...skip].map(n => [n, l.files[n]]));
+      // 안 받은 파일은 예전 번호로 둬서 다음에도 목록에 나온다
+      const kept = Object.fromEntries([...off].map(n => [n, l.files[n]]));
       this.app.show(wb.cur);
       // 받은 파일은 '맞춤'으로: 그 테이블의 JSON · 설명서와 설정 메모를 지금 만들어 내는 대로 다시 기억한다
       const fresh = new Set([...want].flatMap(n => ProjectNote.isNote(n) ? [n] : [base(n) + '.json', descName(base(n)), base(n) + '.md', base(n) + '.csv']));
       fresh.add(ProjectNote.NAME);
       this.setLink({...l, sha: head.sha, at: Date.now(), files: {...remote, ...kept}, local: {...was, ...await this.localShas(fresh)}});
       const problems = errors.length ? '\n' + errors.join('\n') : '';
-      this.app.toast(`GitHub에서 갱신했습니다 · ${done}${skip.size ? `\n그대로 둔 것: ${[...new Set([...skip].map(base))].join(', ')}` : ''}${problems}`, errors.length ? 'warn' : '');
+      this.app.toast(`GitHub에서 갱신했습니다 · ${done}${problems}`, errors.length ? 'warn' : '');
       return true;
     } catch (err) {
       this.app.toast('GitHub에서 갱신 실패\n' + err.message, 'bad');
@@ -206,6 +197,29 @@ export class GitHubSync {
       this.busy = false;
       $('ghSync')?.classList.remove('busy');
     }
+  }
+
+  // 갱신 창의 목록. 탭이 있는지로 신규 · 지움을 가른다(연결 기록이 아니라서, 처음 불러올 때 안 고른 파일도 '신규'로 나온다)
+  //   신규: 여기에 탭이 없는 테이블(안 받은 것 · 팀원이 새로 올린 것) — 체크
+  //   지움: 마지막으로 맞출 때는 있었는데 여기서 지운 테이블 — 체크 뺌(안 받으면 다음 커밋에 GitHub에서도 지운다)
+  //   수정: GitHub에서 바뀐 파일 — 체크. 아직 커밋하지 않은 내 변경도 있으면 ⚠ 체크 뺌
+  // 탭이 없는 테이블의 설명서는 목록에 따로 넣지 않고 테이블을 받을 때 함께 받는다
+  plan(remote, now, was) {
+    const l = this.link, wb = this.app.workbook, rows = [];
+    const mine = n => n in now && now[n] !== (n in was ? was[n] : remote[n]);
+    for (const n of Object.keys(remote).sort()) {
+      const tab = ProjectNote.isNote(n) || wb.findByName(tableOf(n));
+      if (!tab) {
+        if (!/\.(json|csv)$/i.test(n)) continue;
+        rows.push(n in was ? {name: n, kind: 'del', on: false, why: '여기서 지운 테이블 · 안 받으면 다음 커밋에 GitHub에서도 지움'}
+          : {name: n, kind: 'new', on: true, why: '여기에 없는 테이블 · 새 탭으로'});
+      } else if (remote[n] !== l.files[n]) {
+        const risky = mine(n);
+        rows.push({name: n, kind: 'mod', on: !risky, risky, why: risky ? '내가 고친 것도 있음 · 받으면 덮어씀' : 'GitHub에서 바뀜'});
+      }
+    }
+    const order = {new: 0, mod: 1, del: 2};
+    return rows.sort((a, b) => order[a.kind] - order[b.kind]);
   }
 
   // 받은 것을 이름이 같은 탭에: 테이블은 내용을 바꾸고(보기 · 숨긴 경고는 그대로, 설정 메모가 있으면 그것대로), 없으면 새 탭으로.
