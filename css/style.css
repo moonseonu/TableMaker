@@ -268,7 +268,9 @@ td.warn{background:var(--warnbg)}
 /* 우클릭 메뉴 (노란 경고 칸의 '이 경고 숨기기') */
 .ctxmenu{position:fixed;z-index:40;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px;box-shadow:0 6px 16px var(--shadow)}
 .ctxmenu button{display:block;width:100%;text-align:left;background:transparent;border:0;padding:7px 12px;white-space:nowrap}
-.ctxmenu button:hover{background:var(--hover)}
+.ctxmenu button:hover:not(:disabled){background:var(--hover)}
+.ctxmenu button.bad{color:var(--badline)}
+.ctxmenu button:disabled{opacity:.45;cursor:default}
 #status.warn{color:var(--warntext)}
 /* 잠깐 떴다 흐려지는 알림 (Toast.js). 줄바꿈(\n)은 그대로 줄을 나눈다 */
 .toast{position:fixed;left:50%;bottom:40px;z-index:60;max-width:min(720px,calc(100vw - 32px));padding:10px 16px;border-radius:8px;
