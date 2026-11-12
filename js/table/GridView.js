@@ -22,10 +22,10 @@ export class GridView {
     this.rendering = false;
     this.rowH = 31; // 데이터 행 높이. 처음 그린 뒤 실제 높이로 맞춘다
     el.parentElement.addEventListener('scroll', () => this.onScroll(), {passive: true});
-    window.addEventListener('resize', () => this.onScroll());
+    window.addEventListener('resize', () => { this.padRight(); this.onScroll(); });
     for (const ev of ['input', 'change', 'compositionend']) el.addEventListener(ev, e => this.onEdit(e));
     el.addEventListener('focusout', e => this.onFocusOut(e));
-    el.addEventListener('toggle', e => { this.onToggle(e); this.onTranslateToggle(e); }, true); // toggle은 버블링이 안 돼서 capture로
+    el.addEventListener('toggle', e => { this.onToggle(e); this.onTranslateToggle(e); this.placePop(e.target); }, true); // toggle은 버블링이 안 돼서 capture로
     el.addEventListener('focusin', e => this.onFocusIn(e));
     el.addEventListener('dblclick', e => this.onDblClick(e));
     el.addEventListener('click', e => this.onClick(e));
@@ -74,10 +74,25 @@ export class GridView {
     this.el.innerHTML = t.flip ? this.flippedHtml(corner, ghostColHead) : this.normalHtml(corner, ghostColHead);
     if (!t.flip) this.fitColumns(); // 아래쪽 긴 값 때문에 스크롤할 때 열이 넓어지지 않게 미리
     this.showTypes(!this.typesHidden);
+    this.padRight();
     if (t.locked) this.lockHeads();
     this.setPads();
     this.fillRows();
     this.update();
+  }
+
+  // 표 오른쪽 끝 여백(표 영역 폭의 1/3): 끝까지 넘기면 마지막 열이 화면 가운데쯤 와서 오른쪽에 빈자리가 남는다.
+  // 표가 영역의 2/3보다 좁으면 넘길 것이 없어 그대로다. 세로 보기(⇄)는 두지 않는다
+  padRight() {
+    this.el.style.marginRight = this.t.flip ? '' : Math.round(this.el.parentElement.clientWidth / 3) + 'px';
+  }
+
+  // 표 머리의 ⚙ · 문A 창: 오른쪽으로 펼치면 표 영역 밖으로 잘릴 때는 아이콘 기준 왼쪽으로 펼친다
+  placePop(d) {
+    const pop = d.open && d.classList?.contains('opt') && d.querySelector('.pop');
+    if (!pop) return;
+    pop.classList.remove('left');
+    if (pop.getBoundingClientRect().right > this.el.parentElement.getBoundingClientRect().right - 4) pop.classList.add('left');
   }
 
   // 잠근 테이블: 머리 칸(이름 · 타입 · ID 설정)은 보기만. 데이터 칸은 고를 때 읽기 전용이 된다(CellKeys.locked)
