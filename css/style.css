@@ -191,7 +191,7 @@ thead tr.htype th{top:var(--h1,33px)} /* 타입 행은 이름 행 바로 아래�
 /* 가로 보기: 행 번호 칸도 왼쪽에 붙여 둔다 (옆으로 넘겨도 몇 번째 줄인지 보이게).
    z-index를 주지 않아 머리줄(z-index 1)이 그 위에, 보통 칸 위에 그려진다 */
 #grid:not(.flip) td.num{position:sticky;left:0}
-#grid:not(.flip) thead th.num{left:0}
+#grid:not(.flip) thead th.num{left:0;z-index:2} /* 모서리 칸: 옆으로 넘어가는 다른 머리 칸(z-index 1)에 깔리지 않게 */
 th.bad{box-shadow:inset 0 -2px var(--badline)}
 /* 컬럼 머리는 이름 칸·타입 칸 두 개 (가로 보기는 두 행, 세로 보기는 두 열). 이름 칸은 글자 길이에 맞춰 늘어나서(field-sizing)
    긴 이름이면 그만큼 열이 넓어진다 (엑셀처럼 손으로 맞출 필요 없게). field-sizing을 모르는 브라우저는 최소 너비로 */
