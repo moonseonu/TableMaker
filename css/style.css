@@ -133,6 +133,8 @@ header .appmenu button.on .dot{border:3px solid var(--accent)}
 .side .memo textarea{flex:1;min-height:0;resize:none;border:0;outline:0;padding:0;background:transparent;font-size:13px;line-height:1.6}
 /* 좁은 화면: 광고 · 메모장은 못 넣지만 여백은 조금 남겨 표 영역을 가운데에 둔다 */
 @media (max-width:1100px){.side{width:clamp(16px,5vw,60px)}.side .memo{display:none}}
+/* 손가락으로 쓰는 기기(태블릿 · 휴대폰)에서는 왼쪽 광고 자리를 없애고 그만큼 표를 넓게 (.work가 남은 폭을 다 쓴다) */
+@media (pointer:coarse){.side.ads{display:none}}
 .toolbar{display:flex;gap:8px;align-items:center;padding:8px 12px;flex-wrap:wrap}
 .spacer{flex:1}
 #status{color:var(--dim)}
