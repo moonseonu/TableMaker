@@ -11,6 +11,7 @@ import {GridPaste} from './grid/GridPaste.js';
 import {ColumnWidth} from './grid/ColumnWidth.js';
 import {CrossHair} from './grid/CrossHair.js';
 import {IdColor} from './grid/IdColor.js';
+import {ColumnTranslate} from './grid/ColumnTranslate.js';
 
 // 테이블 작성 영역: 표 그리기, 칸 입력·검사 표시, 정렬, 맨 오른쪽 빈 열과 맨 아래 빈 행, 칸에 붙여넣기
 // 역할이 많아 js/table/grid/ 의 역할 묶음(범위 선택, 열 옮기기, 칸 상태·키, HTML, 보이는 행, Enum, 경고 메뉴, 붙여넣기, 열 너비, 고른 칸의 행·열 표시)으로 나누고 여기서 합친다
@@ -24,7 +25,7 @@ export class GridView {
     window.addEventListener('resize', () => this.onScroll());
     for (const ev of ['input', 'change', 'compositionend']) el.addEventListener(ev, e => this.onEdit(e));
     el.addEventListener('focusout', e => this.onFocusOut(e));
-    el.addEventListener('toggle', e => this.onToggle(e), true); // toggle은 버블링이 안 돼서 capture로
+    el.addEventListener('toggle', e => { this.onToggle(e); this.onTranslateToggle(e); }, true); // toggle은 버블링이 안 돼서 capture로
     el.addEventListener('focusin', e => this.onFocusIn(e));
     el.addEventListener('dblclick', e => this.onDblClick(e));
     el.addEventListener('click', e => this.onClick(e));
@@ -253,4 +254,4 @@ export class GridView {
   }
 }
 
-mixin(GridView, RangeSelect, ColumnMove, CellKeys, GridHtml, VirtualRows, EnumHint, WarnMenu, GridPaste, ColumnWidth, CrossHair, IdColor);
+mixin(GridView, RangeSelect, ColumnMove, CellKeys, GridHtml, VirtualRows, EnumHint, WarnMenu, GridPaste, ColumnWidth, CrossHair, IdColor, ColumnTranslate);

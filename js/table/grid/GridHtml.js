@@ -109,6 +109,7 @@ export class GridHtml {
       (t.refs.length ? '<div class="refs">' + cands.map(o => `<label><input type="checkbox" class="refpick" value="${esc(o.name)}"${t.refs.includes(o.name) ? ' checked' : ''}> ${esc(o.name)}</label>`).join('') + '</div>' : '') +
       this.idColorOpt() + '</div></details>';
     // Enum 값 목록 보기(보기만). 칸을 고칠 때마다 바뀌어서 열 때 채운다(onToggle)
+    h += this.translateHead(c, i); // String 열: 문A 다른 열을 번역해서 채우기 (ColumnTranslate)
     if (c.type === 'enum' && !c.linked) h += `<details class="opt enumopt" data-c="${i}"><summary class="ico" title="Enum 값 목록 보기">⚙</summary><div class="pop"></div></details>`;
     // 정렬은 ID 열만: ▼ 오름차순(작은 값이 위), ▲ 내림차순.
     // 다른 열로 정렬하면 JSON 순서까지 바뀌고 ID 자동 정렬이 꺼져서 뺐다
