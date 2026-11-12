@@ -12,6 +12,7 @@ import {ColumnWidth} from './grid/ColumnWidth.js';
 import {CrossHair} from './grid/CrossHair.js';
 import {IdColor} from './grid/IdColor.js';
 import {ColumnTranslate} from './grid/ColumnTranslate.js';
+import {TouchScroll} from './TouchScroll.js';
 
 // 테이블 작성 영역: 표 그리기, 칸 입력·검사 표시, 정렬, 맨 오른쪽 빈 열과 맨 아래 빈 행, 칸에 붙여넣기
 // 역할이 많아 js/table/grid/ 의 역할 묶음(범위 선택, 열 옮기기, 칸 상태·키, HTML, 보이는 행, Enum, 경고 메뉴, 붙여넣기, 열 너비, 고른 칸의 행·열 표시)으로 나누고 여기서 합친다
@@ -45,6 +46,7 @@ export class GridView {
     this.hint = document.body.appendChild(document.createElement('div')); // Enum 자동 완성으로 칸 뒤에 흐리게 보이는 나머지 글자
     this.hint.className = 'hint';
     document.addEventListener('copy', e => this.onCopy(e));
+    new TouchScroll(el.parentElement); // 손가락으로 끌 때 한 방향으로만 (대각선 금지)
   }
 
   get t() { return this.app.table; }

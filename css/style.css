@@ -188,6 +188,10 @@ tr>:first-child{border-left-width:1px}
 thead tr:first-child>*{border-top-width:1px}
 thead th{position:sticky;top:0;z-index:1;background:var(--head)}
 thead tr.htype th{top:var(--h1,33px)} /* 타입 행은 이름 행 바로 아래에 붙는다 (GridView.stickHeads) */
+/* 가로 보기: 행 번호 칸도 왼쪽에 붙여 둔다 (옆으로 넘겨도 몇 번째 줄인지 보이게).
+   z-index를 주지 않아 머리줄(z-index 1)이 그 위에, 보통 칸 위에 그려진다 */
+#grid:not(.flip) td.num{position:sticky;left:0}
+#grid:not(.flip) thead th.num{left:0}
 th.bad{box-shadow:inset 0 -2px var(--badline)}
 /* 컬럼 머리는 이름 칸·타입 칸 두 개 (가로 보기는 두 행, 세로 보기는 두 열). 이름 칸은 글자 길이에 맞춰 늘어나서(field-sizing)
    긴 이름이면 그만큼 열이 넓어진다 (엑셀처럼 손으로 맞출 필요 없게). field-sizing을 모르는 브라우저는 최소 너비로 */
@@ -222,7 +226,8 @@ th.bad{box-shadow:inset 0 -2px var(--badline)}
 .ico.sort{font-size:11px;color:var(--text)}
 /* 칸 글자가 길면(대화 문장 등) 칸이 글자에 맞춰 늘어나 열이 넓어진다(field-sizing, 이름 칸과 같은 방식). 짧으면 열 너비만큼 */
 td input:not([type]){width:auto;min-width:max(130px,100%);field-sizing:content;background:transparent;border:0;padding:6px 8px}
-td input:focus{outline:2px solid var(--accent);outline-offset:-2px}
+/* 고른 칸 테두리는 칸 안쪽에 그린다. outline은 사파리(아이패드 · 아이폰)에서 안쪽으로 못 넣어 칸 밖으로 삐져나온다 */
+td input:focus{outline:0;box-shadow:inset 0 0 0 2px var(--accent)}
 /* 열 너비 손잡이: 이름 칸 오른쪽 경계. 올리면 파랗게, 끄는 동안은 화면 어디서나 ↔ 커서 (ColumnWidth.js) */
 .colgrip{position:absolute;top:0;right:-3px;width:7px;height:100%;cursor:col-resize;z-index:2}
 .colgrip:hover,.colgrip.set:hover{background:var(--accent)}
@@ -235,11 +240,11 @@ body.rangedrag #grid,body.rangedrag #grid *{user-select:none}
 td input[data-mode="select"]{caret-color:transparent;cursor:cell}
 /* 고치는 중이 아닌 칸은 마우스를 올려도 I 모양(글자 고르기) 대신 칸 고르기 모양 (엑셀처럼). 고치는 칸만 I 모양 */
 #grid td input:not([type=checkbox]):not(:focus){cursor:cell}
-td input[data-mode="edit"]:focus{outline-color:var(--warntext)}
-/* ID 칸은 접두사(item_) 자리와 입력칸이 나뉘어 있어서, 테두리를 입력칸이 아니라 칸 전체에 그린다 */
-td:has(.idbox) input:focus{outline:0}
-td:has(.idbox):focus-within{outline:2px solid var(--accent);outline-offset:-2px}
-td:has(.idbox input[data-mode="edit"]:focus){outline-color:var(--warntext)}
+td input[data-mode="edit"]:focus{box-shadow:inset 0 0 0 2px var(--warntext)}
+/* ID 칸은 접두사(item_) 자리와 입력칸이 나뉘어 있어서, 테두리를 입력칸이 아니라 칸 전체(.idbox)에 그린다 (ID 첫 자리 색 띠는 td의 box-shadow라 그 위에) */
+td:has(.idbox) input:focus{box-shadow:none}
+td .idbox:has(input:focus){box-shadow:inset 0 0 0 2px var(--accent)}
+td .idbox:has(input[data-mode="edit"]:focus){box-shadow:inset 0 0 0 2px var(--warntext)}
 /* 드래그·Shift로 고른 범위 */
 /* 고른 범위는 칸 색 위에 파랗게 덮는다 (빨간 오류 칸·노란 경고 칸도 골랐는지 보이게) */
 td.insel{position:relative}
@@ -260,8 +265,8 @@ body.colmove, body.colmove *{cursor:grabbing !important}
 .idbox .pre{color:var(--dim);padding-left:8px}
 .idbox input:not([type]){min-width:70px;padding-left:1px}
 td.chk{text-align:left;padding-left:8px;cursor:cell}
-td.chk:focus-within{outline:2px solid var(--accent);outline-offset:-2px} /* 고른 Bool 칸은 다른 칸처럼 칸 전체에 테두리 */
-td.chk input:focus{outline:0}
+td.chk:focus-within{box-shadow:inset 0 0 0 2px var(--accent)} /* 고른 Bool 칸은 다른 칸처럼 칸 전체에 테두리 */
+td.chk input:focus{box-shadow:none}
 td.linked input{color:var(--dim);cursor:default}
 .link{display:flex;align-items:center;padding:2px 4px;border-radius:3px}
 .link.on,.link.on:hover{color:var(--accent);background:var(--accent-tint)}
