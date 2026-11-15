@@ -124,6 +124,9 @@ export class CellKeys {
   // 머리줄(컬럼 이름)과 맨 아래 빈 줄, 맨 오른쪽 빈 열까지 오간다.
   // 이름 먼저 적든 값 먼저 적든 자유롭게: 빈 열 칸에 값부터 적으면 col1 같은 임시 이름이 붙는다
   // Ctrl+↓: 맨 아래 빈 줄로 한 번에 (긴 표에서 새 행·새 열 넣을 때)
+  // Tab · Shift+Tab: 오른쪽 · 왼쪽 칸 (고치는 중이어도). Tab으로 옆으로 채운 뒤 Enter를 누르면 바로 아래가 아니라
+  // Tab을 시작한 열의 다음 줄로 간다 (엑셀처럼 줄바꿈: ID → Tab → Name → Tab → Price → Enter → 다음 줄 ID).
+  // 시작한 열(tabStart)은 Enter로 줄을 바꾸거나 화살표 · 클릭으로 옮기면 잊는다
   onKey(e) {
     const el = e.target === this.el ? this.active() : e.target, t = this.t, k = e.key;
     if (el === this.el) return;
@@ -149,18 +152,35 @@ export class CellKeys {
     }
     const p = this.pos(el);
     if (!p) return;
-    let dir;
-    if (k === 'ArrowUp' || (k === 'Enter' && e.shiftKey)) dir = 'up';
+    let dir, tabEnter = false;
+    if (k === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      if (this.tabStart == null) this.tabStart = p.c;
+      dir = t.flip ? (e.shiftKey ? 'up' : 'down') : e.shiftKey ? 'left' : 'right'; // 세로 보기는 한 줄(행)이 세로로 서 있다
+    }
+    else if (k === 'Enter' && !e.shiftKey && this.tabStart != null && !t.flip) { dir = 'down'; tabEnter = true; }
+    else if (k === 'ArrowUp' || (k === 'Enter' && e.shiftKey)) dir = 'up';
     else if (k === 'ArrowDown' || (k === 'Enter' && !e.shiftKey)) dir = 'down';
     else if ((k === 'ArrowLeft' || k === 'ArrowRight') && (this.isCellText(el) ? el.dataset.mode !== 'edit' : this.atEdge(el, k === 'ArrowLeft'))) dir = k === 'ArrowLeft' ? 'left' : 'right';
     if (!dir) return;
+    const startCol = tabEnter && this.tabStart < t.cols.length ? this.tabStart : 0; // 그 사이 열이 지워졌으면 맨 앞
+    if (k !== 'Tab') this.tabStart = null;
     e.preventDefault();
     const n = t.rows.length, m = t.cols.length;
     if (t.flip) return this.moveFlipped(el, p, dir);
     if (p.r === n && dir === 'down' && k === 'Enter' && t.cols[p.c] && t.cols[p.c].id && el.value) return this.addFromGhost(el.value);
+    // 새 줄 ID 칸에 미리 채운 번호에서 Tab: 그 번호로 줄을 만들고 그 줄의 오른쪽 칸으로 (이어서 Name · Price를 채우게)
+    if (p.r === n && dir === 'right' && k === 'Tab' && t.cols[p.c] && t.cols[p.c].id && el.value) {
+      const row = t.newRow();
+      row[0] = el.value;
+      t.rows.push(row);
+      this.render();
+      const next = this.at(t.rows.indexOf(row), p.c + 1);
+      if (next) this.focusEl(next);
+      return;
+    }
     const [dr, dc] = {up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1]}[dir];
-    const r = p.r + dr, c = p.c + dc;
-    if (r === n && dr > 0 && c < m) return this.focusGhostRow(c, p.r >= 0 ? el.value : '');
+    const r = p.r + dr, c = tabEnter ? startCol : p.c + dc;
+    if (r === n && dr > 0 && c < m) return this.focusGhostRow(c, p.r >= 0 ? (tabEnter ? t.rows[p.r]?.[c] ?? '' : el.value) : ''); // 줄을 마치고 새 줄로: 다음 번호 미리 채우기
     const next = this.at(r, c);
     if (next) this.focusEl(next);
   }

@@ -43,6 +43,7 @@ export class RangeSelect {
     // 경고 칸이면 경고 메뉴(WarnMenu)가 누른 칸 기준으로 뜬다. 칸을 옮기는 건 왼쪽 클릭만
     if (e.button === 2) { e.preventDefault(); return; }
     if (e.button !== 0) return;
+    this.tabStart = null; // 클릭으로 옮기면 Tab 줄바꿈 시작 열은 잊는다 (CellKeys)
     this.pointer = {x: e.clientX, y: e.clientY}; // 마우스를 움직이기 전에 바로 끌어도 가장자리 자동 스크롤이 위치를 안다
     const t = this.t, th = e.target.closest('th[data-c]');
     // 머리칸의 타입·버튼·⚙과 이미 고치고 있는 이름 칸은 평소대로
