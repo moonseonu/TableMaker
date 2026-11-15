@@ -76,19 +76,47 @@ export class CellKeys {
 
   // ID 칸을 떠나면 그 행을 제자리로 옮기고(새 열 타입이 정해질 때도 다시 그린다), 커서는 옮겨 간 칸에 그대로 둔다.
   // 데이터 칸은 행이 자리를 옮기니 행 자체로 다시 찾고, 머리줄·빈 줄·빈 열은 화면 위치(pos)로 찾는다
-  resortKeepFocus() {
+  // edited: ID를 고친 행. 정렬로 그 행이 다른 자리로 옮겨 가면 그 행이 화면 가운데 오게 스크롤한다(어디로 갔는지 보이게).
+  // 그 밖에는 스크롤을 건드리지 않는다(다시 그려도 보던 자리 그대로, render)
+  resortKeepFocus(edited) {
     setTimeout(() => {
-      const a = document.activeElement, t = this.t;
+      const a = document.activeElement, t = this.t, was = edited ? t.rows.indexOf(edited) : -1;
       const p = this.el.contains(a) && this.pos(a);
       const row = p && a.dataset.r != null ? t.rows[+a.dataset.r] : null;
       const filled = p && a.hasAttribute('data-ghostrow') && a.value; // 빈 줄에 미리 채운 다음 번호는 지키기
       this.render();
-      const el = p && this.at(row ? t.rows.indexOf(row) : p.r, p.c);
+      const now = edited ? t.rows.indexOf(edited) : -1, moved = now >= 0 && now !== was;
+      if (moved) this.centerRow(now);
+      const ri = row ? t.rows.indexOf(row) : p && p.r;
+      // 가운데로 옮겨서 커서 칸이 화면 밖이면, 그 칸을 찾느라 스크롤을 되돌리지 않고 커서만 맡겨 둔다(키를 누르면 돌아온다, VirtualRows)
+      if (moved && row && !this.el.querySelector(`input[data-r="${ri}"][data-c="${p.c}"]`)) {
+        this.cursor = {r: ri, c: p.c, mode: 'select'};
+        this.el.tabIndex = -1;
+        this.el.focus({preventScroll: true});
+        return;
+      }
+      const el = p && this.at(ri, p.c);
       if (!el) return;
-      el.focus();
+      el.focus({preventScroll: true});
       if (filled) el.value = filled;
       if (filled || el.classList.contains('cname')) el.select();
     });
+  }
+
+  // r번째 행이 머리줄 아래 보이는 곳의 가운데 오게 (가로 보기만. 세로 보기는 행이 열로 서서 좌우라 두지 않는다)
+  centerRow(r) {
+    if (this.t.flip) return;
+    const box = this.el.parentElement, b = box.getBoundingClientRect(), head = this.headBottom() - b.top;
+    // 표 맨 위 기준 r번째 행의 자리. 그려지지 않은 행도 빈 줄(padtop) 높이로 자리를 안다 (VirtualRows)
+    const top = this.el.tBodies[0].getBoundingClientRect().top - b.top + box.scrollTop + r * this.rowH;
+    box.scrollTop = top - head - (box.clientHeight - head - this.rowH) / 2;
+    this.fillRows();
+    // 그려진 뒤 실제 자리로 한 번 더 맞춘다 (행 높이 · 머리줄 높이가 어림과 다를 수 있어서)
+    const cell = this.at(r, 0)?.closest('td');
+    if (!cell) return;
+    const c = cell.getBoundingClientRect(), mid = (this.headBottom() + box.getBoundingClientRect().top + box.clientHeight) / 2;
+    box.scrollTop += (c.top + c.height / 2) - mid;
+    this.fillRows();
   }
 
   // 엑셀처럼 칸 이동: Enter·↓ 아래, Shift+Enter·↑ 위, ←→ 옆 칸. 표 칸은 고른 상태·입력 상태에서 옆 칸으로,

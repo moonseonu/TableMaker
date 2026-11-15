@@ -58,10 +58,11 @@ export class RangeSelect {
       return;
     }
     // Bool 칸: 체크박스 밖(칸)을 누르면 값은 그대로 두고 칸만 고른다. 체크박스를 누르면 평소처럼 켜고 끈다(고른 상태에서 Space도)
-    if (cell.type === 'checkbox' && e.target !== cell) { e.preventDefault(); cell.focus(); }
+    // 마우스로 누른 칸은 이미 보이는 칸이라, 커서를 옮길 때 브라우저가 스크롤을 움직이지 않게 (preventScroll)
+    if (cell.type === 'checkbox' && e.target !== cell) { e.preventDefault(); cell.focus({preventScroll: true}); }
     // 글자 칸은 고치는 중(enter · edit)일 때만 브라우저 기본 동작(커서 놓기 · 글자 고르기)을 쓴다.
     // 고른 상태에서는 글자가 파랗게 골라지지 않게 막고 칸만 고른다: 끌기 · 더블클릭 두 번째 누름(단어 고르기)도 같다. 수정은 dblclick이 시작한다
-    else if (this.isCellText(cell) && !(e.target === cell && cell === document.activeElement && cell.dataset.mode !== 'select')) { e.preventDefault(); cell.focus(); }
+    else if (this.isCellText(cell) && !(e.target === cell && cell === document.activeElement && cell.dataset.mode !== 'select')) { e.preventDefault(); cell.focus({preventScroll: true}); }
     this.startDrag('cell', p);
   }
 
@@ -157,6 +158,19 @@ export class RangeSelect {
 
   clearSel() { this.sel = null; this.paintSel(); }
 
+  // 범위는 테이블마다 기억한다(paintSel이 바뀔 때마다 적어 둠). 다시 그리거나 탭을 바꿨다 와도 되살리고,
+  // 다른 칸을 누르거나 옮길 때(onFocusIn) · Esc로만 풀린다. 열이 줄었거나 행이 지워져 범위가 표 밖이면 버린다
+  rememberSel() {
+    (this.sels ||= new WeakMap()).set(this.t, this.sel ? {sel: {...this.sel}, anchor: {...this.anchor}} : null);
+  }
+
+  restoreSel() {
+    const t = this.t, k = this.sels?.get(t), s = k?.sel;
+    const ok = s && Math.min(s.r1, s.r2) < t.rows.length && Math.max(s.c1, s.c2) < t.cols.length && (!t.flip || Math.max(s.r1, s.r2) < t.rows.length);
+    this.sel = ok ? {...s} : null;
+    if (ok) this.anchor = {...k.anchor};
+  }
+
   // Ctrl+A (한글 자판 'ㅁ'도): 표 전체를 고른다 (엑셀처럼). 칸에 글자를 치거나 고치는 중이거나, 다른 입력칸 · 창에 있으면 그 글자 전체 고르기 그대로.
   // 커서가 표 밖에 있었으면 첫 칸에 두고 고른다(그래야 이어서 Ctrl+C · Delete가 범위에 먹는다). 커서 칸과 Shift+화살표 기준(anchor)은 그대로
   onSelectAllKey(e) {
@@ -184,6 +198,7 @@ export class RangeSelect {
   // 열을 통째로(모든 행) 골랐으면 그 열들의 머리 칸, 행을 통째로(모든 열) 골랐으면 그 행들의 번호 칸도 칠한다(hsel)
   paintSel() {
     this.el.querySelectorAll('td.insel, .hsel').forEach(x => x.classList.remove('insel', 'hsel'));
+    this.rememberSel();
     this.paintFill(); // 표 아래로 늘린 점선 줄 (FillSeries)
     this.markCross(); // 고른 칸 · 범위의 행 · 열 표시 (CrossHair)
     if (!this.hasRange()) return;

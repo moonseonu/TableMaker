@@ -43,8 +43,7 @@ export class GridView {
     el.addEventListener('focusout', () => setTimeout(() => this.markCross())); // 표 밖으로 나가면 행 · 열 표시를 지운다
     document.addEventListener('mouseup', () => this.onMouseUp());
     document.addEventListener('mousemove', e => this.onMouseMove(e));
-    // 표 바깥을 누르면 범위 선택(파란 영역)도 푼다. 칸 하나를 고른 것은 포커스를 잃으며 저절로 풀리니 같게
-    document.addEventListener('mousedown', e => { if (e.button === 0 && this.sel && !this.el.contains(e.target)) this.clearSel(); }); // 우클릭은 그대로
+    // 표 바깥(도구줄 · 탭 · 창)을 눌러도 범위는 그대로 둔다: 다른 칸을 누르거나 옮길 때 · Esc로만 풀린다 (RangeSelect.restoreSel)
     this.hint = document.body.appendChild(document.createElement('div')); // Enum 자동 완성으로 칸 뒤에 흐리게 보이는 나머지 글자
     this.hint.className = 'hint';
     document.addEventListener('copy', e => this.onCopy(e));
@@ -56,7 +55,11 @@ export class GridView {
   // ---------- 그리기 ----------
 
   render(keepOrder) {
-    const t = this.t;
+    const t = this.t, box = this.el.parentElement;
+    // 스크롤은 사용자가 휠 · 끌기로 옮길 때만: 다시 그려도 보던 자리 그대로, 탭을 바꾸면 그 테이블에서 보던 자리로
+    if (this.lastT) (this.scrolls ||= new WeakMap()).set(this.lastT, {top: box.scrollTop, left: box.scrollLeft});
+    const pos = this.lastT === t ? {top: box.scrollTop, left: box.scrollLeft} : this.scrolls?.get(t) || {top: 0, left: 0};
+    this.lastT = t;
     this.hideHint();
     // 포커스된 칸이 지워질 때 크롬이 change를 늦게 보내는데, 그땐 정렬로 행 번호가 바뀐 뒤다. 먼저 내보낸다
     this.rendering = true;
@@ -64,7 +67,7 @@ export class GridView {
     this.rendering = false;
     this.cursor = null;
     if (!keepOrder) t.autoSort();
-    this.sel = null; // 다시 그리면 행 자리가 바뀔 수 있어 범위는 푼다 (clearRange는 다시 그린 뒤 되살린다)
+    this.restoreSel(); // 이 테이블에서 고르던 범위(점선으로 늘린 줄 포함)를 되살린다. 탭을 바꿨다 와도 그대로
     this.fillK = 0; // 늘려 보이던 점선 줄도 다시 그리면 없어진다 (FillSeries)
     this.app.workbook.syncRef(t);
     // 모서리 칸: 행/열 바꿔 보기. 바꾼 상태면 파랗게 눌린 상태
@@ -82,6 +85,8 @@ export class GridView {
     this.padRight();
     if (t.locked) this.lockHeads();
     this.setPads();
+    box.scrollTop = pos.top; // 표를 새로 넣는 동안 높이가 잠깐 줄어 맨 위로 튀던 것을 되돌린다 (보이는 행은 이 자리 기준으로 그린다)
+    box.scrollLeft = pos.left;
     this.fillRows();
     this.update();
   }
@@ -243,7 +248,7 @@ export class GridView {
       t.rows[+el.dataset.r][el.dataset.c] = el.value.toLowerCase();
       return this.resortKeepFocus();
     }
-    if (col && col.id && (t.sortOf().c === 0 || t.refs.length)) this.resortKeepFocus();
+    if (col && col.id && (t.sortOf().c === 0 || t.refs.length)) this.resortKeepFocus(t.rows[+el.dataset.r]); // 고친 ID의 행이 자리를 옮기면 그 행을 가운데로
     // 빈 줄에 미리 채운 번호를 받지 않고 다른 데로 가면 지운다 (행으로 친 게 아니니까)
     if (el.hasAttribute('data-ghostrow') && el.type !== 'checkbox') el.value = '';
   }

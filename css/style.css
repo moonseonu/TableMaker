@@ -191,7 +191,7 @@ body.tabgrab, body.tabgrab *{cursor:grabbing !important}
 /* 잠근 테이블: 새 행 · 새 열 칸, 삭제 ✕, 🔗, 체크박스 누르기를 막는다 (GridView) */
 #grid.locked .ghost,#grid.locked tr.ghostrow,#grid.locked td:has([data-ghostrow]),#grid.locked .namedel,#grid.locked [data-delrow],#grid.locked .link{display:none}
 #grid.locked td input[type=checkbox]{pointer-events:none}
-main{flex:1;overflow:auto}
+main{flex:1;overflow:auto;overflow-anchor:none} /* 표를 다시 그릴 때 브라우저가 스크롤 자리를 제멋대로 옮기지 않게 (자리는 GridView.render가 지킨다) */
 /* 테두리는 칸마다 오른쪽·아래를 직접 갖는다(separate). collapse로 이웃 칸과 함께 그리면, 위·왼쪽에 붙어 있는(sticky)
    머리 칸이 따라와도 테두리 선은 아래 내용과 함께 스크롤돼서 그 1px 틈으로 아래 글자가 비친다 */
 table{border-collapse:separate;border-spacing:0}
