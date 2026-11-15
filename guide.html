@@ -200,6 +200,7 @@
     <div class="dropmenu"><div class="menu static">
       <button>JSON… <small>탭을 골라서<i class="mk">4</i></small></button>
       <button>설명서 (.md)… <small>탭을 골라서</small></button>
+      <button>엑셀 (.xlsx)… · CSV…<i class="mk">7</i></button>
       <hr>
       <button>프로젝트 전체 (.zip) <small>JSON + 설명서 + 설정<i class="mk">5</i></small></button>
       <hr>
@@ -213,6 +214,7 @@
     <li><i class="mk">4</i><span><b>JSON… · 설명서…</b> — 저장할 탭을 고릅니다. 하나면 파일 하나, 여러 개면 zip 하나. 오류가 있으면 먼저 묻습니다.</span></li>
     <li><i class="mk">5</i><span><b>프로젝트 전체</b> — 모든 탭의 JSON · 설명서와 설정 메모 <code>_TableMaker.md</code>(탭 순서 · 보기 · 숨긴 경고)를 zip 하나로. 다시 불러오면 그대로 열립니다.</span></li>
     <li><i class="mk">6</i><span><b>GitHub에 커밋</b> — 고친 내용을 팀 저장소에 올립니다. <a href="#team">팀으로 쓰기</a> 참고.</span></li>
+    <li><i class="mk">7</i><span><b>엑셀 · CSV</b> — 저장할 탭을 고릅니다. 기본은 첫 줄 컬럼 이름 + 값만 있는 단순한 표이고, 아래 체크로 팀 양식에 맞춥니다. <b>타입 줄 넣기</b>: 이름 아래에 <code>int</code> · <code>string</code> 줄. <b>설명 넣기</b>: 테이블마다 <code>이름_Meta</code>(Column · Description · Type) 시트(CSV는 파일). <b>ID 접두사 붙이기</b>: <code>item_1001</code>처럼. 엑셀은 고른 탭이 시트 하나씩인 파일 하나, CSV는 탭마다 파일 하나(여럿이면 zip). 고른 체크는 프로젝트마다 기억하고, 저장한 파일은 불러오기로 다시 열면 타입 · 설명까지 돌아옵니다.</span></li>
   </ol>
 
   <h3>목록 창 — 들어갈 곳 확인하기</h3>

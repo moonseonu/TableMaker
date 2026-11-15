@@ -5,6 +5,8 @@ import {SavePicker} from './SavePicker.js';
 import {ProjectNote} from './ProjectNote.js';
 import {JsonFormat} from './JsonFormat.js';
 import {descName} from './DescName.js';
+import {SheetExport} from './SheetExport.js';
+import {XlsxWriter} from './XlsxWriter.js';
 
 const safeName = s => (s || 'table').replace(/[\\/:*?"<>|]/g, '_');
 
@@ -26,6 +28,7 @@ export class Exporter {
       saveFile(`${project}_${date}.zip`, Zip.create(this.projectFiles()), 'application/zip');
       return this.app.safari.backedUp();
     }
+    if (kind === 'xlsx' || kind === 'csv') return this.saveSheets(kind, project, date);
     // JSON · 설명서: 탭을 골라서. 하나면 그 파일 하나, 여러 개면 zip 하나 (여러 파일을 따로 받으면 브라우저가 매번 허락을 묻는다)
     const json = kind === 'json', tabs = wb.tables;
     const items = tabs.map(t => ({name: t.name, size: `${t.rows.length}행 × ${t.cols.length}열`, errors: json ? wb.errorCount(t) : 0}));
@@ -37,6 +40,38 @@ export class Exporter {
     const files = this.files(picked.map(i => tabs[i]), [kind]);
     if (files.length === 1) saveFile(files[0].name, files[0].text, json ? 'application/json' : 'text/markdown');
     else saveFile(`${project}_${json ? 'json' : 'md'}_${date}.zip`, Zip.create(files), 'application/zip');
+  }
+
+  // 엑셀 · CSV: 탭을 고르고, 선택(타입 줄 · 설명 · ID 접두사, 기본은 모두 꺼짐)은 프로젝트마다 마지막 것을 기억한다.
+  // 엑셀은 고른 탭이 시트 하나씩인 파일 하나(설명은 '이름_Meta' 시트). CSV는 탭마다 파일 하나(설명은 '이름_Meta.csv'), 여럿이면 zip 하나
+  async saveSheets(kind, project, date) {
+    const wb = this.app.workbook, tabs = wb.tables, xlsx = kind === 'xlsx', key = 'tablemaker.sheetopts.' + this.app.projects.cur;
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch {}
+    const opts = [{key: 'types', label: '타입 줄 넣기'}, {key: 'meta', label: xlsx ? '설명 시트 넣기' : '설명 파일 넣기'}, {key: 'prefix', label: 'ID 접두사 붙이기'}]
+      .map(o => ({...o, on: !!saved[o.key]}));
+    const items = tabs.map(t => ({name: t.name, size: `${t.rows.length}행 × ${t.cols.length}열`, errors: 0}));
+    const res = await SavePicker.pick(xlsx ? '엑셀로 저장' : 'CSV로 저장', items, wb.cur, false, opts,
+      xlsx ? '고른 탭이 시트 하나씩 들어간 엑셀 파일 하나로 받습니다.' : undefined);
+    if (!res || !res.picked.length) return;
+    const o = res.values;
+    try { localStorage.setItem(key, JSON.stringify(o)); } catch {}
+    const sheets = [];
+    for (const t of res.picked.map(i => tabs[i])) {
+      wb.syncRef(t); // 참조 열은 저장 직전 값으로
+      sheets.push({name: t.name, rows: SheetExport.rows(t, o)});
+      if (o.meta) sheets.push({name: t.name + '_Meta', rows: SheetExport.metaRows(t, o)});
+    }
+    const one = res.picked.length === 1 ? safeName(tabs[res.picked[0]].name) : `${project}_${date}`;
+    if (xlsx) return saveFile(one + '.xlsx', XlsxWriter.create(sheets), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    const used = new Set(), files = sheets.map(s => {
+      let n = safeName(s.name);
+      while (used.has(n.toLowerCase())) n += '_';
+      used.add(n.toLowerCase());
+      return {name: n + '.csv', text: SheetExport.csv(s.rows)};
+    });
+    if (files.length === 1) saveFile(files[0].name, files[0].text, 'text/csv');
+    else saveFile(`${project}_csv_${date}.zip`, Zip.create(files), 'application/zip');
   }
 
   // 테이블들 → 저장할 파일들 [{name, text}]. kinds: 'json', 'md'. 이름이 같은 탭은 파일이 겹치지 않게 뒤에 _를 붙인다.

@@ -40,10 +40,11 @@ export class FillSeries {
   onFillMenu(e) {
     if (!this.inSel(e.target) || this.t.locked) return false;
     e.preventDefault();
-    const rule = Series.label(this.fillSeed(this.range(), this.firstFillCol()));
+    // 범위는 지금 잡아 둔다: 메뉴를 누르는 순간 표 밖 mousedown으로 범위가 풀리기 때문
+    const g = this.range(), rule = Series.label(this.fillSeed(g, this.firstFillCol()));
     CtxMenu.show(e.clientX, e.clientY, [
-      {label: '연속으로 채우기' + (rule ? ` (${rule})` : ''), run: () => this.fillRange(false)},
-      {label: '같은 값으로 채우기', run: () => this.fillRange(true)},
+      {label: '연속으로 채우기' + (rule ? ` (${rule})` : ''), run: () => this.fillRange(false, g)},
+      {label: '같은 값으로 채우기', run: () => this.fillRange(true, g)},
     ]);
     return true;
   }
@@ -66,8 +67,8 @@ export class FillSeries {
 
   // 열마다 위쪽 값을 보고 나머지 칸을 채운다(그 아래 적힌 값은 덮어씀, 엑셀과 같다). 🔗 열은 건드리지 않는다.
   // 늘린 줄은 진짜 줄이 되고, ID 열을 범위에 넣지 않았으면 빈 줄에 칠 때처럼 이어지는 번호를 붙인다. Ctrl+Z 한 번으로 되돌린다
-  fillRange(copy) {
-    const t = this.t, g = this.range(), n = t.rows.length, extra = Math.max(0, g.bottom - (n - 1));
+  fillRange(copy, g = this.range()) {
+    const t = this.t, n = t.rows.length, extra = Math.max(0, g.bottom - (n - 1));
     const seeds = t.cols.map((_, c) => this.fillSeed(g, c, n)); // 줄을 늘리기 전에 (새 줄의 Bool 'false'를 값으로 보지 않게)
     for (let i = 0; i < extra; i++) t.rows.push(t.newRow());
     for (let c = g.left; c <= g.right; c++) {
