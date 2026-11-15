@@ -86,10 +86,13 @@ export class GridView {
     this.update();
   }
 
-  // 표 오른쪽 끝 여백(표 영역 폭의 1/3): 끝까지 넘기면 마지막 열이 화면 가운데쯤 와서 오른쪽에 빈자리가 남는다.
-  // 표가 영역의 2/3보다 좁으면 넘길 것이 없어 그대로다. 세로 보기(⇄)는 두지 않는다
+  // 표 끝 여백: 오른쪽은 표 영역 폭의 1/3, 아래는 높이의 1/2. 끝까지 넘기면 마지막 열은 가운데쯤, 마지막 줄은 한가운데 와서
+  // 그 뒤로 빈자리가 남는다(아래로 끌어 줄을 늘릴 때 가장자리에 바로 닿지 않게, FillSeries).
+  // 표가 그보다 작으면 넘길 것이 없어 그대로다. 세로 보기(⇄)는 두지 않는다
   padRight() {
-    this.el.style.marginRight = this.t.flip ? '' : Math.round(this.el.parentElement.clientWidth / 3) + 'px';
+    const box = this.el.parentElement, flip = this.t.flip;
+    this.el.style.marginRight = flip ? '' : Math.round(box.clientWidth / 3) + 'px';
+    this.el.style.marginBottom = flip ? '' : Math.round(box.clientHeight / 2) + 'px';
   }
 
   // 표 머리의 ⚙ · 문A 창: 오른쪽으로 펼치면 표 영역 밖으로 잘릴 때는 아이콘 기준 왼쪽으로 펼친다

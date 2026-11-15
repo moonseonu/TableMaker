@@ -98,7 +98,10 @@ export class RangeSelect {
     const flip = this.t.flip, colAxis = d === 'col' || d === 'move';
     const across = colAxis ? !flip : d === 'row' && flip, down = colAxis ? flip : d === 'row' && !flip;
     const dx = down ? 0 : x < r.left + EDGE ? -speed(r.left + EDGE - x) : x > r.right - EDGE ? speed(x - r.right + EDGE) : 0;
-    const dy = across ? 0 : y < top + EDGE ? -speed(top + EDGE - y) : y > r.bottom - EDGE ? speed(y - r.bottom + EDGE) : 0;
+    let dy = across ? 0 : y < top + EDGE ? -speed(top + EDGE - y) : y > r.bottom - EDGE ? speed(y - r.bottom + EDGE) : 0;
+    // 맨 아래 빈 줄(점선) 아래로 줄을 늘리는 중이면 최고 속도를 낮춘다: 가장자리에서 멀리 끌수록 빨라지되 1초에 30줄쯤까지
+    // (표가 늘어나며 끝없이 빨라지지 않게, FillSeries)
+    if (dy > 0 && this.fillExtraAt(y)) dy = Math.min(dy, Math.round(this.rowH / 2));
     if (dx || dy) {
       box.scrollLeft += dx;
       box.scrollTop += dy;
@@ -112,6 +115,14 @@ export class RangeSelect {
   // 끄는 동안 마우스가 칸 위에 없어도(표 오른쪽 빈 곳 · 표 밖 · 창 밖) 마우스 위치에서 가장 가까운 칸까지 범위를 잡는다(엑셀처럼).
   // 마우스 위치를 지금 그려진 데이터 칸들의 영역(보이는 곳만) 안으로 당겨서 그 자리의 칸을 찾는다. 같은 칸이면 다시 칠하지 않는다
   dragToPointer(r, top) {
+    // 맨 아래 빈 줄(점선) 아래까지 끌면 그만큼 줄을 늘려 고른다 (FillSeries). 열은 위에 붙어 있는 컬럼 머리로 찾는다:
+    // 많이 내려가 기존 줄이 화면 위로 다 사라져도 늘어난 줄 수가 계속 따라오게
+    const extra = this.fillExtraAt(this.pointer.y);
+    if (extra) {
+      const heads = [...this.el.querySelectorAll('thead tr.hname th[data-c]')];
+      const th = heads.find(h => this.pointer.x < h.getBoundingClientRect().right) || heads.at(-1);
+      return this.dragTo({r: this.t.rows.length - 1 + extra, c: th ? +th.dataset.c : 0});
+    }
     const cells = this.el.querySelectorAll('td input[data-r]');
     if (!cells.length) return;
     const a = cells[0].closest('td').getBoundingClientRect(), z = cells[cells.length - 1].closest('td').getBoundingClientRect();
@@ -119,8 +130,6 @@ export class RangeSelect {
     const cx = clamp(this.pointer.x, Math.max(r.left, a.left) + 2, Math.min(r.right, z.right) - 2);
     const cy = clamp(this.pointer.y, Math.max(top, a.top) + 2, Math.min(r.bottom, z.bottom) - 2);
     const p = this.pointOf(document.elementFromPoint(cx, cy) || this.el);
-    const extra = this.fillExtraAt(this.pointer.y); // 맨 아래 빈 줄(점선) 아래까지 끌면 그만큼 줄을 늘려 고른다 (FillSeries)
-    if (p && extra) p.r = this.t.rows.length - 1 + extra;
     if (p) this.dragTo(p);
   }
 
