@@ -269,6 +269,10 @@ td.insel{position:relative}
 /* 열·행을 통째로 고르면 그 열의 이름·타입 칸, 그 행의 번호 칸도 파랗게 (엑셀처럼) */
 #grid th.hsel,#grid td.num.hsel,#grid.flip th.colhead.hsel{background:color-mix(in srgb,var(--accent) 28%,var(--head))}
 td.insel::after{content:'';position:absolute;inset:0;background:var(--accent-tint);pointer-events:none}
+/* 맨 아래 빈 줄 아래로 끌어 늘린 점선 줄 (FillSeries). 오른쪽 아래 칸에 '+3줄' */
+#grid tr.fillprev td{border-style:dashed;background:transparent}
+#grid tr.ghostrow td.insel,#grid tr.fillprev td.insel{position:relative}
+#grid td[data-fill]::before{content:attr(data-fill);position:absolute;right:6px;bottom:4px;z-index:1;font-size:11px;color:var(--accent-text);pointer-events:none}
 #grid tr.pad td{border:0;background:transparent}
 #grid:focus{outline:0} /* 스크롤로 치워진 커서를 잠시 맡아 두는 동안 */
 td.insel input{cursor:cell}

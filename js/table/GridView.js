@@ -14,6 +14,7 @@ import {IdColor} from './grid/IdColor.js';
 import {ColumnTranslate} from './grid/ColumnTranslate.js';
 import {TouchScroll} from './TouchScroll.js';
 import {RefImport} from './grid/RefImport.js';
+import {FillSeries} from './grid/FillSeries.js';
 
 // 테이블 작성 영역: 표 그리기, 칸 입력·검사 표시, 정렬, 맨 오른쪽 빈 열과 맨 아래 빈 행, 칸에 붙여넣기
 // 역할이 많아 js/table/grid/ 의 역할 묶음(범위 선택, 열 옮기기, 칸 상태·키, HTML, 보이는 행, Enum, 경고 메뉴, 붙여넣기, 열 너비, 고른 칸의 행·열 표시)으로 나누고 여기서 합친다
@@ -31,7 +32,7 @@ export class GridView {
     el.addEventListener('focusin', e => this.onFocusIn(e));
     el.addEventListener('dblclick', e => this.onDblClick(e));
     el.addEventListener('click', e => this.onClick(e));
-    el.addEventListener('contextmenu', e => this.onContextMenu(e));
+    el.addEventListener('contextmenu', e => this.onFillMenu(e) || this.onContextMenu(e)); // 범위 안이면 채우기 메뉴, 아니면 경고 칸 메뉴
     el.addEventListener('keydown', e => this.onKey(e));
     document.addEventListener('keydown', e => this.onSelectAllKey(e)); // Ctrl+A: 표 전체 고르기 (RangeSelect)
     // 열 너비 손잡이는 열 고르기 · 순서 바꾸기 · 이름 고치기보다 먼저 받는다 (capture)
@@ -64,6 +65,7 @@ export class GridView {
     this.cursor = null;
     if (!keepOrder) t.autoSort();
     this.sel = null; // 다시 그리면 행 자리가 바뀔 수 있어 범위는 푼다 (clearRange는 다시 그린 뒤 되살린다)
+    this.fillK = 0; // 늘려 보이던 점선 줄도 다시 그리면 없어진다 (FillSeries)
     this.app.workbook.syncRef(t);
     // 모서리 칸: 행/열 바꿔 보기. 바꾼 상태면 파랗게 눌린 상태
     // 모서리 칸: ⇄ 행/열 바꾸기와 타입 줄 접기를 나란히. 이름 줄 쪽 칸이라 타입 줄을 접고 펴도 버튼 자리가 그대로다
@@ -165,7 +167,7 @@ export class GridView {
       const r = t.newRow();
       r[c] = box ? 'true' : el.value;
       // ID가 아닌 칸(Name 등)부터 적으면 ID는 지금 가장 큰 번호의 다음 번호로 채운다 (ID가 하나도 없으면 비워 둠)
-      if (t.hasId && !t.cols[c].id) r[0] = t.nextId(t.maxId() || '') || '';
+      if (t.hasId && !t.cols[c].id) { const max = t.maxId() || ''; r[0] = t.nextId(max, t.stepBefore(max)) || ''; }
       t.rows.push(r);
       this.render(true); // 다 적기 전엔 자리를 옮기지 않는다. 칸을 떠날 때 resortKeepFocus가 정렬한다
       const nel = this.at(t.rows.length - 1, c);
@@ -273,4 +275,4 @@ export class GridView {
   }
 }
 
-mixin(GridView, RangeSelect, ColumnMove, CellKeys, GridHtml, VirtualRows, EnumHint, WarnMenu, GridPaste, ColumnWidth, CrossHair, IdColor, ColumnTranslate, RefImport);
+mixin(GridView, RangeSelect, ColumnMove, CellKeys, GridHtml, VirtualRows, EnumHint, WarnMenu, GridPaste, ColumnWidth, CrossHair, IdColor, ColumnTranslate, RefImport, FillSeries);

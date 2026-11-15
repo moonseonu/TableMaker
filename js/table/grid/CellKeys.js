@@ -55,7 +55,7 @@ export class CellKeys {
   focusGhostRow(c, base) {
     const el = this.el.querySelector(`[data-ghostrow][data-c="${c}"]`);
     el.focus();
-    if (this.t.cols[c] && this.t.cols[c].id && /^\d+$/.test(base || '')) { el.value = this.t.nextId(base); el.select(); }
+    if (this.t.cols[c] && this.t.cols[c].id && /^\d+$/.test(base || '')) { el.value = this.t.nextId(base, this.t.stepBefore(base)); el.select(); } // 위 두 줄의 차이로 (1010 · 1020 → 1030)
   }
 
   // 미리 채운 번호를 받아들여(Enter) 행을 만들고, 다시 빈 줄에서 그다음 번호를 채운다

@@ -39,6 +39,7 @@ export class RangeSelect {
   }
 
   onMouseDown(e) {
+    if (e.button === 2 && this.inSel(e.target)) { e.preventDefault(); return; } // 범위 안 우클릭: 칸이 바뀌어 범위가 풀리지 않게 (FillSeries 메뉴)
     if (e.button !== 0) return;
     this.pointer = {x: e.clientX, y: e.clientY}; // 마우스를 움직이기 전에 바로 끌어도 가장자리 자동 스크롤이 위치를 안다
     const t = this.t, th = e.target.closest('th[data-c]');
@@ -118,6 +119,8 @@ export class RangeSelect {
     const cx = clamp(this.pointer.x, Math.max(r.left, a.left) + 2, Math.min(r.right, z.right) - 2);
     const cy = clamp(this.pointer.y, Math.max(top, a.top) + 2, Math.min(r.bottom, z.bottom) - 2);
     const p = this.pointOf(document.elementFromPoint(cx, cy) || this.el);
+    const extra = this.fillExtraAt(this.pointer.y); // 맨 아래 빈 줄(점선) 아래까지 끌면 그만큼 줄을 늘려 고른다 (FillSeries)
+    if (p && extra) p.r = this.t.rows.length - 1 + extra;
     if (p) this.dragTo(p);
   }
 
@@ -170,6 +173,7 @@ export class RangeSelect {
   // 열을 통째로(모든 행) 골랐으면 그 열들의 머리 칸, 행을 통째로(모든 열) 골랐으면 그 행들의 번호 칸도 칠한다(hsel)
   paintSel() {
     this.el.querySelectorAll('td.insel, .hsel').forEach(x => x.classList.remove('insel', 'hsel'));
+    this.paintFill(); // 표 아래로 늘린 점선 줄 (FillSeries)
     this.markCross(); // 고른 칸 · 범위의 행 · 열 표시 (CrossHair)
     if (!this.hasRange()) return;
     const g = this.range(), t = this.t;

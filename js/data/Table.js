@@ -57,17 +57,26 @@ export class Table {
 
   newRow() { return this.cols.map(c => c.type === 'bool' ? 'false' : ''); }
 
+  // 다음 ID를 몇씩 늘릴지: base와 바로 아래 번호의 차이 (1010 · 1020이면 10).
+  // 100을 넘으면 다른 구간으로 건너뛴 것으로 보고(1020 → 2001) 1. 아래 번호가 없어도 1
+  stepBefore(base) {
+    const b = +base, below = this.rows.map(r => r[0]).filter(v => /^\d+$/.test(v) && +v < b).map(Number);
+    const d = below.length ? b - Math.max(...below) : 0;
+    return d > 0 && d <= 100 ? d : 1;
+  }
+
   // 지금 ID 중 가장 큰 번호 (숫자 ID가 없으면 '')
   maxId() {
     return this.rows.map(r => r[0]).filter(v => /^\d+$/.test(v)).reduce((a, b) => (a === '' || +b > +a ? b : a), '');
   }
 
-  // base 다음으로 아직 안 쓴 ID 번호 (1001 → 1002, 이미 있으면 1003…). 앞의 0 자릿수는 지킨다(001 → 002). base가 없으면 ''
-  nextId(base) {
+  // base 다음으로 아직 안 쓴 ID 번호 (1001 → 1002, 이미 있으면 1003…). step만큼 건너뛴다(1010 → 1020).
+  // 앞의 0 자릿수는 지킨다(001 → 002). base가 없으면 ''
+  nextId(base, step = 1) {
     if (!/^\d+$/.test(base)) return '';
     const used = new Set(this.rows.map(r => String(+r[0])));
-    let n = +base + 1;
-    while (used.has(String(n))) n++;
+    let n = +base + step;
+    while (used.has(String(n))) n += step;
     return String(n).padStart(base.length, '0');
   }
 
