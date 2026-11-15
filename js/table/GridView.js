@@ -13,6 +13,7 @@ import {CrossHair} from './grid/CrossHair.js';
 import {IdColor} from './grid/IdColor.js';
 import {ColumnTranslate} from './grid/ColumnTranslate.js';
 import {TouchScroll} from './TouchScroll.js';
+import {RefImport} from './grid/RefImport.js';
 
 // 테이블 작성 영역: 표 그리기, 칸 입력·검사 표시, 정렬, 맨 오른쪽 빈 열과 맨 아래 빈 행, 칸에 붙여넣기
 // 역할이 많아 js/table/grid/ 의 역할 묶음(범위 선택, 열 옮기기, 칸 상태·키, HTML, 보이는 행, Enum, 경고 메뉴, 붙여넣기, 열 너비, 고른 칸의 행·열 표시)으로 나누고 여기서 합친다
@@ -26,7 +27,7 @@ export class GridView {
     window.addEventListener('resize', () => { this.padRight(); this.onScroll(); });
     for (const ev of ['input', 'change', 'compositionend']) el.addEventListener(ev, e => this.onEdit(e));
     el.addEventListener('focusout', e => this.onFocusOut(e));
-    el.addEventListener('toggle', e => { this.onToggle(e); this.onTranslateToggle(e); this.placePop(e.target); }, true); // toggle은 버블링이 안 돼서 capture로
+    el.addEventListener('toggle', e => { this.onToggle(e); this.onTranslateToggle(e); this.onRefToggle(e); this.placePop(e.target); }, true); // toggle은 버블링이 안 돼서 capture로
     el.addEventListener('focusin', e => this.onFocusIn(e));
     el.addEventListener('dblclick', e => this.onDblClick(e));
     el.addEventListener('click', e => this.onClick(e));
@@ -260,6 +261,7 @@ export class GridView {
     else if (b.id === 'typeToggle') { this.showTypes(this.typesHidden); this.stickHeads(); }
     else if (b.dataset.link) { const c = t.cols[+b.dataset.link]; c.unlink = !c.unlink; this.render(); }
     else if (b.dataset.sort) { t.sortBy(+b.dataset.sort); this.render(); }
+    else if (b.hasAttribute('data-refload')) this.importRefIds(); // ID ⚙ → ID 불러오기 (RefImport)
     else if (b.dataset.delcol) {
       const c = t.cols[+b.dataset.delcol], i = +b.dataset.delcol, filled = t.rows.filter(r => r[i] !== '').length;
       ask(`'${c.name || '(이름 없음)'}' 열을 삭제할까요?`, `값이 있는 칸 ${filled}개 · 지운 뒤에도 Ctrl+Z로 되돌릴 수 있습니다`, '삭제').then(ok => {
@@ -271,4 +273,4 @@ export class GridView {
   }
 }
 
-mixin(GridView, RangeSelect, ColumnMove, CellKeys, GridHtml, VirtualRows, EnumHint, WarnMenu, GridPaste, ColumnWidth, CrossHair, IdColor, ColumnTranslate);
+mixin(GridView, RangeSelect, ColumnMove, CellKeys, GridHtml, VirtualRows, EnumHint, WarnMenu, GridPaste, ColumnWidth, CrossHair, IdColor, ColumnTranslate, RefImport);

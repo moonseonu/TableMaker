@@ -106,7 +106,8 @@ export class GridHtml {
       `<label title="${cands.length ? 'ID가 다른 테이블의 ID를 가리킬 때 (예: Localization → items). 여러 테이블을 고를 수 있고, 이름이 같은 열은 그 ID가 있는 테이블 값으로 채워집니다' : '참조할 수 있는 다른 테이블(ID 열이 있는 탭)이 없습니다'}">` +
       `<input type="checkbox" class="refon"${t.refs.length ? ' checked' : ''}${cands.length ? '' : ' disabled'}> 다른 테이블 참조</label>` +
       // 참조 중이면 대상 테이블을 체크로 고른다 (여러 개 가능)
-      (t.refs.length ? '<div class="refs">' + cands.map(o => `<label><input type="checkbox" class="refpick" value="${esc(o.name)}"${t.refs.includes(o.name) ? ' checked' : ''}> ${esc(o.name)}</label>`).join('') + '</div>' : '') +
+      (t.refs.length ? '<div class="refs">' + cands.map(o => `<label><input type="checkbox" class="refpick" value="${esc(o.name)}"${t.refs.includes(o.name) ? ' checked' : ''}> ${esc(o.name)}</label>`).join('') + '</div>' +
+        this.refImportHtml() : '') + // 참조 테이블에만 있는 ID를 새 줄로 (RefImport)
       this.idColorOpt() + '</div></details>';
     // Enum 값 목록 보기(보기만). 칸을 고칠 때마다 바뀌어서 열 때 채운다(onToggle)
     h += this.translateHead(c, i); // String 열: 문A 다른 열을 번역해서 채우기 (ColumnTranslate)
