@@ -39,7 +39,9 @@ export class RangeSelect {
   }
 
   onMouseDown(e) {
-    if (e.button === 2 && this.inSel(e.target)) { e.preventDefault(); return; } // 범위 안 우클릭: 칸이 바뀌어 범위가 풀리지 않게 (FillSeries 메뉴)
+    // 우클릭은 커서 · 범위를 바꾸지 않는다(잘못 눌러도 고른 범위가 풀리지 않게). 범위 안이면 채우기 메뉴(FillSeries),
+    // 경고 칸이면 경고 메뉴(WarnMenu)가 누른 칸 기준으로 뜬다. 칸을 옮기는 건 왼쪽 클릭만
+    if (e.button === 2) { e.preventDefault(); return; }
     if (e.button !== 0) return;
     this.pointer = {x: e.clientX, y: e.clientY}; // 마우스를 움직이기 전에 바로 끌어도 가장자리 자동 스크롤이 위치를 안다
     const t = this.t, th = e.target.closest('th[data-c]');

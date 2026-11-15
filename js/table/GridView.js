@@ -44,7 +44,7 @@ export class GridView {
     document.addEventListener('mouseup', () => this.onMouseUp());
     document.addEventListener('mousemove', e => this.onMouseMove(e));
     // 표 바깥을 누르면 범위 선택(파란 영역)도 푼다. 칸 하나를 고른 것은 포커스를 잃으며 저절로 풀리니 같게
-    document.addEventListener('mousedown', e => { if (this.sel && !this.el.contains(e.target)) this.clearSel(); });
+    document.addEventListener('mousedown', e => { if (e.button === 0 && this.sel && !this.el.contains(e.target)) this.clearSel(); }); // 우클릭은 그대로
     this.hint = document.body.appendChild(document.createElement('div')); // Enum 자동 완성으로 칸 뒤에 흐리게 보이는 나머지 글자
     this.hint.className = 'hint';
     document.addEventListener('copy', e => this.onCopy(e));
