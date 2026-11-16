@@ -1,6 +1,6 @@
 import {esc} from '../common/util.js';
 
-// 데이터 조회 칸 아래로 펼치는 ID 목록 (어떤 ID가 있는지 몰라도 찾게). 숫자를 칠 때만 열린다.
+// 데이터 조회 칸 아래로 펼치는 ID 목록 (어떤 ID가 있는지 몰라도 찾게). 숫자를 칠 때, 숫자가 적힌 칸을 다시 누를 때 열린다.
 // source(앞자리) → [{id, sub}] (작은 순서). 마우스로 누르거나 ↑↓ + Enter로 고르면 칸을 그 ID로 채우고 input 이벤트를 보낸다.
 // Esc · 칸 밖을 누르면 닫는다. 길면 목록 안에서 스크롤 (아래 창 밖으로 넘치지 않게 높이를 맞춘다)
 export class IdSuggest {
@@ -14,6 +14,7 @@ export class IdSuggest {
     this.list = Object.assign(document.createElement('ul'), {className: 'combo-list', hidden: true});
     wrap.append(input, this.list);
     input.addEventListener('input', () => { if (!this.picking) this.show(); });
+    input.addEventListener('click', () => { if (this.list.hidden) this.show(); }); // 밖을 눌러 닫았어도 칸을 다시 누르면 다시
     input.addEventListener('blur', () => this.hide());
     input.addEventListener('keydown', e => this.key(e));
     // 누를 때 칸 포커스를 뺏지 않게 (blur로 목록이 먼저 닫히지 않게)
