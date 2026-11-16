@@ -1,6 +1,10 @@
 /* 사용 안내(guide.html) 전용. 색·표·탭 모양은 style.css를 그대로 쓰고, 번호 표시와 설명 목록만 더한다 */
-header .back{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--accent-text);text-decoration:none}
-header .back:hover{text-decoration:underline}
+/* 가운데 제목을 누르면 GameTableMaker로 돌아간다 (앱에서 왔으면 뒤로 가기, 바로 들어왔으면 앱 첫 화면, guide.js).
+   돌아가는 길이 이것뿐이라 좁은 화면에서도 숨기지 않고, 오른쪽 ☰ 자리가 없으니 가운데 그대로 */
+header h1 .home{color:inherit;text-decoration:none;display:inline-block;padding:8px 12px;margin:-8px -12px} /* 누르는 자리를 넉넉하게 (머리줄 높이는 그대로) */
+header h1 .home:hover{text-decoration:underline}
+@media (max-width:640px){header h1{text-align:center;padding-right:0}}
+@media (max-width:340px){header h1{display:block}}
 #tabs .tab{padding-right:12px}
 main.guide{padding:18px 20px 48px}
 /* 모든 주제를 한 페이지에 펼친다 (Ctrl+F로 찾을 수 있게). 위 탭 줄은 목차 */

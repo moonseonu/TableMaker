@@ -21,3 +21,9 @@ main.addEventListener('scroll', () => { if (atEnd()) mark(tabs.at(-1).dataset.to
 const first = document.getElementById(location.hash.slice(1));
 if (first) first.scrollIntoView({block: 'start'});
 mark(first ? first.id : 'start');
+
+// 가운데 제목: 앱에서 들어왔으면 뒤로 가기(보던 화면 그대로), 검색 · 공유 링크로 바로 들어왔으면 링크대로 앱 첫 화면으로
+document.querySelector('header .home').addEventListener('click', e => {
+  const from = document.referrer ? new URL(document.referrer) : null;
+  if (from && from.origin === location.origin && !from.pathname.endsWith('guide.html') && history.length > 1) { e.preventDefault(); history.back(); }
+});
