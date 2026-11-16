@@ -1,11 +1,13 @@
 import {$, esc} from '../common/util.js';
+import {IdSuggest} from './IdSuggest.js';
 
 const CAP = 100; // 테이블마다 보여 줄 줄 수
 
 // 데이터 조회 (도구줄 버튼으로 여는 아래 왼쪽 창): ID를 적으면 모든 테이블에서
 //   ① 그 ID의 행 (참조로 이은 테이블이면 'ID로 참조'),
 //   ② 이름이 ID로 끝나는 열(ItemID 등)에 그 값이 적힌 줄
-// 을 테이블별 작은 표로 모아 보여 준다. 정확히 맞는 ID만(사용자 결정, 일부만 쳐서 목록을 띄우지 않음), 접두사(item_)는 떼고 본다.
+// 을 테이블별 작은 표로 모아 보여 준다. 결과는 정확히 맞는 ID만(사용자 결정), 접두사(item_)는 떼고 본다.
+// 어떤 ID가 있는지는 칠 때 아래로 펼치는 목록(IdSuggest)으로 알려 준다.
 // 줄을 누르면 그 탭의 그 칸으로 옮겨 가 화면 가운데 오게 한다
 export class DataLookup {
   constructor(app) {
@@ -19,6 +21,24 @@ export class DataLookup {
     $('closeLookup').onclick = () => this.setOpen(false);
     this.inp.addEventListener('input', () => this.refresh());
     this.out.addEventListener('click', e => this.go(e));
+    this.suggest = new IdSuggest(this.inp, q => this.ids(q));
+  }
+
+  // 자동 완성 목록: 각 테이블 ID 열의 값 중 앞자리가 q인 것, 작은 순서. 같은 ID는 한 줄에 테이블 이름을 모아서
+  ids(q) {
+    q = String(+q);
+    const m = new Map();
+    for (const t of this.app.workbook.tables) {
+      if (!t.hasId) continue;
+      for (const r of t.rows) {
+        if (r[0] === '' || !/^\d+$/.test(r[0])) continue;
+        const id = String(+r[0]);
+        if (!id.startsWith(q)) continue;
+        if (!m.has(id)) m.set(id, new Set());
+        m.get(id).add(t.name);
+      }
+    }
+    return [...m].sort((a, b) => a[0] - b[0]).map(([id, names]) => ({id, sub: [...names].join(' · ')}));
   }
 
   get open() { return !this.el.hidden; }

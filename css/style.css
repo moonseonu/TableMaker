@@ -373,8 +373,14 @@ tr:hover .num .del{visibility:visible}
 #lookup:not([hidden])+#meta{border-left:1px solid var(--line)}
 .bar{display:flex;gap:8px;align-items:center;padding:6px 12px;border-bottom:1px solid var(--line)}
 /* 데이터 조회 (DataLookup): ID 칸 아래 테이블마다 작은 표 */
-.lkbody{flex:1;min-height:0;overflow:auto;padding:10px 12px}
-#lookupId{width:200px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 8px;margin-bottom:10px}
+/* ID 칸은 결과를 내려도 위에 그대로, 그 아래로 펼치는 ID 목록(IdSuggest)은 결과 위에 겹쳐 뜬다 */
+.lkfind{padding:10px 12px}
+.lkbody{flex:1;min-height:0;overflow:auto;padding:0 12px 10px}
+.idsug{position:relative;display:inline-block;max-width:100%}
+.idsug .combo-list{right:auto;width:260px;max-width:calc(100vw - 40px)}
+.idsug .combo-list li{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.idsug .combo-list small{color:var(--dim);overflow:hidden;text-overflow:ellipsis}
+#lookupId{width:200px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 8px}
 #lookupId:focus{outline:0;border-color:var(--accent)}
 .lkgrp{margin-bottom:14px}
 .lkh{display:flex;gap:8px;align-items:baseline;margin-bottom:4px}
