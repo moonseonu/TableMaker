@@ -6,7 +6,7 @@ import {StorageFull} from './data/StorageFull.js';
 import {History} from './data/History.js';
 import {GridView} from './table/GridView.js';
 import {TabsView} from './table/TabsView.js';
-import {JsonPanel} from './json/JsonPanel.js';
+import {DataLookup} from './lookup/DataLookup.js';
 import {Exporter} from './json/Exporter.js';
 import {MetaPanel} from './meta/MetaPanel.js';
 import {Importer} from './import/Importer.js';
@@ -23,8 +23,9 @@ import {SafariNotice} from './settings/SafariNotice.js';
 import {Memo} from './memo/Memo.js';
 
 // 각 영역을 만들고 서로 잇는다. 영역끼리는 직접 부르지 않고 App을 거친다
-//   table/  테이블 작성 영역 (표, 탭)      json/   JSON 보기·다운로드
+//   table/  테이블 작성 영역 (표, 탭)      json/   JSON 다운로드
 //   meta/   테이블 설명 · 설명서          import/ 불러오기 · 붙여넣기 해석
+//   lookup/ 데이터 조회 (아래 왼쪽 창)
 //   data/   데이터와 규칙 (화면과 무관)        settings/ ☰ 메뉴 (화면 테마, 후원), 새 버전 알림, 제목줄 왼쪽 프로젝트 메뉴
 export class App {
   constructor() {
@@ -38,7 +39,7 @@ export class App {
     this.errors = 0;
     this.grid = new GridView($('grid'), this);
     this.tabs = new TabsView($('tabs'), this);
-    this.json = new JsonPanel(this);
+    this.lookup = new DataLookup(this); // 데이터 조회 창
     this.meta = new MetaPanel(this);
     this.exporter = new Exporter(this);
     StorageFull.exportZip = () => this.exporter.save('project'); // 저장 공간이 꽉 찼을 때 팝업의 'zip으로 받기'
@@ -90,7 +91,7 @@ export class App {
     if (errors) this.status(`오류 ${errors}개`, 'bad');
     else if (warns) this.status(`경고 ${warns}개`, 'warn'); // 다른 테이블과 ID 자릿수 겹침, 참조 대상에 없는 ID (칸에 마우스를 올리면 이유)
     else this.status('');
-    this.json.refresh();
+    this.lookup.refresh();
     this.meta.refresh();
     this.commit(this.group);
     this.group = null;
@@ -134,8 +135,8 @@ export class App {
   // 한 번 알리면 되는 것은 잠깐 떴다 사라지는 알림으로
   toast(text, kind) { Toast.show(text, kind); }
 
-  // 하단 패널 둘은 따로 켜고 끈다. 둘 다 켜면 JSON 왼쪽, 설명 오른쪽
-  layoutPanels() { $('panels').hidden = !this.json.open && !this.meta.open; }
+  // 하단 패널 둘은 따로 켜고 끈다. 둘 다 켜면 데이터 조회 왼쪽, 설명 오른쪽
+  layoutPanels() { $('panels').hidden = !this.lookup.open && !this.meta.open; }
 
   // 붙여넣기는 커서 위치로 갈린다: 테이블 설명 창 → Meta 시트, 표의 칸 → 그 칸부터 채우기, 아무 데도 아니면 → 새 테이블
   onPaste(e) {
