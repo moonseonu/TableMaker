@@ -42,7 +42,7 @@
 <!-- ───────── 시작하기 ───────── -->
 <section class="topic" id="start">
   <h2>표 만들기</h2>
-  <p class="lead">엑셀처럼 칸에 바로 적습니다. 점선으로 된 빈 칸에 적으면 그 순간 새 열·새 행이 됩니다.</p>
+  <p class="lead">엑셀처럼 칸에 바로 적습니다. 점선 칸에 적으면 새 열 · 새 행이 됩니다.</p>
   <div class="sheet" inert>
     <table>
       <thead><tr class="hname">
@@ -66,20 +66,20 @@
     </table>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>새 열</b> — 맨 오른쪽 점선 칸에 컬럼 이름을 적으면 열이 생깁니다. 값부터 적으면 <code>col1</code> 같은 임시 이름이 붙으니 나중에 고치세요. 비워 둔 열은 JSON에 나오지 않습니다.</span></li>
-    <li><i class="mk">2</i><span><b>새 행</b> — 맨 아래 점선 줄에 적으면 행이 생깁니다. ID가 아닌 칸부터 적으면 다음 번호가 자동으로 붙습니다. 긴 표에서는 <kbd>Ctrl</kbd>+<kbd>↓</kbd>로 그 줄에 바로 갑니다.</span></li>
-    <li><i class="mk">3</i><span><b>열 타입</b> — ID · String(문자열) · Int(정수) · Float(실수) · Bool(참/거짓) · Enum(정해진 값 중 하나). JSON에 그 타입 그대로 나갑니다(<code>"900"</code>이 아니라 <code>900</code>). 새 열은 처음 적은 값을 보고 타입이 정해지고, 드롭다운에서 언제든 바꿀 수 있습니다. 바꿔도 값은 그대로이고, 맞지 않는 값만 빨간 칸이 됩니다.<br><b>Enum</b> — 그 열에 적힌 값들이 곧 목록입니다. 앞 글자만 쳐도 나머지가 흐리게 보여 <kbd>Enter</kbd> · <kbd>Tab</kbd>으로 채워지고, ⚙를 누르면 목록이 보입니다. JSON에는 글자로 나갑니다.</span></li>
-    <li><i class="mk">4</i><span><b>빨간 칸</b> — 타입에 맞지 않는 값입니다(위 표의 <code>천원</code>). 위쪽에 오류 개수가 뜨고, 고치면 사라집니다.</span></li>
-    <li><i class="mk">5</i><span><b>문A 번역해서 채우기</b> — String 열에만 있습니다. 누르면 다른 열(예: Korean)을 번역해 이 열(예: English)의 <b>모든 칸</b>을 채웁니다. 원문 열과 번역할 언어만 고르면 되고, 원문 언어는 글을 보고 알아냅니다. 이미 적힌 칸이 있으면 덮어쓰기 전에 묻고, <kbd>Ctrl</kbd>+<kbd>Z</kbd> 한 번으로 모두 되돌립니다. 지금은 <b>브라우저 내장 번역</b>(무료, 글이 PC 밖으로 나가지 않음)이라 <b>Chrome PC</b>에서만 되고, 처음 한 번은 언어 파일을 받습니다. 기계 번역이니 한 번 확인해 주세요.</span></li>
+    <li><i class="mk">1</i><span><b>새 열</b> — 맨 오른쪽 점선 칸에 이름을 적으면 열이 생깁니다.<details class="more"><summary>자세히</summary><div>값부터 적으면 <code>col1</code> 같은 임시 이름이 붙습니다. 비워 둔 열은 JSON에 나오지 않습니다.</div></details></span></li>
+    <li><i class="mk">2</i><span><b>새 행</b> — 맨 아래 점선 줄에 적으면 행이 생기고, ID는 다음 번호가 붙습니다.<details class="more"><summary>자세히</summary><div>긴 표에서는 <kbd>Ctrl</kbd>+<kbd>↓</kbd>로 그 줄에 바로 갑니다.</div></details></span></li>
+    <li><i class="mk">3</i><span><b>열 타입</b> — ID · String · Int · Float · Bool · Enum. JSON에 그 타입으로 나갑니다(<code>"900"</code>이 아니라 <code>900</code>).<details class="more"><summary>자세히</summary><div>새 열은 처음 적은 값으로 타입이 정해지고, 드롭다운에서 바꿉니다. 바꿔도 값은 그대로이고 맞지 않으면 빨간 칸입니다. <b>Enum</b>은 그 열에 적힌 값들이 목록이라, 앞 글자를 치면 나머지가 흐리게 보여 <kbd>Enter</kbd> · <kbd>Tab</kbd>으로 채웁니다. JSON에는 글자로 나갑니다.</div></details></span></li>
+    <li><i class="mk">4</i><span><b>빨간 칸</b> — 타입에 맞지 않는 값입니다(<code>천원</code>). 위쪽에 오류 개수가 뜹니다.</span></li>
+    <li><i class="mk">5</i><span><b>문A 번역해서 채우기</b> — 다른 열(Korean)을 번역해 이 열(English)을 채웁니다. Chrome PC에서 무료로 됩니다.<details class="more"><summary>자세히</summary><div>원문 열과 언어만 고르면 원문 언어는 알아서 찾습니다. 이미 적힌 칸이 있으면 덮어쓰기 전에 묻고, <kbd>Ctrl</kbd>+<kbd>Z</kbd> 한 번으로 되돌립니다. 브라우저 내장 번역이라 글이 PC 밖으로 나가지 않고, 처음 한 번은 언어 파일을 받습니다. 기계 번역이니 한 번 확인해 주세요.</div></details></span></li>
   </ol>
-  <div class="tip"><b>칸 고르기와 고치기 (엑셀과 같음)</b> — 칸을 클릭해 고르고 화살표로 움직입니다. 그대로 타이핑하면 새로 쓰고, 일부만 고치려면 더블클릭이나 <kbd>F2</kbd>. <kbd>Esc</kbd> 취소, <kbd>Delete</kbd> 비우기, <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기. 여러 칸은 드래그해서 고릅니다(컬럼 이름 칸 · 행 번호를 끌면 열 · 행 통째로). 열은 글자에 맞춰 넓어지고, 컬럼 이름 칸의 <b>오른쪽 경계를 끌어</b> 너비를 정하거나 <b>두 번 눌러</b> 되돌립니다. 키 전체는 <a href="#keys" style="color:var(--accent-text)">보기 · 단축키</a>에 있습니다.</div>
-  <div class="tip"><b>이미 엑셀로 만든 표가 있다면</b> — 엑셀에서 <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd> 한 뒤 GameTableMaker의 빈 곳을 누르고 <kbd>Ctrl</kbd>+<kbd>V</kbd>. 첫 줄이 컬럼 이름이 되고, 값을 보고 열 타입을 알아서 정합니다. 엑셀이 붙이는 <code>1,000</code> 같은 쉼표와 <code>TRUE</code>/<code>FALSE</code>도 알아봅니다.</div>
+  <div class="tip"><b>칸 고르기와 고치기</b> — 클릭해 고르고, 그대로 치면 새로 씁니다. 일부만 고치려면 더블클릭 · <kbd>F2</kbd>. <kbd>Esc</kbd> 취소 · <kbd>Delete</kbd> 비우기 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기. 키 전체는 <a href="#keys">보기 · 단축키</a>에.<details class="more"><summary>자세히</summary><div>열은 글자에 맞춰 넓어집니다. 컬럼 이름 칸의 오른쪽 경계를 끌어 너비를 정하고, 두 번 누르면 되돌립니다.</div></details></div>
+  <div class="tip"><b>엑셀 표가 있다면</b> — 엑셀에서 <kbd>Ctrl</kbd>+<kbd>A</kbd> → <kbd>Ctrl</kbd>+<kbd>C</kbd> 한 뒤 빈 곳에서 <kbd>Ctrl</kbd>+<kbd>V</kbd>. 첫 줄이 컬럼 이름이 됩니다.<details class="more"><summary>자세히</summary><div>값을 보고 열 타입을 정합니다. 엑셀이 붙이는 <code>1,000</code> 같은 쉼표와 <code>TRUE</code> / <code>FALSE</code>도 알아봅니다.</div></details></div>
 </section>
 
 <!-- ───────── ID 규칙 ───────── -->
 <section class="topic" id="id">
   <h2>ID 규칙</h2>
-  <p class="lead">첫 열이 ID입니다. JSON에는 정수로 나가고, 행은 항상 ID 순서로 정렬됩니다.</p>
+  <p class="lead">첫 열이 ID입니다. JSON에는 정수로 나가고, 행은 늘 ID 순서입니다.</p>
   <div class="row">
     <div class="sheet" inert>
       <table>
@@ -108,20 +108,20 @@
     </div></div>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>ID는 정수</b> — 번호에 의미를 담는 방식(1011 씨앗, 1012 작물…)을 그대로 씁니다. 비었거나, 숫자가 아니거나, 다른 행과 겹치면 빨간 칸입니다.</span></li>
-    <li><i class="mk">+</i><span><b>번호 이어서 적기</b> — ID 칸에 <code>1001</code>을 적고 <kbd>Enter</kbd>를 치면 맨 아래 빈 줄에 <code>1002</code>가 미리 채워집니다. 위 두 줄이 <code>1010</code> · <code>1020</code>처럼 10씩 늘었으면 <code>1030</code>처럼 <b>그 차이대로</b> 이어 갑니다(차이가 100을 넘으면 다른 구간으로 건너뛴 것으로 보고 1씩). 이미 있는 번호는 건너뜁니다.</span></li>
-    <li><i class="mk">2</i><span><b>⚙ 접두사</b> — <code>item_</code>처럼 적으면 칸 앞에 이름표가 붙어 어떤 테이블의 ID인지 보입니다. 화면에만 붙고 JSON에는 <code>1001</code>로 나갑니다. <b>JSON에 포함</b>을 켜면 <code>"item_1001"</code> 문자로 나갑니다. 설정이 있으면 ⚙가 파랗게 보입니다.</span></li>
-    <li><i class="mk">3</i><span><b>정렬</b> — ▼ 오름차순, ▲ 내림차순. 번호를 적고 칸을 떠나면 그 행이 순서에 맞는 자리로 가고, 화면도 그 행이 가운데 오게 따라갑니다. 그 밖에는 휠 · 끌기로 옮길 때만 스크롤됩니다.</span></li>
-    <li><i class="mk">4</i><span><b>노란 칸</b> — 다른 테이블이 같은 자릿수의 ID를 쓰고 있다는 알림입니다(위 표의 <code>2001</code>). 테이블마다 100단위, 1000단위처럼 자릿수를 나눠 쓰면 겹치지 않습니다. 저장은 막지 않습니다.</span></li>
-    <li><i class="mk">5</i><span><b>⚙ 첫 자리로 색 구분</b> — ID 첫 자리(1~9)마다 색을 정해 ID 칸 옆에 얇은 띠로 보여 줍니다. 1xxx 씨앗 · 8xxx 업그레이드처럼 첫 자리로 종류를 나눈 표에서 구간이 한눈에 보이고, 잘못 매긴 번호가 튑니다. 아래 동그라미는 색과 자리의 짝입니다(이 표에 없는 자리는 테두리만). 화면에만 보이고, 테이블마다 켜고 끕니다.</span></li>
+    <li><i class="mk">1</i><span><b>ID는 정수</b> — 비었거나 숫자가 아니거나 다른 행과 겹치면 빨간 칸입니다.</span></li>
+    <li><i class="mk">+</i><span><b>번호 이어서 적기</b> — 마지막 ID에서 Enter를 누르면 새 줄에 다음 번호가 미리 채워집니다. 10씩 적었으면 10씩 이어 갑니다.<details class="more"><summary>자세히</summary><div>위 두 줄의 차이를 씁니다. 차이가 100을 넘으면 다른 구간으로 건너뛴 것으로 보고 1씩입니다. 이미 있는 번호는 건너뜁니다. 여러 줄을 한 번에 만들려면 <a href="#keys">채우기</a>를 쓰세요.</div></details></span></li>
+    <li><i class="mk">2</i><span><b>⚙ 접두사</b> — <code>item_</code>처럼 적으면 칸 앞에 이름표가 붙습니다. JSON에는 <code>1001</code>로 나갑니다.<details class="more"><summary>자세히</summary><div><b>JSON에 포함</b>을 켜면 <code>"item_1001"</code> 문자로 나갑니다. 설정이 있으면 ⚙가 파랗게 보입니다.</div></details></span></li>
+    <li><i class="mk">3</i><span><b>정렬</b> — ▼ 오름차순, ▲ 내림차순. 번호를 고치면 그 행이 제자리로 가고 화면이 따라갑니다.</span></li>
+    <li><i class="mk">4</i><span><b>노란 칸</b> — 다른 테이블이 같은 자릿수의 ID를 쓴다는 알림입니다. 저장은 막지 않습니다.<details class="more"><summary>자세히</summary><div>테이블마다 100단위, 1000단위처럼 자릿수를 나눠 쓰면 겹치지 않습니다.</div></details></span></li>
+    <li><i class="mk">5</i><span><b>⚙ 첫 자리로 색 구분</b> — ID 첫 자리(1~9)마다 색 띠를 보여 줍니다. 화면에만 보입니다.<details class="more"><summary>자세히</summary><div>1xxx 씨앗 · 8xxx 업그레이드처럼 첫 자리로 종류를 나눈 표에서 구간이 한눈에 보이고, 잘못 매긴 번호가 튑니다. 동그라미는 색과 자리의 짝입니다(표에 없는 자리는 테두리만). 테이블마다 켜고 끕니다.</div></details></span></li>
   </ol>
-  <div class="tip"><b>ID가 없는 테이블</b> — Config처럼 한 줄짜리 설정 테이블은 ID 열을 지우면 됩니다. 다른 열의 타입을 <b>ID</b>로 바꾸면 그 열이 맨 앞으로 가서 ID가 됩니다.</div>
+  <div class="tip"><b>ID가 없는 테이블</b> — Config처럼 한 줄짜리 표는 ID 열을 지우면 됩니다.<details class="more"><summary>자세히</summary><div>다른 열의 타입을 <b>ID</b>로 바꾸면 그 열이 맨 앞으로 가서 ID가 됩니다.</div></details></div>
 </section>
 
 <!-- ───────── 다른 테이블 참조 ───────── -->
 <section class="topic" id="ref">
   <h2>다른 테이블 참조</h2>
-  <p class="lead">번역 테이블처럼 행 하나가 다른 테이블의 행 하나와 짝인 경우, 이름이 같은 열을 자동으로 가져옵니다.</p>
+  <p class="lead">번역 테이블처럼 행이 다른 테이블의 행과 짝이면, 이름이 같은 열을 자동으로 가져옵니다.</p>
   <div class="sheet" inert>
     <table>
       <thead><tr class="hname">
@@ -143,18 +143,19 @@
     </table>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>켜기</b> — ID 열의 ⚙ → <b>다른 테이블 참조</b>를 체크하면, 이 테이블의 ID가 들어 있는 테이블이 자동으로 골라집니다. 아래 목록에서 체크로 바꿀 수 있고, 여러 개도 됩니다(예: CostDataTable → StructureDataTable + UnitDataTable). 대상도 탭으로 열려 있어야 합니다.</span></li>
-    <li><i class="mk">2</i><span><b>🔗 자동으로 가져온 열</b> — 대상에도 있는 이름의 열(<code>Name</code>)은 같은 ID 행의 값으로 채워지고 회색으로 잠깁니다. 대상에서 고치면 여기도 바뀌고, JSON에도 그 값으로 나갑니다.</span></li>
-    <li><i class="mk">3</i><span><b>🔗 끄기</b> — 파란 🔗를 누르면 연결이 끊겨 직접 고칠 수 있습니다. 연결 전에 적어 둔 값이 있었다면 그 값으로 돌아갑니다. 다시 누르면 대상 값으로 채워집니다.</span></li>
-    <li><i class="mk">4</i><span><b>없는 ID</b> — 고른 대상 어디에도 없는 번호는 노란 경고 칸입니다(<code>1099</code>). 오타나 지워진 아이템을 찾을 때 씁니다. 일부러 둔 행이면 칸 <b>우클릭 → 이 경고 숨기기</b>(다시 우클릭하면 되살리기). 오류가 아니라 저장은 그대로 됩니다.</span></li>
-    <li><i class="mk">+</i><span><b>ID 불러오기</b> — 참조한 테이블에는 있는데 여기에는 없는 ID가 있으면, ID ⚙ 창의 참조 목록 아래에 <b>ID 불러오기 (N)</b> 버튼이 생깁니다. 누르면 그 ID들이 새 줄로 들어오고, 이름이 같은 열(🔗)은 바로 채워집니다. 여러 테이블을 참조하면 어느 테이블에서 불러올지 고르는 창이 뜨고, 이미 다 불러온 테이블은 회색으로 꺼져 있습니다. <kbd>Ctrl</kbd>+<kbd>Z</kbd> 한 번으로 되돌립니다.</span></li>
+    <li><i class="mk">1</i><span><b>켜기</b> — ID ⚙ → <b>다른 테이블 참조</b>. 이 ID가 들어 있는 테이블이 골라지고, 여러 개도 됩니다.<details class="more"><summary>자세히</summary><div>목록의 체크로 바꿀 수 있습니다(예: CostDataTable → StructureDataTable + UnitDataTable). 대상도 탭으로 열려 있어야 합니다.</div></details></span></li>
+    <li><i class="mk">2</i><span><b>🔗 가져온 열</b> — 이름이 같은 열은 대상 값으로 채워지고 회색으로 잠깁니다.</span></li>
+    <li><i class="mk">3</i><span><b>🔗 끄기</b> — 누르면 연결이 끊겨 직접 고칠 수 있습니다. 다시 누르면 대상 값으로 채워집니다.<details class="more"><summary>자세히</summary><div>연결 전에 적어 둔 값이 있었으면 그 값으로 돌아갑니다.</div></details></span></li>
+    <li><i class="mk">4</i><span><b>없는 ID</b> — 대상에 없는 번호는 노란 칸입니다. 일부러 둔 줄이면 우클릭 → <b>이 경고 숨기기</b>.</span></li>
+    <li><i class="mk">+</i><span><b>ID 불러오기</b> — 대상에만 있는 ID를 ⚙의 <b>ID 불러오기 (N)</b>로 새 줄로 가져옵니다.<details class="more"><summary>자세히</summary><div>여러 테이블을 참조하면 고르는 창이 뜨고, 이미 다 불러온 테이블은 회색으로 꺼져 있습니다. <kbd>Ctrl</kbd>+<kbd>Z</kbd> 한 번으로 되돌립니다.</div></details></span></li>
   </ol>
+  <div class="flow3" inert><div class="st"><div class="lab"><i class="mk">1</i>⚙ → ID 불러오기</div><button class="primary small">ID 불러오기 (2)</button></div><span class="arr">→</span><div class="st"><div class="lab"><i class="mk">2</i>여럿이면 고르기</div><div class="minidlg"><label><input type="checkbox" checked> Unit 2개</label><label class="off"><input type="checkbox" disabled> Item 0개</label></div></div><span class="arr">→</span><div class="st"><div class="lab"><i class="mk">3</i>새 줄 + 🔗 채움</div><table class="mini"><tr><td>1011</td><td>CornSeed</td></tr><tr><td class="n">5001</td><td class="n">Farmer</td></tr><tr><td class="n">5002</td><td class="n">Guard</td></tr></table></div></div>
 </section>
 
 <!-- ───────── 테이블 설명 ───────── -->
 <section class="topic" id="desc">
   <h2>테이블 설명</h2>
-  <p class="lead">엑셀의 Meta 시트 대신 쓰는 곳입니다. 설명은 JSON에 나가지 않고, 설명서(.md) 파일로 따로 내보냅니다.</p>
+  <p class="lead">엑셀의 Meta 시트 대신 쓰는 곳입니다. JSON에는 안 나가고 설명서(.md)로 내보냅니다.</p>
   <div class="row">
     <div class="sheet" inert style="margin:0;min-width:300px">
       <div class="bar"><b>items 테이블 설명</b><i class="mk">1</i><span class="spacer"></span><small style="color:var(--dim)">Meta 시트 붙여넣기</small><i class="mk">2</i></div>
@@ -180,17 +181,17 @@
 | kind | Enum: 검, 활, 지팡이 | 무기 종류 |</pre></div>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>적기</b> — 위쪽 <b>테이블 설명</b> 버튼을 누르면 아래에 창이 열립니다. 컬럼 설명 칸은 <kbd>↓</kbd> · <kbd>Enter</kbd> · <kbd>Tab</kbd>으로 다음 칸, <kbd>↑</kbd> · <kbd>Shift</kbd>+<kbd>Enter</kbd> · <kbd>Shift</kbd>+<kbd>Tab</kbd>으로 이전 칸입니다. Enum 열은 <b>Enum · N개 ▾</b>를 누르면 값 목록이 펼쳐집니다.</span></li>
-    <li><i class="mk">2</i><span><b>엑셀 Meta 시트 붙여넣기</b> — <code>Column · Description · Type</code> 형식의 시트를 복사해 이 창에 붙여넣으면 한 번에 채워집니다. <code>컬럼명 · 설명 · 타입</code>처럼 한국어 머리줄도 알아봅니다.</span></li>
-    <li><i class="mk">3</i><span><b>설명서 내보내기</b> — <b>파일 저장 ▾ → 설명서 (.md)…</b>. 오른쪽 같은 문서가 만들어집니다. 파일 이름은 <code>ItemDataTable_Desc.md</code>처럼 뒤에 <code>_Desc</code>가 붙습니다(JSON과 이름이 같으면 Unity <code>Resources.Load</code>가 헷갈려서). 예전 이름(<code>ItemDataTable.md</code>)도 불러오고, 커밋하면 새 이름으로 바꿔 올립니다.</span></li>
-    <li><i class="mk">4</i><span><b>설정 되살리기</b> — JSON과 그 설명서(<code>이름_Desc.md</code>, 예전 <code>이름.md</code>)를 함께 불러오면 설명과 함께 열 타입·접두사·참조 설정도 돌아옵니다.</span></li>
+    <li><i class="mk">1</i><span><b>적기</b> — <b>테이블 설명</b> 버튼을 누르면 아래에 창이 열립니다. <kbd>↓</kbd> · <kbd>Enter</kbd> · <kbd>Tab</kbd>으로 다음 칸.<details class="more"><summary>자세히</summary><div><kbd>↑</kbd> · <kbd>Shift</kbd>+<kbd>Enter</kbd> · <kbd>Shift</kbd>+<kbd>Tab</kbd>은 이전 칸입니다. Enum 열은 <b>Enum · N개 ▾</b>로 값 목록을 펼칩니다.</div></details></span></li>
+    <li><i class="mk">2</i><span><b>Meta 시트 붙여넣기</b> — <code>Column · Description · Type</code> 시트를 복사해 이 창에 붙이면 한 번에 채워집니다.<details class="more"><summary>자세히</summary><div><code>컬럼명 · 설명 · 타입</code>처럼 한국어 머리줄도 알아봅니다.</div></details></span></li>
+    <li><i class="mk">3</i><span><b>설명서 내보내기</b> — <b>파일 저장 ▾ → 설명서 (.md)…</b>. 이름은 <code>ItemDataTable_Desc.md</code>입니다.<details class="more"><summary>자세히</summary><div>JSON과 이름이 같으면 Unity <code>Resources.Load</code>가 헷갈려서 <code>_Desc</code>를 붙입니다. 예전 이름(<code>ItemDataTable.md</code>)도 불러오고, 커밋하면 새 이름으로 바꿔 올립니다.</div></details></span></li>
+    <li><i class="mk">4</i><span><b>설정 되살리기</b> — JSON과 설명서를 함께 불러오면 타입 · 접두사 · 참조 설정도 돌아옵니다.</span></li>
   </ol>
 </section>
 
 <!-- ───────── 불러오기 · 저장 ───────── -->
 <section class="topic" id="file">
   <h2>불러오기 · 저장</h2>
-  <p class="lead">어디서 가져오든 같은 목록 창이 떠서, 파일마다 들어갈 곳(새 탭 · 설명 · 설정)을 먼저 짐작해 보여 줍니다. 지금 탭은 덮어쓰지 않습니다.</p>
+  <p class="lead">어디서 가져오든 목록 창에서 파일마다 들어갈 곳을 먼저 보여 줍니다. 지금 탭은 덮어쓰지 않습니다.</p>
   <div class="row" inert>
     <div class="dropmenu outline"><div class="menu static">
       <button>GitHub <small>저장소 폴더에서<i class="mk">1</i></small></button>
@@ -208,13 +209,13 @@
     </div></div>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>GitHub</b> — 팀 저장소의 폴더에서 바로 가져옵니다. 로그인 · 연결 · 갱신은 <a href="#team">팀으로 쓰기</a>에 정리했습니다.</span></li>
-    <li><i class="mk">2</i><span><b>파일</b> — 여러 개를 함께 고를 수 있습니다. JSON · CSV 하나만 고르면 목록 창 없이 바로 새 탭으로 열립니다.</span></li>
-    <li><i class="mk">3</i><span><b>폴더</b> — Unity의 Json 폴더를 통째로 고르면 안의 파일이 목록에 나옵니다(<code>.meta</code> · 엑셀은 뺌). 이름 순서로 열리니 탭을 끌어 순서를 바꾸세요.</span></li>
-    <li><i class="mk">4</i><span><b>JSON… · 설명서…</b> — 저장할 탭을 고릅니다. 하나면 파일 하나, 여러 개면 zip 하나. 오류가 있으면 먼저 묻습니다.</span></li>
-    <li><i class="mk">5</i><span><b>프로젝트 전체</b> — 모든 탭의 JSON · 설명서와 설정 메모 <code>_TableMaker.md</code>(탭 순서 · 보기 · 숨긴 경고)를 zip 하나로. 다시 불러오면 그대로 열립니다.</span></li>
+    <li><i class="mk">1</i><span><b>GitHub</b> — 팀 저장소의 폴더에서 바로 가져옵니다. <a href="#team">팀으로 쓰기</a> 참고.</span></li>
+    <li><i class="mk">2</i><span><b>파일</b> — 여러 개도 됩니다. JSON · CSV 하나면 바로 새 탭으로 열립니다.</span></li>
+    <li><i class="mk">3</i><span><b>폴더</b> — Unity의 Json 폴더를 통째로 고릅니다(<code>.meta</code> · 엑셀은 뺌).<details class="more"><summary>자세히</summary><div>이름 순서로 열리니 탭을 끌어 순서를 바꾸세요.</div></details></span></li>
+    <li><i class="mk">4</i><span><b>JSON… · 설명서…</b> — 저장할 탭을 고릅니다. 여러 개면 zip 하나. 오류가 있으면 먼저 묻습니다.</span></li>
+    <li><i class="mk">5</i><span><b>프로젝트 전체</b> — 모든 탭의 JSON · 설명서와 설정(탭 순서 · 보기)을 zip 하나로. 다시 불러오면 그대로 열립니다.</span></li>
     <li><i class="mk">6</i><span><b>GitHub에 커밋</b> — 고친 내용을 팀 저장소에 올립니다. <a href="#team">팀으로 쓰기</a> 참고.</span></li>
-    <li><i class="mk">7</i><span><b>엑셀 · CSV</b> — 저장할 탭을 고릅니다. 기본은 첫 줄 컬럼 이름 + 값만 있는 단순한 표이고, 아래 체크로 팀 양식에 맞춥니다. <b>타입 줄 넣기</b>: 이름 아래에 <code>int</code> · <code>string</code> 줄. <b>설명 넣기</b>: 테이블마다 <code>이름_Meta</code>(Column · Description · Type) 시트(CSV는 파일). <b>ID 접두사 붙이기</b>: <code>item_1001</code>처럼. 엑셀은 고른 탭이 시트 하나씩인 파일 하나, CSV는 탭마다 파일 하나(여럿이면 zip). 고른 체크는 프로젝트마다 기억하고, 저장한 파일은 불러오기로 다시 열면 타입 · 설명까지 돌아옵니다.</span></li>
+    <li><i class="mk">7</i><span><b>엑셀 · CSV</b> — 기본은 이름 줄 + 값만 있는 표입니다. 체크로 타입 줄 · 설명 · ID 접두사를 더합니다.<details class="more"><summary>자세히</summary><div>엑셀은 탭마다 시트 하나, 설명은 <code>이름_Meta</code> 시트(CSV는 파일)로 들어갑니다. CSV는 탭마다 파일 하나, 여럿이면 zip. 고른 체크는 프로젝트마다 기억하고, 다시 불러오면 타입 · 설명까지 돌아옵니다.</div></details></span></li>
   </ol>
 
   <h3>목록 창 — 들어갈 곳 확인하기</h3>
@@ -234,24 +235,24 @@
     </table></div>
   </div>
   <ol class="notes">
-    <li><i class="mk">A</i><span><b>새 탭</b> — JSON · CSV · 엑셀 시트. 이미 있는 이름이면 아래에 이름 칸(기본 <code>_2</code>)이 나와 바로 고칩니다.</span></li>
-    <li><i class="mk">B</i><span><b>설명 → 테이블</b> — 설명서(.md)와 표로 만든 Meta. 머리줄이 <code>Column</code> · <code>Description</code> · <code>Type</code>(또는 <code>컬럼명</code> · <code>설명</code> · <code>타입</code>)이고, 이름이 <code>…_Meta</code>이거나 컬럼 이름 절반 이상이 어떤 테이블과 같으면 설명으로 봅니다.</span></li>
-    <li><i class="mk">C</i><span><b>짝을 못 찾은 설명</b> — 체크가 빠져 있습니다. 붙일 테이블을 골라 체크하면 붙습니다(파일 하나만 골랐으면 지금 탭이 기본).</span></li>
-    <li><i class="mk">D</i><span><b>설정</b> — 프로젝트 저장 zip의 <code>_TableMaker.md</code>. 탭 순서 · 보기 · 숨긴 경고를 되살립니다.</span></li>
+    <li><i class="mk">A</i><span><b>새 탭</b> — 같은 이름이 있으면 아래에 이름 칸(<code>_2</code>)이 나와 바로 고칩니다.</span></li>
+    <li><i class="mk">B</i><span><b>설명 → 테이블</b> — 설명서와 Meta 표는 짝이 되는 테이블에 붙습니다.<details class="more"><summary>자세히</summary><div>머리줄이 <code>Column</code> · <code>Description</code> · <code>Type</code>(또는 <code>컬럼명</code> · <code>설명</code> · <code>타입</code>)이고, 이름이 <code>…_Meta</code>이거나 컬럼 이름 절반 이상이 같으면 설명으로 봅니다.</div></details></span></li>
+    <li><i class="mk">C</i><span><b>짝을 못 찾은 설명</b> — 체크가 빠져 있습니다. 붙일 테이블을 고르면 붙습니다.</span></li>
+    <li><i class="mk">D</i><span><b>설정</b> — <code>_TableMaker.md</code>로 탭 순서 · 보기 · 숨긴 경고를 되살립니다.</span></li>
   </ol>
-  <div class="tip"><b>엑셀(.xlsx)</b> — 시트마다 목록에 한 줄씩 나옵니다. 수식은 계산된 값으로, 맨 위 제목 줄은 건너뜁니다. 컬럼 이름 위나 아래 줄에 <code>int</code> · <code>string</code> · <code>enum</code> 같은 타입을 적어 두면 그대로 읽고, 없으면 값으로 짐작합니다. 뒤 시트의 ID가 앞 시트에 모두 있으면 <b>다른 테이블 참조</b>로 이어집니다.</div>
+  <div class="tip"><b>엑셀(.xlsx)</b> — 시트마다 목록에 한 줄씩 나옵니다. 타입 줄이 있으면 그 타입대로 읽습니다.<details class="more"><summary>자세히</summary><div>수식은 계산된 값으로, 맨 위 제목 줄은 건너뜁니다. 타입 줄이 없으면 값으로 짐작합니다. 뒤 시트의 ID가 앞 시트에 모두 있으면 <b>다른 테이블 참조</b>로 이어집니다.</div></details></div>
 </section>
 
 <!-- ───────── 팀으로 쓰기 (GitHub) ───────── -->
 <section class="topic" id="team">
   <h2>팀으로 쓰기 (GitHub)</h2>
-  <p class="lead">프로젝트를 팀 저장소의 폴더에 연결하면, 누가 커밋했을 때 다른 사람 화면에 알림이 뜨고 ↻ 한 번으로 같은 탭이 새 내용으로 바뀝니다. 서버 없이 GitHub만 씁니다.</p>
+  <p class="lead">팀 저장소의 폴더에 연결하면, 누가 커밋할 때 알림이 뜨고 ↻로 받습니다. 서버 없이 GitHub만 씁니다.</p>
   <h3>처음 한 번</h3>
   <div class="cards steps">
-    <div class="card"><h3><i class="mk">1</i>저장소 준비</h3><p>GitHub에 저장소를 만듭니다(내 계정이든 조직이든 됩니다). 만들 때 <b>Add a README file</b>을 체크하면 빈 저장소가 아니라서 문제가 없습니다. 팀원은 저장소 Settings → Collaborators(조직이면 조직)에 초대합니다.</p></div>
-    <div class="card"><h3><i class="mk">2</i>앱 설치 (저장소 주인, 한 번)</h3><p>저장소 주인이 <b>GameTableMaker 앱</b>을 설치하고 쓸 저장소를 고릅니다. 처음 <b>GitHub로 로그인</b>하면 Authorize 다음에 설치 화면이 바로 이어집니다. 팀원이 초대한 저장소만 쓴다면 <b>앱 설치 없이 로그인</b>을 누르세요(주인에게 설치를 부탁하는 안내가 뜹니다). 앱은 고른 저장소의 파일 읽기 · 쓰기만 합니다.</p></div>
-    <div class="card"><h3><i class="mk">3</i>로그인 (각자)</h3><p><b>☰ → GitHub 로그인 → GitHub로 로그인</b>을 누르고 GitHub 화면에서 <b>Authorize</b>를 누르면 돌아옵니다. 토큰을 만들 필요가 없습니다. <b>로그인 유지</b>(기본 켬)를 끄면 탭을 닫을 때 로그아웃됩니다. 직접 만든 토큰을 쓰고 싶으면 같은 창의 <b>고급: 토큰으로 로그인</b>.</p></div>
-    <div class="card"><h3><i class="mk">4</i>연결</h3><p><b>불러오기 ▾ → GitHub</b>으로 저장소 · 브랜치 · 폴더를 고르면 가져오면서 연결됩니다. 처음 올리는 사람은 <b>파일 저장 ▾ → GitHub에 커밋</b>으로 연결해도 됩니다. 이미 작업하던 표가 있으면 같은 창의 <b>현재 표로 연동</b>을 누르세요. 탭은 그대로 두고 연결만 하고, GitHub에만 있는 표는 받아 옵니다.</p></div>
+    <div class="card"><h3><i class="mk">1</i>저장소 준비</h3><p>GitHub에 저장소를 만들고 팀원을 초대합니다. 만들 때 <b>Add a README file</b>을 체크하세요.</p></div>
+    <div class="card"><h3><i class="mk">2</i>앱 설치 (저장소 주인, 한 번)</h3><p>저장소 주인이 <b>GameTableMaker 앱</b>을 설치합니다. 처음 로그인하면 설치 화면이 이어집니다.</p><details class="more"><summary>자세히</summary><div>팀원 저장소만 쓴다면 <b>앱 설치 없이 로그인</b>을 누르세요(주인에게 부탁하는 안내가 뜹니다). 앱은 고른 저장소의 파일 읽기 · 쓰기만 합니다.</div></details></div>
+    <div class="card"><h3><i class="mk">3</i>로그인 (각자)</h3><p><b>☰ → GitHub 로그인 → GitHub로 로그인</b> → GitHub 화면에서 <b>Authorize</b>.</p><details class="more"><summary>자세히</summary><div><b>로그인 유지</b>를 끄면 탭을 닫을 때 로그아웃됩니다. 직접 만든 토큰은 같은 창의 <b>고급: 토큰으로 로그인</b>.</div></details></div>
+    <div class="card"><h3><i class="mk">4</i>연결</h3><p><b>불러오기 ▾ → GitHub</b>에서 저장소 · 브랜치 · 폴더를 고르면 연결됩니다.</p><details class="more"><summary>자세히</summary><div>이미 작업하던 표가 있으면 같은 창의 <b>현재 표로 연동</b>을 누르세요. 탭은 그대로 두고, GitHub에만 있는 표는 받아 옵니다. 처음 올리는 사람은 <b>파일 저장 ▾ → GitHub에 커밋</b>으로 연결해도 됩니다.</div></details></div>
   </div>
 
   <h3>새 커밋 받기</h3>
@@ -260,8 +261,8 @@
     <div class="mocktabs"><div class="tab on"><span>ItemDataTable</span></div><div class="tab"><span>UnitDataTable</span></div><div class="tab"><span>CostDataTable</span></div><span class="mtools"><button>+</button><button class="sync new"><span>↻</span></button><button>⚙</button><i class="mk">1</i></span></div>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>↻ (탭 줄 오른쪽 끝)</b> — 연결된 프로젝트에 생깁니다. 누르면 받을 파일 목록이 뜨고, 고른 파일로 <b>같은 탭을 새 내용으로</b> 바꿉니다(<kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌리기). 새 커밋이 있으면 점이 붙습니다.</span></li>
-    <li><i class="mk">2</i><span><b>알림 띠</b> — 보는 동안 1분마다 확인해서, <b>연결된 폴더의 파일을 바꾼</b> 커밋이 들어오면 뜹니다(코드만 바꾼 커밋은 조용히). <b>갱신하기</b>는 ↻와 같습니다.</span></li>
+    <li><i class="mk">1</i><span><b>↻ (탭 줄 오른쪽 끝)</b> — 누르면 받을 파일 목록이 뜨고, 고른 파일로 같은 탭을 바꿉니다. 새 커밋이 있으면 점이 붙습니다.</span></li>
+    <li><i class="mk">2</i><span><b>알림 띠</b> — 연결된 폴더의 파일이 바뀐 커밋이 오면 뜹니다. <b>갱신하기</b>는 ↻와 같습니다.</span></li>
   </ol>
   <div class="mockwin ghimport commitdlg" inert style="width:min(580px,100%)">
     <h3>GitHub에서 갱신</h3>
@@ -273,8 +274,8 @@
     </table></div>
   </div>
   <ol class="notes">
-    <li><i class="mk">3</i><span><b>신규 · 수정</b> — GitHub 쪽에서 본 상태입니다. 신규는 GitHub에는 있고 여기에 탭이 없는 테이블로, 받으면 새 탭이 됩니다(설명서도 함께). 여기서 지운 테이블은 체크가 빠져 있고, 그대로 두면 다음 커밋에 GitHub에서도 지워집니다.</span></li>
-    <li><i class="mk">4</i><span><b>⚠ 내 변경과 겹칠 때</b> — 아직 커밋하지 않은 내 변경이 있는 파일은 체크가 빠져 있습니다. 체크하면 GitHub 것으로 덮어씁니다.</span></li>
+    <li><i class="mk">3</i><span><b>신규 · 수정</b> — GitHub 쪽 기준입니다. 신규는 여기에 없는 테이블이라 받으면 새 탭이 됩니다.<details class="more"><summary>자세히</summary><div>여기서 지운 테이블은 체크가 빠져 있고, 그대로 두면 다음 커밋에 GitHub에서도 지워집니다.</div></details></span></li>
+    <li><i class="mk">4</i><span><b>⚠ 내 변경과 겹칠 때</b> — 아직 커밋하지 않은 내 변경이 있는 파일은 체크가 빠져 있습니다. 체크하면 덮어씁니다.</span></li>
   </ol>
 
   <h3>내 변경 올리기</h3>
@@ -299,12 +300,12 @@
 · 설명서 이름 변경: UnitDataTable.md → UnitDataTable_Desc.md</textarea><i class="mk">7</i></label>
   </div>
   <ol class="notes">
-    <li><i class="mk">4</i><span><b>내가 고친 파일만 · 신규 · 수정 · 삭제</b> — 마지막 갱신 뒤 고친 파일만 올라가서, 팀원이 고친 파일을 옛 내용으로 되돌리지 않습니다. 이름만 바뀐 파일은 <b>수정</b>으로 나오고 옆에 예전 이름이 보입니다. 여기서 지운 표는 <b>삭제</b>로 GitHub에서도 지워집니다. 들여쓰기 같은 글자 모양 차이는 바뀐 것으로 치지 않습니다.</span></li>
-    <li><i class="mk">5</i><span><b>⚠ 팀원도 고친 파일</b> — 올리면 팀원 변경을 덮어써서 체크가 빠져 있습니다. 먼저 ↻로 받은 뒤 다시 고쳐 올리는 게 안전합니다.</span></li>
-    <li><i class="mk">6</i><span><b>저장소 · 브랜치 · 폴더</b> — 연결된 저장소로 채워져 열립니다. 바꾸면 아래 목록이 그 폴더 기준으로 다시 계산되고, 폴더 목록 맨 아래 <b>+ 새 폴더…</b>로 새 폴더도 만듭니다.</span></li>
-    <li><i class="mk">7</i><span><b>커밋 메시지</b> — 고른 파일에 맞춰 자동으로 적힙니다. 바뀐 칸 수와 <b>⚠ 컬럼 삭제 · 이름 · 타입 변경</b>처럼 프로그래머가 알아야 할 변경이 들어가니, 필요하면 이유를 덧붙여 주세요.</span></li>
+    <li><i class="mk">4</i><span><b>내가 고친 파일만</b> — 팀원이 고친 파일을 옛 내용으로 되돌리지 않습니다. 여기서 지운 표는 <b>삭제</b>로 올라갑니다.<details class="more"><summary>자세히</summary><div>이름만 바뀐 파일은 <b>수정</b>으로 나오고 옆에 예전 이름이 보입니다. 들여쓰기 같은 글자 모양 차이는 바뀐 것으로 치지 않습니다.</div></details></span></li>
+    <li><i class="mk">5</i><span><b>⚠ 팀원도 고친 파일</b> — 올리면 덮어써서 체크가 빠져 있습니다. ↻로 먼저 받으세요.</span></li>
+    <li><i class="mk">6</i><span><b>저장소 · 브랜치 · 폴더</b> — 연결된 곳으로 채워집니다. 폴더 목록의 <b>+ 새 폴더…</b>로 새로 만듭니다.</span></li>
+    <li><i class="mk">7</i><span><b>커밋 메시지</b> — 자동으로 적힙니다(바뀐 칸 수, <b>⚠ 컬럼 삭제 · 이름 · 타입 변경</b>). 이유는 덧붙여 주세요.</span></li>
   </ol>
-  <div class="tip"><b>알아 둘 것</b> — 그사이 누가 먼저 커밋했으면 덮어쓰지 않고 알려 줍니다. GitHub에서만 지운 파일은 여기가 원본이라, 다음 커밋 때 다시 올라갑니다. ↻는 연결된 폴더 바로 아래 파일만 맞추고, 같은 탭을 둘이 고치면 칸끼리 합치지 않고 파일 하나를 고릅니다. <b>빈 저장소를 GitHub Desktop 등으로 먼저 받아 두었다면</b>, 첫 커밋 뒤 다시 받아야 파일이 보입니다.</div>
+  <div class="tip"><b>알아 둘 것</b> — 누가 먼저 커밋했으면 덮어쓰지 않고 알려 줍니다.<details class="more"><summary>자세히</summary><div>GitHub에서만 지운 파일은 여기가 원본이라 다음 커밋 때 다시 올라갑니다. ↻는 연결된 폴더 바로 아래 파일만 맞춥니다. 같은 탭을 둘이 고치면 칸끼리 합치지 않고 파일 하나를 고릅니다. 빈 저장소를 GitHub Desktop 등으로 먼저 받아 두었다면 첫 커밋 뒤 다시 받아야 파일이 보입니다.</div></details></div>
 </section>
 
 <!-- ───────── 보기 · 단축키 ───────── -->
@@ -326,51 +327,63 @@
     </table>
   </div>
   <ol class="notes">
-    <li><i class="mk">1</i><span><b>⇄ 행/열 바꿔 보기</b> — 표 왼쪽 위 모서리(⚙ → 보기 방향도 같음). 열이 수십 개인 Config 같은 테이블을 위아래로 훑어봅니다. JSON은 그대로이고 테이블마다 기억합니다. 행이 수천 개면 가로 보기가 빠릅니다.</span></li>
-    <li><i class="mk">1</i><span><b>︽ 타입 줄 접기</b> — ⇄ 옆 버튼으로 타입 줄을 접어 값만 봅니다. 타입을 바꿀 때는 ︾(»)로 다시 펴세요.</span></li>
+    <li><i class="mk">1</i><span><b>⇄ 행/열 바꿔 보기</b> — 표 왼쪽 위 모서리(⚙ → 보기 방향도 같음). JSON은 그대로이고 테이블마다 기억합니다.<details class="more"><summary>자세히</summary><div>행이 수천 개면 가로 보기가 빠릅니다.</div></details></span></li>
+    <li><i class="mk">1</i><span><b>︽ 타입 줄 접기</b> — ⇄ 옆 버튼으로 타입 줄을 접어 값만 봅니다.</span></li>
   </ol>
-  <h3>단축키</h3>
+  <h3>고르기 · 고치기</h3>
   <table class="keys">
-    <tr><th>칸 클릭</th><td>칸 고르기. 그대로 타이핑하면 기존 값을 지우고 새로 씁니다 (엑셀과 같음)</td></tr>
-    <tr><th>더블클릭 · <kbd>F2</kbd></th><td>기존 값을 그대로 두고 고치기. 이때 <kbd>←</kbd><kbd>→</kbd>는 글자 사이를 움직입니다</td></tr>
-    <tr><th><kbd>Esc</kbd></th><td>고치던 내용 취소</td></tr>
-    <tr><th><kbd>Delete</kbd></th><td>고른 칸 비우기 (범위를 골랐으면 범위 전체)</td></tr>
-    <tr><th>드래그 · <kbd>Shift</kbd>+클릭 · <kbd>Shift</kbd>+<kbd>←↑↓→</kbd></th><td>여러 칸 범위 고르기. 표 가장자리로 끌면 표가 저절로 넘어가고, 마우스가 표 밖으로 나가도 가장 가까운 칸까지 고릅니다. <kbd>Esc</kbd>나 다른 칸 클릭으로만 풀립니다. 우클릭 · 도구줄 · 다른 탭에 갔다 오기로는 풀리지 않습니다(점선으로 늘린 줄도 그대로)</td></tr>
-    <tr><th>컬럼 이름 칸 클릭·끌기 · 행 번호 클릭·끌기</th><td>열 · 행을 통째로 고르기. 컬럼 이름은 <b>더블클릭</b>해서 고칩니다</td></tr>
-    <tr><th>컬럼 이름 칸을 꾹 눌러 끌기</th><td>열 순서 바꾸기. 0.4초 누르면 열이 떠올라 따라오고, 놓은 자리로 옮겨집니다(JSON 키 순서도 바뀜). ID 열은 맨 앞 고정</td></tr>
-    <tr><th>탭 줄 오른쪽 + · ⚙</th><td><b>+ 새 테이블 · ↻ 갱신 · ⚙ 테이블 설정</b>은 탭을 넘겨도 늘 같은 자리에 있습니다. +는 이름을 적고 <b>만들기</b>를 누르면 새 탭이 생깁니다. ⚙에는 <b>이름 바꾸기 · 복제 · 보기 방향 · 잠금 · 테이블 삭제</b>가 있습니다. <b>잠금</b>을 켜면 탭 이름 앞에 자물쇠가 붙고 칸 · 컬럼 · 탭 이름을 고치거나 지울 수 없습니다(고르기 · 복사는 됨, 이 브라우저에만 저장)</td></tr>
-    <tr><th>탭을 꾹 눌러 끌기 · 탭 줄에서 휠</th><td>탭 순서 바꾸기. 0.4초 누르면 탭이 떠올라 따라옵니다. 탭이 넘치면 탭 줄에서 휠을 굴리거나, 누르자마자 좌우로 끌어 넘깁니다. zip도 이 순서로 저장됩니다</td></tr>
-    <tr><th>탭 더블클릭 · 탭 우클릭 · 열의 ✕</th><td>테이블 이름 바꾸기 · 우클릭 메뉴(이름 바꾸기 · 테이블 삭제, 탭을 열지 않아도 됨) · 열 삭제. 테이블 삭제는 ⚙ 메뉴에도 있고, 삭제는 확인 창을 거치고 <kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌릴 수 있습니다</td></tr>
-    <tr><th>창 제목 옆 <b>?</b></th><td>그 창의 도움말을 펼치고 접기</td></tr>
-    <tr><th><kbd>Ctrl</kbd>+<kbd>A</kbd></th><td>표 전체 고르기. 고치는 중이거나 다른 입력칸에서는 그 글자 전체</td></tr>
-    <tr><th><kbd>Ctrl</kbd>+<kbd>C</kbd></th><td>고른 칸(범위)을 복사. 엑셀에 붙여넣으면 표 모양 그대로 들어갑니다</td></tr>
-    <tr><th><kbd>Ctrl</kbd>+<kbd>Z</kbd> · <kbd>Ctrl</kbd>+<kbd>Y</kbd></th><td>되돌리기 · 다시 하기 (최근 100번까지. 한 칸에 이어서 친 것은 한 번으로)</td></tr>
-    <tr><th><kbd>Enter</kbd> · <kbd>↓</kbd></th><td>아래 칸. 마지막 행에서는 맨 아래 빈 줄로. ID 칸이면 다음 번호(1001 → 1002)가 미리 채워집니다</td></tr>
-    <tr><th><kbd>Tab</kbd> · <kbd>Shift</kbd>+<kbd>Tab</kbd></th><td>오른쪽 · 왼쪽 칸 (고치는 중이어도). Tab으로 옆으로 채운 뒤 <kbd>Enter</kbd>를 누르면 <b>Tab을 시작한 열의 다음 줄</b>로 갑니다(엑셀처럼: ID → Tab → Name → Tab → Price → Enter → 다음 줄 ID). 맨 아래 새 줄이면 ID 칸에 다음 번호가 미리 채워집니다</td></tr>
-    <tr><th><kbd>Shift</kbd>+<kbd>Enter</kbd> · <kbd>↑</kbd></th><td>위 칸. 첫 행에서는 컬럼 이름 칸으로</td></tr>
-    <tr><th><kbd>←</kbd> · <kbd>→</kbd></th><td>옆 칸. 마지막 열 다음은 빈 열 칸으로 (값부터 적으면 <code>col1</code> 같은 임시 이름이 붙습니다)</td></tr>
-    <tr><th>세로 보기(⇄)에서</th><td><kbd>↑</kbd><kbd>↓</kbd> · <kbd>Enter</kbd>는 컬럼 사이, <kbd>←</kbd><kbd>→</kbd>는 행 사이. 마지막 컬럼에서 <kbd>Enter</kbd> · <kbd>↓</kbd>면 <b>+ 새 열</b> 줄로 갑니다</td></tr>
-    <tr><th><kbd>Ctrl</kbd>+<kbd>↓</kbd></th><td>맨 아래 빈 줄로 한 번에 (긴 표에서 새 행 넣을 때)</td></tr>
-    <tr><th>범위를 고르고 우클릭</th><td><b>연속으로 채우기</b>: 범위 위쪽에 적힌 값을 보고 나머지를 채웁니다(<code>1010</code> · <code>1020</code> → 1030, 1040…, 값이 하나면 1씩, <code>Item1</code>처럼 끝에 숫자가 붙은 글도). <b>같은 값으로 채우기</b>: 위쪽 값을 그대로 되풀이합니다. 끌다가 <b>맨 아래 점선 줄 아래로</b> 내려가면 점선 줄이 따라 늘어나고(+3줄), 채우면 진짜 줄이 됩니다. <kbd>Ctrl</kbd>+<kbd>Z</kbd> 한 번으로 되돌립니다</td></tr>
-    <tr><th><kbd>Shift</kbd>+마우스 휠</th><td>표를 옆으로 스크롤</td></tr>
-    <tr><th>태블릿 · 터치</th><td>손가락으로 표를 끌면 민 쪽(위아래 또는 좌우) 한 방향으로만 움직입니다. 컬럼 이름 줄과 왼쪽 행 번호는 늘 제자리에 있어, 넘겨도 어느 줄 · 어느 열인지 보입니다</td></tr>
-    <tr><th><kbd>Ctrl</kbd>+<kbd>V</kbd></th><td>고른 칸부터 채움(한 값이면 고른 범위 전체를 그 값으로) · 빈 테이블: 표 전체로 · 빈 곳: 새 테이블 · 테이블 설명 창: Meta 시트로</td></tr>
+    <tr><th>칸 클릭</th><td>고르기. 그대로 치면 새로 씁니다</td></tr>
+    <tr><th>더블클릭 · <kbd>F2</kbd></th><td>일부만 고치기</td></tr>
+    <tr><th><kbd>Esc</kbd></th><td>고치던 것 취소 · 범위 풀기</td></tr>
+    <tr><th><kbd>Delete</kbd></th><td>비우기 (범위면 전체)</td></tr>
+    <tr><th>드래그 · <kbd>Shift</kbd>+클릭 · <kbd>Shift</kbd>+<kbd>←↑↓→</kbd></th><td>범위 고르기. 다른 칸 클릭 · Esc로만 풀립니다(우클릭 · 탭 이동으로는 안 풀림)</td></tr>
+    <tr><th>컬럼 이름 · 행 번호 클릭 · 끌기</th><td>열 · 행 통째로. 컬럼 이름은 더블클릭으로 고칩니다</td></tr>
+    <tr><th><kbd>Ctrl</kbd>+<kbd>A</kbd></th><td>표 전체</td></tr>
+  </table>
+  <h3>움직이기</h3>
+  <table class="keys">
+    <tr><th><kbd>Enter</kbd> · <kbd>↓</kbd> / <kbd>Shift</kbd>+<kbd>Enter</kbd> · <kbd>↑</kbd></th><td>아래 · 위 칸. 마지막 ID에서 Enter면 새 줄에 다음 번호</td></tr>
+    <tr><th><kbd>Tab</kbd> · <kbd>Shift</kbd>+<kbd>Tab</kbd></th><td>오른쪽 · 왼쪽. Tab으로 채운 뒤 Enter면 시작한 열의 다음 줄로</td></tr>
+    <tr><th><kbd>←</kbd> · <kbd>→</kbd></th><td>옆 칸 (마지막 열 다음은 빈 열)</td></tr>
+    <tr><th><kbd>Ctrl</kbd>+<kbd>↓</kbd></th><td>맨 아래 새 줄로</td></tr>
+    <tr><th><kbd>Shift</kbd>+휠</th><td>옆으로 스크롤</td></tr>
+    <tr><th>세로 보기(⇄)에서</th><td><kbd>↑</kbd><kbd>↓</kbd>는 컬럼 사이, <kbd>←</kbd><kbd>→</kbd>는 행 사이</td></tr>
+  </table>
+  <div class="flow3" inert><div class="st"><div class="lab"><i class="mk">1</i>ID에서 Tab</div><table class="mini"><tr><td class="s">1030</td><td></td><td></td></tr></table></div><span class="arr">→</span><div class="st"><div class="lab"><i class="mk">2</i>Tab으로 오른쪽</div><table class="mini"><tr><td>1030</td><td>C</td><td class="s">300</td></tr></table></div><span class="arr">→</span><div class="st"><div class="lab"><i class="mk">3</i>Enter → 다음 줄 ID</div><table class="mini"><tr><td>1030</td><td>C</td><td>300</td></tr><tr><td class="s">1040</td><td class="d"></td><td class="d"></td></tr></table></div></div>
+  <h3>채우기 · 복사</h3>
+  <table class="keys">
+    <tr><th>범위를 고르고 우클릭</th><td><b>연속으로 채우기</b>(1010 · 1020 → 1030…) · <b>같은 값으로 채우기</b><details class="more"><summary>자세히</summary><div>맨 위부터 이어 적힌 값의 마지막 두 값 차이로 이어 갑니다. 값이 하나면 1씩, <code>Item1</code>처럼 끝에 숫자가 붙은 글도 됩니다. 아래쪽에 적힌 값은 덮어씁니다.</div></details></td></tr>
+    <tr><th>점선 줄 아래로 끌기</th><td>줄을 늘려 고릅니다(+N줄). 채우면 진짜 줄이 됩니다</td></tr>
+    <tr><th><kbd>Ctrl</kbd>+<kbd>C</kbd> · <kbd>Ctrl</kbd>+<kbd>V</kbd></th><td>복사 · 붙여넣기 (엑셀과 표 모양 그대로)<details class="more"><summary>자세히</summary><div>붙여넣기: 한 값이면 고른 범위 전체를 그 값으로 · 빈 테이블이면 표 전체로 · 빈 곳이면 새 테이블 · 테이블 설명 창이면 Meta 시트로.</div></details></td></tr>
+    <tr><th><kbd>Ctrl</kbd>+<kbd>Z</kbd> · <kbd>Ctrl</kbd>+<kbd>Y</kbd></th><td>되돌리기 · 다시 하기 (100번까지)</td></tr>
+  </table>
+  <div class="flow3" inert><div class="st"><div class="lab"><i class="mk">1</i>값 두 개를 고르고</div><table class="mini"><tr><td class="s">1010</td><td>A</td></tr><tr><td class="s">1020</td><td>B</td></tr><tr><td class="d"></td><td class="d"></td></tr></table></div><span class="arr">→</span><div class="st"><div class="lab"><i class="mk">2</i>점선 줄 아래로 끌기</div><table class="mini"><tr><td class="s">1010</td><td>A</td></tr><tr><td class="s">1020</td><td>B</td></tr><tr><td class="s d"></td><td class="d"></td></tr><tr><td class="s d"></td><td class="d"></td></tr></table><span class="tag">+2줄</span></div><span class="arr">→</span><div class="st"><div class="lab"><i class="mk">3</i>우클릭 → 연속으로 채우기</div><table class="mini"><tr><td>1010</td><td>A</td></tr><tr><td>1020</td><td>B</td></tr><tr><td class="n">1030</td><td></td></tr><tr><td class="n">1040</td><td></td></tr></table></div></div>
+  <h3>탭 · 테이블</h3>
+  <table class="keys">
+    <tr><th>탭 줄 오른쪽 + · ↻ · ⚙</th><td>새 테이블 · 갱신 · 테이블 설정(이름 · 복제 · 보기 방향 · 잠금 · 삭제)</td></tr>
+    <tr><th>잠금 (⚙)</th><td>칸 · 컬럼 · 이름을 못 고치게 합니다. 이 브라우저에만 저장됩니다</td></tr>
+    <tr><th>탭 우클릭 · 더블클릭</th><td>이름 바꾸기 · 삭제</td></tr>
+    <tr><th>탭을 꾹 눌러 끌기 · 탭 줄에서 휠</th><td>탭 순서 바꾸기 · 넘기기</td></tr>
+    <tr><th>컬럼 이름 칸을 꾹 눌러 끌기</th><td>열 순서 바꾸기 (ID는 맨 앞 고정)</td></tr>
+    <tr><th>열의 ✕</th><td>열 삭제 (<kbd>Ctrl</kbd>+<kbd>Z</kbd>로 되돌림)</td></tr>
+    <tr><th>창 제목 옆 <b>?</b></th><td>그 창의 도움말</td></tr>
+    <tr><th>태블릿 · 터치</th><td>끌면 한 방향으로만 움직이고, 머리줄 · 행 번호는 제자리에 있습니다</td></tr>
   </table>
 </section>
 
 <!-- ───────── 이용 안내 ───────── -->
 <section class="topic" id="terms">
   <h2>이용 안내</h2>
-  <p class="lead">GameTableMaker를 쓰기 전에 알아두면 좋은 점입니다.</p>
+  <p class="lead">쓰기 전에 알아 두면 좋은 점입니다.</p>
   <div class="cards">
-    <div class="card"><h3>프로젝트</h3><p>제목줄 왼쪽의 프로젝트 이름을 누르면 프로젝트를 바꾸거나 새로 만들고, 이름을 바꾸거나 지울 수 있습니다. 새로 만들 때는 <b>빈 프로젝트 · 내 파일로 시작 · GitHub 저장소에서</b> 중 하나를 고릅니다. 탭 묶음은 프로젝트마다 따로 저장됩니다.</p></div>
-    <div class="card"><h3>메모</h3><p>오른쪽 여백의 <b>메모</b> 칸에 커밋 메시지나 작업 기록을 적어 둡니다. 쓰는 대로 프로젝트마다 저장되고, 이 브라우저에만 남습니다(zip · 커밋에는 안 들어감). 화면이 좁으면(1100px 미만) 숨겨집니다.</p></div>
-    <div class="card"><h3>데이터는 내 브라우저에만</h3><p>입력한 표는 서버로 보내지 않고 지금 쓰는 브라우저에만 저장됩니다. 가입도 필요 없습니다. 저장 공간은 모든 프로젝트를 합쳐 글자 약 500만 자이고, 꽉 차면 알림이 뜹니다. 그동안은 저장되지 않으니 바로 zip으로 받아 두고 안 쓰는 프로젝트를 지우세요.</p></div>
-    <div class="card"><h3>백업은 직접</h3><p>브라우저 데이터를 지우거나 다른 PC로 옮기면 표가 보이지 않습니다. 중요한 작업은 <b>파일 저장 ▾ → 프로젝트 전체 (.zip)</b>로 받아 두거나 <b>GitHub에 커밋</b>하세요.</p></div>
-    <div class="card"><h3>Safari에서 쓸 때</h3><p>Safari(Mac · iPhone · iPad)는 이 사이트를 <b>Safari를 쓴 날로 7일 동안 열지 않으면</b> 저장된 표를 지울 수 있습니다(Apple 정책, 크롬 · 엣지에는 없음). Safari에서 쓴다면 <b>GitHub에 커밋</b>하거나 <b>프로젝트 전체 (.zip)</b>로 받아 두세요. 받아 둔 지 3일이 지나면 알림이 뜹니다. iPhone · iPad는 <b>공유 → 홈 화면에 추가</b>로 열면 이 규칙이 적용되지 않습니다.</p></div>
-    <div class="card"><h3>무료</h3><p>모든 기능을 무료로 쓸 수 있습니다. 만든 데이터는 상업용 게임을 포함해 자유롭게 쓰면 됩니다. 도움이 됐다면 ☰ 메뉴의 <b>커피 한 잔 후원</b>으로 응원해 주세요.</p></div>
-    <div class="card"><h3>새 버전</h3><p>업데이트가 올라오면 화면 맨 위에 <b>새 버전</b> 띠가 뜹니다. 누르면 새로고침되고, 작업한 표는 그대로 남습니다. 지금 버전은 ☰ 메뉴 맨 아래에 있습니다.</p></div>
-    <div class="card"><h3>권장 브라우저</h3><p>크롬, 엣지 최신 버전에서 가장 잘 동작합니다. 표 편집은 PC 화면을 기준으로 만들었습니다. 태블릿 · 휴대폰에서는 양옆 여백을 줄여 표를 더 넓게 보여 줍니다.</p></div>
+    <div class="card"><h3>프로젝트</h3><p>제목줄 왼쪽 이름을 누르면 바꾸기 · 새로 만들기 · 이름 바꾸기 · 지우기. 탭 묶음은 프로젝트마다 따로입니다.</p></div>
+    <div class="card"><h3>메모</h3><p>오른쪽 메모 칸에 작업 기록을 적어 둡니다. 프로젝트마다 이 브라우저에만 저장됩니다(zip · 커밋엔 안 들어감).</p></div>
+    <div class="card"><h3>데이터는 내 브라우저에만</h3><p>서버로 보내지 않고 가입도 없습니다. 저장 공간(약 500만 자)이 차면 알림이 뜨니 zip으로 받아 두세요.</p></div>
+    <div class="card"><h3>백업은 직접</h3><p><b>파일 저장 ▾ → 프로젝트 전체 (.zip)</b>로 받거나 <b>GitHub에 커밋</b>하세요.</p></div>
+    <div class="card"><h3>Safari에서 쓸 때</h3><p>7일 동안 이 사이트를 열지 않으면 저장된 표를 지울 수 있습니다(Apple 정책). 커밋하거나 zip으로 받아 두세요.</p><details class="more"><summary>자세히</summary><div>iPhone · iPad는 <b>공유 → 홈 화면에 추가</b>로 열면 이 규칙이 적용되지 않습니다. 받아 둔 지 3일이 지나면 알림이 뜹니다.</div></details></div>
+    <div class="card"><h3>무료</h3><p>모든 기능이 무료이고, 상업용 게임에도 자유롭게 쓰세요. ☰의 <b>커피 한 잔 후원</b>으로 응원할 수 있습니다.</p></div>
+    <div class="card"><h3>새 버전</h3><p>맨 위 <b>새 버전</b> 띠를 누르면 새로고침됩니다(표는 그대로). 버전은 ☰ 맨 아래에 있습니다.</p></div>
+    <div class="card"><h3>권장 브라우저</h3><p>크롬 · 엣지 최신 버전. 번역(문A)은 Chrome PC에서만 됩니다. 태블릿 · 휴대폰은 표를 넓게 보여 줍니다.</p></div>
   </div>
 </section>
 

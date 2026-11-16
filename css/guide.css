@@ -53,3 +53,38 @@ kbd{display:inline-block;padding:1px 6px;border:1px solid var(--line);border-bot
 .card{border:1px solid var(--line);border-radius:6px;padding:12px 14px;background:var(--panel);line-height:1.65}
 .card h3{margin:0 0 6px}
 .card p{margin:0;color:var(--dim)}
+/* 세부는 접어 둔다: 번호 설명 · 팁 · 카드 끝의 '자세히' (크롬은 Ctrl+F로 찾으면 저절로 펼친다) */
+details.more{display:inline}
+details.more summary{display:inline;cursor:pointer;list-style:none;margin-left:6px;color:var(--accent-text);font-size:12px;white-space:nowrap}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:' ▸'}
+details.more[open] summary::after{content:' ▾'}
+details.more[open]{display:block}
+details.more > div{margin-top:4px;color:var(--dim);line-height:1.65}
+.card details.more{display:block;margin-top:4px}
+.card details.more summary{margin-left:0}
+.keys details.more summary{margin-left:4px}
+/* 움직임을 보여 주는 단계 그림 세 칸 (사진이 아니라 HTML이라 테마를 따른다) */
+.flow3{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin:4px 0 18px}
+.flow3 .st{border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:8px 10px;position:relative}
+.flow3 .lab{display:flex;align-items:center;font-size:12px;color:var(--dim);margin-bottom:6px;white-space:nowrap}
+.flow3 .lab .mk{margin:0 6px 0 0}
+.flow3 .arr{color:var(--dim);font-size:16px;align-self:center}
+.flow3 table.mini{border-collapse:separate;border-spacing:0}
+.flow3 table.mini td{min-width:44px;height:22px;padding:0 6px;font-size:12px;border:0 solid var(--line);border-width:1px 1px 0 0;background:var(--cell);position:relative}
+.flow3 table.mini tr:last-child td{border-bottom-width:1px}
+.flow3 table.mini td:first-child{border-left-width:1px}
+.flow3 table.mini td.s::after{content:'';position:absolute;inset:0;background:var(--accent-tint)}
+.flow3 table.mini td.d{border-style:dashed;background:transparent}
+.flow3 table.mini td.n{color:var(--accent-text);font-weight:600}
+.flow3 .tag{position:absolute;right:10px;bottom:6px;font-size:11px;color:var(--accent-text)}
+.flow3 .minidlg{display:grid;gap:4px;font-size:12px}
+.flow3 .minidlg label{display:flex;gap:6px;align-items:center;padding:3px 6px;border:1px solid var(--line);border-radius:4px}
+.flow3 .minidlg label.off{background:var(--head);color:var(--dim);opacity:.6}
+.flow3 button.small{font-size:12px;padding:3px 10px}
+.topic > h3 + .keys{margin-bottom:6px}
+/* 단축키 묶음 표들의 왼쪽 칸 폭을 맞춰 위아래 표의 둘째 칸이 한 줄로 서게 */
+.keys{width:100%;max-width:860px}
+.keys th{width:36%}
+/* 좁은 화면: 나란히 놓은 그림(설명서 .md 미리보기 등)이 화면 밖으로 밀어내지 않게, 넘치면 그 안에서 옆으로 넘긴다 */
+.row > div{min-width:0;max-width:100%}
