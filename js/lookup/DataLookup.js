@@ -1,14 +1,14 @@
-import {$, esc} from '../common/util.js';
+import {$} from '../common/util.js';
 import {IdSuggest} from './IdSuggest.js';
+import {LookupRecent} from './LookupRecent.js';
+import {LookupResult} from './LookupResult.js';
 
-const CAP = 100; // 테이블마다 보여 줄 줄 수
+const ICON = '<svg class="lkicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
 
-// 데이터 조회 (도구줄 버튼으로 여는 아래 왼쪽 창): ID를 적으면 모든 테이블에서
-//   ① 그 ID의 행 (참조로 이은 테이블이면 'ID로 참조'),
-//   ② 이름이 ID로 끝나는 열(ItemID 등)에 그 값이 적힌 줄
-// 을 테이블별 작은 표로 모아 보여 준다. 결과는 정확히 맞는 ID만(사용자 결정), 접두사(item_)는 떼고 본다.
-// 어떤 ID가 있는지는 칠 때 아래로 펼치는 목록(IdSuggest)으로 알려 준다.
-// 줄을 누르면 그 탭의 그 칸으로 옮겨 가 화면 가운데 오게 한다
+// 데이터 조회 (도구줄 버튼으로 여는 아래 왼쪽 창).
+//   처음: 가운데 큰 검색 칸 + 최근 칩(LookupRecent). 숫자를 치면 칸이 위로 가고 ID 목록(IdSuggest)이 펼쳐진다
+//   결과(LookupResult): 왼쪽 목록(오브젝트 · 쓰는 곳) + 오른쪽 자세히. 창이 좁으면(설명 창을 같이 켬 · 태블릿 · 폰) 목록이 위 칩 줄로 (CSS @container)
+// 결과는 정확히 맞는 ID만(사용자 결정), 접두사(item_)는 떼고 본다
 export class DataLookup {
   constructor(app) {
     this.app = app;
@@ -16,29 +16,17 @@ export class DataLookup {
     this.btn = $('toggleLookup');
     this.inp = $('lookupId');
     this.out = $('lookupOut');
-    this.found = []; // 지금 보이는 결과 (줄을 누를 때 행을 찾으려고)
+    this.res = null; // 지금 보이는 결과
+    this.sel = '';   // 왼쪽 목록에서 고른 것 (o0 · u0 …)
     this.btn.onclick = () => this.setOpen(!this.open);
     $('closeLookup').onclick = () => this.setOpen(false);
     this.inp.addEventListener('input', () => this.refresh());
-    this.out.addEventListener('click', e => this.go(e));
-    this.suggest = new IdSuggest(this.inp, q => this.ids(q));
-  }
-
-  // 자동 완성 목록: 각 테이블 ID 열의 값 중 앞자리가 q인 것, 작은 순서. 같은 ID는 한 줄에 테이블 이름을 모아서
-  ids(q) {
-    q = String(+q);
-    const m = new Map();
-    for (const t of this.app.workbook.tables) {
-      if (!t.hasId) continue;
-      for (const r of t.rows) {
-        if (r[0] === '' || !/^\d+$/.test(r[0])) continue;
-        const id = String(+r[0]);
-        if (!id.startsWith(q)) continue;
-        if (!m.has(id)) m.set(id, new Set());
-        m.get(id).add(t.name);
-      }
-    }
-    return [...m].sort((a, b) => a[0] - b[0]).map(([id, names]) => ({id, sub: [...names].join(' · ')}));
+    this.out.addEventListener('click', e => this.click(e));
+    this.suggest = new IdSuggest(this.inp, q => this.ids(q), () => this.remember());
+    // 목록 없이 정확한 ID를 치고 Enter해도 최근에 남긴다 (목록에서 Enter로 고른 것은 IdSuggest가 먼저 막고 onPick으로)
+    this.inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.defaultPrevented) this.remember(); });
+    this.inp.insertAdjacentHTML('beforebegin', ICON);
+    this.recent = new LookupRecent(app, $('lookupRecent'), id => this.search(id));
   }
 
   get open() { return !this.el.hidden; }
@@ -57,55 +45,71 @@ export class DataLookup {
     return m ? String(+m[1]) : '';
   }
 
-  // → [{t, labels: [...], rows: [{row, cols: [찾은 열 번호]}]}]. 자기 ID로 가진 테이블(참조하지 않는)을 먼저
-  find(id) {
-    const out = [];
+  // 자동 완성 목록: 각 테이블 ID 열의 값 중 앞자리가 q인 것, 작은 순서. 같은 ID는 한 줄에 테이블 이름을 모아서
+  ids(q) {
+    q = String(+q);
+    const m = new Map();
     for (const t of this.app.workbook.tables) {
-      const hit = new Map(), labels = new Set();
-      const add = (row, c) => { if (!hit.has(row)) hit.set(row, []); hit.get(row).push(c); };
-      if (t.hasId) for (const r of t.rows) if (r[0] !== '' && String(+r[0]) === id) { add(r, 0); labels.add(t.refs.length ? 'ID로 참조' : ''); }
-      t.cols.forEach((c, i) => {
-        if (i === 0 && t.hasId || !/id$/i.test(c.name)) return;
-        for (const r of t.rows) if (/^\d+$/.test(r[i]) && String(+r[i]) === id) { add(r, i); labels.add(`${c.name} 열`); }
-      });
-      if (hit.size) out.push({t, labels: [...labels].filter(Boolean), rows: [...hit].map(([row, cols]) => ({row, cols}))});
+      if (!t.hasId) continue;
+      for (const r of t.rows) {
+        if (!/^\d+$/.test(r[0])) continue;
+        const id = String(+r[0]);
+        if (!id.startsWith(q)) continue;
+        if (!m.has(id)) m.set(id, new Set());
+        m.get(id).add(t.name);
+      }
     }
-    return out.sort((a, b) => (a.labels.length > 0) - (b.labels.length > 0));
+    return [...m].sort((a, b) => a[0] - b[0]).map(([id, names]) => ({id, sub: [...names].join(' · ')}));
   }
+
+  // 최근 칩 · 결과 안의 ID 링크: 그 ID로 바로 조회하고 최근에 남긴다
+  search(id) {
+    this.inp.value = id;
+    this.refresh();
+    this.remember();
+    this.inp.focus({preventScroll: true});
+  }
+
+  remember() { if (this.res && !this.res.empty) this.recent.add(this.res.id, this.res.first); }
 
   refresh() {
     if (!this.open) return;
     const id = DataLookup.idOf(this.inp.value);
-    this.found = id ? this.find(id) : [];
-    if (!id) { this.out.innerHTML = ''; return; }
-    if (!this.found.length) { this.out.innerHTML = `<p class="lkempty">${esc(id)} · 찾은 줄 없음</p>`; return; }
-    this.out.innerHTML = this.found.map((g, gi) => {
-      const t = g.t, rows = g.rows.slice(0, CAP);
-      const cell = (row, ci, cols) => {
-        const v = esc((t.cols[ci].id && t.prefix ? t.prefix : '') + row[ci]);
-        return `<td>${cols.includes(ci) ? `<mark>${v}</mark>` : v}</td>`;
-      };
-      return `<div class="lkgrp"><div class="lkh"><b>${esc(t.name)}</b>${g.labels.map(l => `<span>${esc(l)}</span>`).join('')}</div>` +
-        `<div class="lktbl"><table><tr>${t.cols.map(c => `<th>${esc(c.name)}</th>`).join('')}</tr>` +
-        rows.map((x, ri) => `<tr data-g="${gi}" data-i="${ri}">${t.cols.map((_, ci) => cell(x.row, ci, x.cols)).join('')}</tr>`).join('') +
-        `</table></div>${g.rows.length > CAP ? `<p class="lkempty">${g.rows.length - CAP}줄 더</p>` : ''}</div>`;
-    }).join('');
+    this.el.classList.toggle('idle', !id);
+    if (!id) { this.res = null; this.out.innerHTML = ''; this.recent.render(); return; }
+    const prev = this.res && this.res.id;
+    this.res = new LookupResult(this.app.workbook.tables, id);
+    if (prev !== id || !this.res.keys.includes(this.sel)) this.sel = this.res.keys[0];
+    this.render();
   }
 
-  // 결과 줄을 누르면: 그 탭을 열고 그 행이 화면 가운데 오게, 찾은 칸에 커서
-  go(e) {
-    const tr = e.target.closest('tr[data-g]');
-    if (!tr) return;
-    const g = this.found[+tr.dataset.g], x = g && g.rows[+tr.dataset.i];
-    if (!x) return;
-    const app = this.app, ti = app.workbook.tables.indexOf(g.t);
+  render() {
+    const r = this.res;
+    this.out.innerHTML = r.empty ? `<p class="lkempty">${r.id} · 찾은 줄 없음</p>`
+      : `<div class="lklist">${r.listHtml(this.sel)}</div><div class="lkdetail">${r.detailHtml(this.sel)}</div>`;
+  }
+
+  click(e) {
+    const r = this.res, b = e.target.closest('[data-item], [data-jump], [data-q], tr[data-u]');
+    if (!r || !b) return;
+    if (b.dataset.item) { this.sel = b.dataset.item; this.render(); return; }
+    if (b.dataset.q) { this.search(b.dataset.q); return; }
+    const i = +this.sel.slice(1);
+    if (b.dataset.jump) { const m = r.objs[i][+b.dataset.jump]; this.jump(m.t, m.row, 0); }
+    else { const u = r.uses[i], x = u.rows[+b.dataset.u]; this.jump(u.t, x.row, x.c); }
+    this.remember();
+  }
+
+  // 그 탭을 열고 그 행이 화면 가운데 오게, 그 칸에 커서
+  jump(t, row, c) {
+    const app = this.app, ti = app.workbook.tables.indexOf(t);
     if (ti < 0) return;
     if (ti !== app.workbook.cur) app.show(ti);
-    const r = g.t.rows.indexOf(x.row);
+    const r = t.rows.indexOf(row);
     if (r < 0) return;
     const grid = app.grid;
     grid.centerRow(r);
-    const el = grid.at(r, x.cols[0]);
+    const el = grid.at(r, c);
     if (!el) return;
     grid.clearSel(); // 다른 칸으로 옮겨 가니 범위는 풀린다
     el.focus({preventScroll: true});

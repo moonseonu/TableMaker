@@ -1,5 +1,6 @@
 import {StorageFull} from './StorageFull.js';
 import {Memo} from '../memo/Memo.js';
+import {LookupRecent} from '../lookup/LookupRecent.js';
 
 const INDEX ='tablemaker.projects', OLD = 'tablemaker.v2';
 
@@ -43,7 +44,7 @@ export class Projects {
 
   remove(id) {
     this.list = this.list.filter(p => p.id !== id);
-    try { localStorage.removeItem(Projects.key(id)); localStorage.removeItem(Memo.key(id)); } catch {}
+    try { localStorage.removeItem(Projects.key(id)); localStorage.removeItem(Memo.key(id)); localStorage.removeItem(LookupRecent.key(id)); } catch {}
     if (this.cur === id) this.cur = this.list[0].id;
   }
 }

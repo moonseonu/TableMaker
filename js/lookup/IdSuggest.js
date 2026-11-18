@@ -4,9 +4,10 @@ import {esc} from '../common/util.js';
 // source(앞자리) → [{id, sub}] (작은 순서). 마우스로 누르거나 ↑↓ + Enter로 고르면 칸을 그 ID로 채우고 input 이벤트를 보낸다.
 // Esc · 칸 밖을 누르면 닫는다. 길면 목록 안에서 스크롤 (아래 창 밖으로 넘치지 않게 높이를 맞춘다)
 export class IdSuggest {
-  constructor(input, source) {
+  constructor(input, source, onPick = () => {}) {
     this.input = input;
     this.source = source;
+    this.onPick = onPick;
     this.items = [];
     this.at = -1;
     const wrap = Object.assign(document.createElement('span'), {className: 'idsug'});
@@ -43,6 +44,7 @@ export class IdSuggest {
     this.input.dispatchEvent(new Event('input', {bubbles: true}));
     this.picking = false;
     this.hide();
+    this.onPick(id);
   }
 
   key(e) {

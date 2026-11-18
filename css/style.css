@@ -372,27 +372,82 @@ tr:hover .num .del{visibility:visible}
 #panels section{flex:1;min-width:0;display:flex;flex-direction:column}
 #lookup:not([hidden])+#meta{border-left:1px solid var(--line)}
 .bar{display:flex;gap:8px;align-items:center;padding:6px 12px;border-bottom:1px solid var(--line)}
-/* 데이터 조회 (DataLookup): ID 칸 아래 테이블마다 작은 표 */
-/* ID 칸은 결과를 내려도 위에 그대로, 그 아래로 펼치는 ID 목록(IdSuggest)은 결과 위에 겹쳐 뜬다 */
-.lkfind{padding:10px 12px}
-.lkbody{flex:1;min-height:0;overflow:auto;padding:0 12px 10px}
+/* 데이터 조회 (DataLookup). 처음(.idle)은 가운데 큰 둥근 검색 칸 + 최근 칩, 숫자를 치면 칸이 위로 가고 아래는 결과(왼쪽 목록 | 오른쪽 자세히).
+   창 폭으로 모양을 바꾼다(@container): 설명 창을 같이 켜거나 태블릿 · 폰처럼 좁으면 목록이 위 칩 줄로 */
+#lookup{container-type:inline-size}
+.lkfind{padding:10px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+#lookup.idle .lkfind{flex:1;min-height:0;overflow:auto;align-items:center;justify-content:safe center} /* 최근 칩이 많아 넘치면 위가 잘리지 않고 스크롤 */
+#lookup.idle .lkres,#lookup:not(.idle) .lkrecent{display:none}
 .idsug{position:relative;display:inline-block;max-width:100%}
 .idsug .combo-list{right:auto;width:260px;max-width:calc(100vw - 40px)}
 .idsug .combo-list li{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
 .idsug .combo-list small{color:var(--dim);overflow:hidden;text-overflow:ellipsis}
-#lookupId{width:200px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 8px}
+.lkicon{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--dim);pointer-events:none}
+#lookupId{width:240px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:5px 12px 5px 32px}
+#lookup.idle .idsug{width:min(320px,100%)}
+#lookup.idle #lookupId{width:100%;padding:8px 14px 8px 34px;font-size:14px;border-radius:20px}
 #lookupId:focus{outline:0;border-color:var(--accent)}
-.lkgrp{margin-bottom:14px}
-.lkh{display:flex;gap:8px;align-items:baseline;margin-bottom:4px}
-.lkh span{color:var(--dim);font-size:12px}
+.lkrecent{width:min(320px,100%)}
+.lkrecent .rh{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--dim);margin:0 2px 6px}
+.lkrecent .rh button{background:none;border:0;padding:0;color:var(--dim)}
+.lkrecent .rh button:hover{color:var(--text)}
+.lkchips{display:flex;flex-wrap:wrap;gap:6px}
+.lkchip{display:inline-flex;align-items:baseline;gap:6px;background:var(--btn);border:1px solid var(--line);border-radius:14px;padding:3px 4px 3px 10px;cursor:pointer;font-size:12px}
+.lkchip:hover{background:var(--hover)}
+.lkchip small{color:var(--dim);font-size:11px}
+.lkchip button{background:none;border:0;padding:0 4px;color:var(--dim);font-size:11px}
+.lkchip button:hover{color:var(--text)}
+.lkres{flex:1;min-height:0;display:grid;grid-template-columns:200px minmax(0,1fr);border-top:1px solid var(--line)}
+.lkres:has(>.lkempty){display:block;padding:10px 12px}
+.lklist{overflow:auto;border-right:1px solid var(--line);padding:4px 6px}
+.lklist .lh{font-size:11px;color:var(--dim);padding:8px 8px 4px}
+.lkitem{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px;width:100%;text-align:left;background:none;border:0;border-radius:4px;padding:6px 8px;margin-bottom:2px}
+.lkitem b{flex:1;min-width:0}
+.lkitem small{flex-basis:100%}
+.lkitem:hover{background:var(--hover)}
+.lkitem.on{background:var(--accent-tint);box-shadow:inset 2px 0 var(--accent)}
+.lkitem b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.lkitem small{color:var(--dim);font-size:11px}
+.lkitem .cnt{color:var(--dim);font-size:11px}
+.lkdetail{overflow:auto;padding:10px 14px}
+.lkoh{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lkid{font:600 17px Consolas,monospace;color:var(--accent-text)}
+.lksrc{color:var(--dim);font-size:12px}
+.lkoh button,.lkgo{font-size:12px;padding:2px 10px}
+.lkgo{margin-left:8px}
+.lkobj{width:100%;max-width:640px}
+.lkobj td{border-width:0 0 1px;background:transparent;padding:5px 10px;white-space:normal;vertical-align:baseline}
+.lkobj td.k{width:34%;color:var(--dim)}
+.lkobj td.k small{display:block;font-size:11px;opacity:.8}
+.lkobj tr.g td{color:var(--dim);font-size:11px;padding:12px 10px 4px;border-color:var(--headline)}
+.lkobj tr:first-child td{padding-top:4px}
+.lkobj tr.diff td{background:var(--warnbg)}
+.lkdiff{color:var(--warntext);font-size:11px;margin-left:8px}
+.lknum{font-family:Consolas,monospace}
+.lkbadge{background:var(--accent-tint);color:var(--accent-text);border-radius:10px;padding:1px 9px;font-size:12px}
+.lkok{color:var(--accent-text)}
+.lkdim{color:var(--dim)}
+.lklink{background:none;border:0;border-bottom:1px dashed var(--accent);border-radius:0;padding:0;color:var(--accent-text);font-family:Consolas,monospace}
+.lklink:hover{background:none;border-bottom-style:solid}
 .lktbl{overflow-x:auto}
 .lktbl th,.lktbl td{padding:4px 10px;text-align:left}
 .lktbl tr:first-child>*{border-top-width:1px;background:var(--head)}
 .lktbl tr>:first-child{border-left-width:1px}
-.lktbl tr[data-g]{cursor:pointer}
-.lktbl tr[data-g]:hover td{background:var(--hover)}
+.lktbl tr[data-u]{cursor:pointer}
+.lktbl tr[data-u]:hover td{background:var(--hover)}
 .lktbl mark{background:var(--accent-tint);color:var(--accent-text);border-radius:3px;padding:0 3px}
 .lkempty{color:var(--dim);margin:4px 0}
+@container (max-width:560px){
+  .lkres{display:block;overflow:auto}
+  .lklist{display:flex;flex-wrap:wrap;align-items:center;gap:6px;overflow:visible;border-right:0;padding:8px 12px 0}
+  .lklist .lh{padding:0 2px 0 0}
+  .lkitem{display:inline-flex;align-items:baseline;gap:5px;width:auto;margin:0;border:1px solid var(--line);border-radius:14px;padding:3px 10px;font-size:12px}
+  .lkitem.on{box-shadow:none;border-color:var(--accent);color:var(--accent-text)}
+  .lkitem b{flex:none;font-weight:400}
+  .lkitem small{display:none}
+  .lkdetail{overflow:visible;padding:10px 12px}
+  .lkobj td.k{width:40%}
+}
 .metabody{flex:1;overflow:auto;padding:10px 12px}
 #tdesc{width:100%;min-height:56px;resize:vertical;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;margin-bottom:10px}
 .metabody table{width:100%}
