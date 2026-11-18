@@ -83,14 +83,19 @@ export class DataLookup {
     this.render();
   }
 
+  // 같은 ID · 같은 항목을 다시 그릴 때(칸으로 가거나 표를 고치면 다시 그린다)는 스크롤 자리를 그대로
   render() {
-    const r = this.res;
+    const r = this.res, same = this.shown === r.id + '/' + this.sel;
+    const boxes = () => [this.out, ...this.out.querySelectorAll('.lklist, .lkdetail')];
+    const keep = same ? boxes().map(b => b.scrollTop) : [];
     this.out.innerHTML = r.empty ? `<p class="lkempty">${r.id} · 찾은 줄 없음</p>`
       : `<div class="lklist">${r.listHtml(this.sel)}</div><div class="lkdetail">${r.detailHtml(this.sel)}</div>`;
+    boxes().forEach((b, i) => { if (keep[i]) b.scrollTop = keep[i]; });
+    this.shown = r.id + '/' + this.sel;
   }
 
   click(e) {
-    const r = this.res, b = e.target.closest('[data-item], [data-q], tr[data-m], tr[data-u]');
+    const r = this.res, b = e.target.closest('[data-item], [data-q], td[data-m], tr[data-u]');
     if (!r || !b) return;
     if (b.dataset.item) { this.sel = b.dataset.item; this.render(); return; }
     if (b.dataset.q) { this.search(b.dataset.q); return; } // 줄 안의 ID 링크는 줄 이동보다 먼저
