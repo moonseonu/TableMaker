@@ -70,7 +70,11 @@ export class DataLookup {
     this.inp.focus({preventScroll: true});
   }
 
-  remember() { if (this.res && !this.res.empty) this.recent.add(this.res.id, this.res.first); }
+  remember() {
+    if (!this.res || this.res.empty) return;
+    this.recent.add(this.res.id, this.res.first);
+    this.recent.render(this.res.id);
+  }
 
   refresh() {
     if (!this.open) return;
@@ -80,6 +84,7 @@ export class DataLookup {
     const prev = this.res && this.res.id;
     this.res = new LookupResult(this.app.workbook.tables, id);
     if (prev !== id || !this.res.keys.includes(this.sel)) this.sel = this.res.keys[0];
+    if (prev !== id) this.recent.render(id);
     this.render();
   }
 

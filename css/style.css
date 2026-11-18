@@ -377,7 +377,13 @@ tr:hover .num .del{visibility:visible}
 #lookup{container-type:inline-size}
 .lkfind{padding:10px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:14px}
 #lookup.idle .lkfind{flex:1;min-height:0;overflow:auto;align-items:center;justify-content:safe center} /* 최근 칩이 많아 넘치면 위가 잘리지 않고 스크롤 */
-#lookup.idle .lkres,#lookup:not(.idle) .lkrecent{display:none}
+#lookup.idle .lkres{display:none}
+/* 결과 화면: 최근 칩은 칸 오른쪽 한 줄로 (제목 줄 · ✕ 없이, 넘치면 오래된 쪽이 잘린다) */
+#lookup:not(.idle) .lkfind{flex-direction:row;align-items:center;gap:12px}
+#lookup:not(.idle) .lkrecent{flex:1;min-width:0;width:auto;overflow:hidden}
+#lookup:not(.idle) .lkrecent .rh,#lookup:not(.idle) .lkchip button{display:none}
+#lookup:not(.idle) .lkchips{flex-wrap:nowrap}
+#lookup:not(.idle) .lkchip{padding-right:10px}
 .idsug{position:relative;display:inline-block;max-width:100%}
 .idsug .combo-list{right:auto;width:260px;max-width:calc(100vw - 40px)}
 .idsug .combo-list li{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
@@ -392,7 +398,7 @@ tr:hover .num .del{visibility:visible}
 .lkrecent .rh button{background:none;border:0;padding:0;color:var(--dim)}
 .lkrecent .rh button:hover{color:var(--text)}
 .lkchips{display:flex;flex-wrap:wrap;gap:6px}
-.lkchip{display:inline-flex;align-items:baseline;gap:6px;background:var(--btn);border:1px solid var(--line);border-radius:14px;padding:3px 4px 3px 10px;cursor:pointer;font-size:12px}
+.lkchip{flex:none;white-space:nowrap;display:inline-flex;align-items:baseline;gap:6px;background:var(--btn);border:1px solid var(--line);border-radius:14px;padding:3px 4px 3px 10px;cursor:pointer;font-size:12px}
 .lkchip:hover{background:var(--hover)}
 .lkchip small{color:var(--dim);font-size:11px}
 .lkchip button{background:none;border:0;padding:0 4px;color:var(--dim);font-size:11px}
@@ -451,6 +457,7 @@ tr:hover .num .del{visibility:visible}
   .lkitem small{display:none}
   .lkdetail{overflow:visible;padding:10px 12px}
   .lkobj td.k{width:40%}
+  #lookup:not(.idle) #lookupId{width:150px} /* 옆 최근 칩이 한두 개는 보이게 */
 }
 .metabody{flex:1;overflow:auto;padding:10px 12px}
 #tdesc{width:100%;min-height:56px;resize:vertical;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;margin-bottom:10px}
