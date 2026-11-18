@@ -59,7 +59,7 @@ export class LookupResult {
     const root = g[0].t, seen = new Map();
     let rows = '';
     g.forEach((m, mi) => {
-      rows += `<tr class="g"><td colspan="2">${esc(m.t.name)} <button class="lkgo" data-jump="${mi}">표에서 보기</button></td></tr>`;
+      rows += `<tr class="g"><td colspan="2"><button class="lkgo" data-jump="${mi}" title="표에서 보기">${esc(m.t.name)} ↗</button></td></tr>`;
       m.t.cols.forEach((c, ci) => {
         if (c.id || c.linked) return;
         const v = m.row[ci], s = seen.get(c.name);
@@ -69,7 +69,7 @@ export class LookupResult {
           `<td>${LookupResult.val(c, v)}${s ? `<span class="lkdiff">${esc(s.t)} 값과 다름</span>` : ''}</td></tr>`;
       });
     });
-    // '표에서 보기'는 테이블마다 그 머리 줄에 (첫 테이블도 같은 자리)
+    // 테이블마다 머리 줄의 이름이 '표에서 보기' 버튼 (모든 테이블이 같은 자리)
     return `<div class="lkoh"><span class="lkid">${esc(root.prefix + this.id)}</span><span class="lksrc">${esc(root.name)}</span></div><table class="lkobj">${rows}</table>`;
   }
 

@@ -413,8 +413,9 @@ tr:hover .num .del{visibility:visible}
 .lkoh{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .lkid{font:600 17px Consolas,monospace;color:var(--accent-text)}
 .lksrc{color:var(--dim);font-size:12px}
-.lkoh button,.lkgo{font-size:12px;padding:2px 10px}
-.lkgo{margin-left:8px}
+/* 묶음 머리 줄의 테이블 이름 = '표에서 보기' 버튼 */
+.lkgo{background:none;border:0;border-radius:0;padding:0;font-size:11px;color:var(--dim)}
+.lkgo:hover{background:none;color:var(--accent-text);text-decoration:underline}
 .lkobj{width:100%;max-width:640px}
 .lkobj td{border-width:0 0 1px;background:transparent;padding:5px 10px;white-space:normal;vertical-align:baseline}
 .lkobj td.k{width:34%;color:var(--dim)}
