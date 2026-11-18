@@ -90,12 +90,12 @@ export class DataLookup {
   }
 
   click(e) {
-    const r = this.res, b = e.target.closest('[data-item], [data-jump], [data-q], tr[data-u]');
+    const r = this.res, b = e.target.closest('[data-item], [data-q], tr[data-m], tr[data-u]');
     if (!r || !b) return;
     if (b.dataset.item) { this.sel = b.dataset.item; this.render(); return; }
-    if (b.dataset.q) { this.search(b.dataset.q); return; }
+    if (b.dataset.q) { this.search(b.dataset.q); return; } // 줄 안의 ID 링크는 줄 이동보다 먼저
     const i = +this.sel.slice(1);
-    if (b.dataset.jump) { const m = r.objs[i][+b.dataset.jump]; this.jump(m.t, m.row, 0); }
+    if (b.dataset.m) { const m = r.objs[i][+b.dataset.m]; this.jump(m.t, m.row, +b.dataset.c); }
     else { const u = r.uses[i], x = u.rows[+b.dataset.u]; this.jump(u.t, x.row, x.c); }
     this.remember();
   }

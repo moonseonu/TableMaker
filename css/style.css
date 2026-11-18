@@ -413,15 +413,18 @@ tr:hover .num .del{visibility:visible}
 .lkoh{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .lkid{font:600 17px Consolas,monospace;color:var(--accent-text)}
 .lksrc{color:var(--dim);font-size:12px}
-/* 묶음 머리 줄의 테이블 이름 = '표에서 보기' 버튼 */
-.lkgo{background:none;border:0;border-radius:0;padding:0;font-size:11px;color:var(--dim)}
-.lkgo:hover{background:none;color:var(--accent-text);text-decoration:underline}
 .lkobj{width:100%;max-width:640px}
-.lkobj td{border-width:0 0 1px;background:transparent;padding:5px 10px;white-space:normal;vertical-align:baseline}
-.lkobj td.k{width:34%;color:var(--dim)}
-.lkobj td.k small{display:block;font-size:11px;opacity:.8}
-.lkobj tr.g td{color:var(--dim);font-size:11px;padding:12px 10px 4px;border-color:var(--headline)}
+.lkobj td{border-width:0 0 1px;background:transparent;padding:6px 10px;white-space:normal;vertical-align:baseline}
+/* 글자 위계: ID(17px) > 테이블 이름(14px 굵게) > 필드 이름(굵게) > 값(보통). 타입은 필드 이름 아래 작고 흐리게 */
+.lkobj td.k{width:34%;font-weight:600}
+.lkobj td.k small{display:block;font-weight:400;font-size:11px;color:var(--dim)}
+.lkobj tr.g td{font-size:14px;font-weight:600;padding:16px 10px 6px;border-bottom:2px solid var(--headline)}
 .lkobj tr:first-child td{padding-top:4px}
+/* 조회는 보기만: 줄을 누르면 표의 그 칸으로 (올린 줄에만 ↗) */
+.lkobj tr.r{cursor:pointer}
+.lkobj tr.r:hover td{background:var(--hover)}
+.lkobj td.go{width:24px;text-align:right;color:var(--accent-text);visibility:hidden}
+.lkobj tr.r:hover td.go{visibility:visible}
 .lkobj tr.diff td{background:var(--warnbg)}
 .lkdiff{color:var(--warntext);font-size:11px;margin-left:8px}
 .lknum{font-family:Consolas,monospace}

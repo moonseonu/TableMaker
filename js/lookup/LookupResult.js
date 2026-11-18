@@ -59,17 +59,17 @@ export class LookupResult {
     const root = g[0].t, seen = new Map();
     let rows = '';
     g.forEach((m, mi) => {
-      rows += `<tr class="g"><td colspan="2"><button class="lkgo" data-jump="${mi}" title="표에서 보기">${esc(m.t.name)} ↗</button></td></tr>`;
+      rows += `<tr class="g"><td colspan="3">${esc(m.t.name)}</td></tr>`;
       m.t.cols.forEach((c, ci) => {
         if (c.id || c.linked) return;
         const v = m.row[ci], s = seen.get(c.name);
         if (s && s.v === v) return;
         if (!s) seen.set(c.name, {v, t: m.t.name});
-        rows += `<tr${s ? ' class="diff"' : ''}><td class="k">${esc(c.name)}<small>${Table.TYPES[c.type]}</small></td>` +
-          `<td>${LookupResult.val(c, v)}${s ? `<span class="lkdiff">${esc(s.t)} 값과 다름</span>` : ''}</td></tr>`;
+        rows += `<tr class="r${s ? ' diff' : ''}" data-m="${mi}" data-c="${ci}"><td class="k">${esc(c.name)}<small>${Table.TYPES[c.type]}</small></td>` +
+          `<td>${LookupResult.val(c, v)}${s ? `<span class="lkdiff">${esc(s.t)} 값과 다름</span>` : ''}</td><td class="go">↗</td></tr>`;
       });
     });
-    // 테이블마다 머리 줄의 이름이 '표에서 보기' 버튼 (모든 테이블이 같은 자리)
+    // 조회는 보기만 한다(고치기는 표에서만: 검사 · 정렬 · 되돌리기가 거기 있어서). 줄을 누르면 그 테이블의 그 칸으로
     return `<div class="lkoh"><span class="lkid">${esc(root.prefix + this.id)}</span><span class="lksrc">${esc(root.name)}</span></div><table class="lkobj">${rows}</table>`;
   }
 
